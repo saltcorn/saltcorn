@@ -1159,8 +1159,11 @@ router.post(
     }
     //console.log(joinFields, row);
     const id = req.query.id || row.id;
+    //ownership must be decided on the stored row, never on posted values
+    let ownershipRow = row;
     if (id) {
       let [dbrow] = await table.getJoinedRows({ where: { id }, joinFields });
+      if (dbrow) ownershipRow = dbrow;
       row = { ...dbrow, ...row };
       //prevent overwriting ownership field
       if (table.ownership_field_id) {
@@ -1195,9 +1198,9 @@ router.post(
     }
     if (
       role > table.min_role_read &&
-      !(req.user && table.is_owner(req.user, row))
+      !(req.user && table.is_owner(req.user, ownershipRow))
     ) {
-      //console.log("not owner", row, table.is_owner(req.user, row));
+      //console.log("not owner", row, table.is_owner(req.user, ownershipRow));
       res.status(401).send("");
       return;
     }

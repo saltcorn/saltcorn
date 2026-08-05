@@ -2,10 +2,12 @@ const request = require("supertest");
 const getApp = require("../app");
 const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
+const User = require("@saltcorn/data/models/user");
 
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
+  getUserLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
   toBeTrue,
@@ -366,7 +368,7 @@ describe("Field Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude(" is: <pre>"));
   });
-   it("should show on stored expression with half-hjoinfield", async () => {
+  it("should show on stored expression with half-hjoinfield", async () => {
     const loginCookie = await getAdminLoginCookie();
     const table = Table.findOne({ name: "books" });
 
@@ -601,6 +603,76 @@ describe("Field Endpoints", () => {
         },
       })
       .expect(toBeTrue((r) => r.text.includes("pub:ak press")));
+  });
+});
+
+describe("show-calculated ownership checks", () => {
+  const SECRET = "the eagle has landed";
+  const mkOwnedTable = async () => {
+    const tbl = await Table.create("ownedsecrets", {
+      min_role_read: 40,
+      min_role_write: 40,
+    });
+    await Field.create({
+      table: tbl,
+      name: "owner",
+      label: "Owner",
+      type: "Key",
+      reftable_name: "users",
+      attributes: { summary_field: "email" },
+      required: false,
+    });
+    await Field.create({
+      table: tbl,
+      name: "secret",
+      label: "Secret",
+      type: "String",
+    });
+    await tbl.update({ ownership_formula: "owner === user.id" });
+    const owned = Table.findOne({ name: "ownedsecrets" });
+    const admin = await User.findOne({ email: "admin@foo.com" });
+    const id = await owned.insertRow({
+      owner: admin.id,
+      secret: SECRET,
+    });
+    return { table: owned, id };
+  };
+
+  const shouldNotLeak = (res) => {
+    if (res.text.includes(SECRET))
+      throw new Error(
+        `Expected secret to be absent, but was present (status ${res.statusCode})`
+      );
+  };
+
+  it("should not show field value of row not owned", async () => {
+    const { id } = await mkOwnedTable();
+    const loginCookie = await getUserLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/ownedsecrets/secret/show")
+      .set("Cookie", loginCookie)
+      .send({ id })
+      .expect(401)
+      .expect(shouldNotLeak);
+  });
+
+  it("should not allow ownership formula to be spoofed by posted values", async () => {
+    const user = await User.findOne({ email: "user@foo.com" });
+    const owned = Table.findOne({ name: "ownedsecrets" });
+    const [row] = await owned.getRows({});
+    const loginCookie = await getUserLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+
+    // user@foo.com does not own this row, but posts a spoofed value for the
+    // field the ownership formula is based on. The posted values must not be
+    // able to satisfy the ownership check for the stored row.
+    await request(app)
+      .post("/field/show-calculated/ownedsecrets/secret/show")
+      .set("Cookie", loginCookie)
+      .send({ id: row.id, owner: user.id })
+      .expect(shouldNotLeak);
   });
 });
 
