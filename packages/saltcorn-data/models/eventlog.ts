@@ -180,6 +180,7 @@ class EventLog {
         occur_at: new Date(),
         payload: JSON.stringify({ version: packagejson.version }),
       });
+      await storedVersion.update({ body: { version: packagejson.version } });
     }
   }
 }

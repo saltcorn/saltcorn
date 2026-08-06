@@ -228,14 +228,12 @@ class Trigger implements AbstractTrigger {
     userPW: User | object = {},
     payload?: any
   ): void {
-    if (
-      !isNode() &&
-      !nsState.getState()!.mobileConfig?.isOfflineMode
-    ) {
+    if (!isNode() && !nsState.getState()!.mobileConfig?.isOfflineMode) {
       Trigger.sendEventToServer(eventType, channel, userPW, payload);
       return;
     }
     setTimeout(async () => {
+      if (eventType === "Startup") await EventLog.maintainCoreVersionLog();
       const { password, ...user } = (userPW || {}) as User;
       if (!getState) return; // probably in a test
       const findArgs: Where = { when_trigger: eventType };
