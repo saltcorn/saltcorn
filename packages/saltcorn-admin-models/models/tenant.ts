@@ -245,6 +245,7 @@ const upgrade_all_tenants_plugins = async (
         for (const plugin of myplugins) {
           if (latest_versions[plugin.location]) {
             if (plugin.version !== latest_versions[plugin.location]) {
+              await plugin.logUpgrade(latest_versions[plugin.location]);
               plugin.version = latest_versions[plugin.location];
               await plugin.upsert();
             }
@@ -265,6 +266,7 @@ const upgrade_all_tenants_plugins = async (
                   `Upgrading plugin ${plugin.location} to version ${version}`
                 );
                 plugin.version = version;
+                await plugin.logUpgrade(version, String(prevVersion));
                 await plugin.upsert();
               }
             }

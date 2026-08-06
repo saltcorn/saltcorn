@@ -91,6 +91,7 @@ class PluginsCommand extends Command {
                     }`
                   );
                 } else {
+                  await plugin.logUpgrade(new_versions[plugin.location]);
                   plugin.version = new_versions[plugin.location];
 
                   const sql_logging = db.get_sql_logging();
