@@ -15,6 +15,7 @@ import {
   prepareExportOptionsPlist,
   copyShareExtFiles,
   modifyShareViewController,
+  createShareExtensionTarget,
   writeCapacitorConfig,
   prepAppIcon,
   modifyInfoPlist,
@@ -49,6 +50,8 @@ const appNameDefault = "SaltcornMobileApp";
 export type IosCfg = {
   noProvisioningProfile?: boolean;
   appleTeamId?: string;
+  // whether the main provisioning profile is Ad Hoc rather than App Store
+  isAdHoc?: boolean;
   mainProvisioningProfile?: {
     guuid: string;
   };
@@ -144,7 +147,6 @@ export class MobileBuilder {
   pushNotificationsEnabled: boolean;
 
   private capacitorHelper: CapacitorHelper;
-  private pluginsLoaded = false;
 
   /**
    *
@@ -215,23 +217,12 @@ export class MobileBuilder {
   }
 
   /**
-   *
+   * Builds the mobile app: sets up the project directory, copies in the
+   * app's code and assets, and produces the Android/iOS build in one pass.
    */
-  public async fullBuild() {
-    try {
-      let resultCode = await this.prepareStep();
-      if (resultCode !== 0) return resultCode;
-      else return await this.finishStep();
-    } catch (error: any) {
-      console.error(error);
-      return 1;
-    }
-  }
-
-  public async prepareStep() {
+  public async build() {
     try {
       await Plugin.loadAllPlugins();
-      this.pluginsLoaded = true;
       prepareBuildDir(
         this.buildDir,
         this.templateDir,
@@ -252,15 +243,7 @@ export class MobileBuilder {
         buildType: this.buildType,
       });
       this.capacitorHelper.addPlatforms();
-      return 0;
-    } catch (e: any) {
-      console.error(e);
-      return 1;
-    }
-  }
 
-  public async finishStep() {
-    try {
       if (this.appIcon) prepAppIcon(this.buildDir, this.appIcon);
       copyServerFiles(this.buildDir);
       await copySiteLogo(this.buildDir);
@@ -291,10 +274,6 @@ export class MobileBuilder {
         this.plugins
       );
       if (resultCode !== 0) return resultCode;
-      if (!this.pluginsLoaded) {
-        await Plugin.loadAllPlugins();
-        this.pluginsLoaded = true;
-      }
       copyPluginMobileAppDirs(this.buildDir);
       if (this.pushNotificationsEnabled || this.pushSync) {
         copyOptionalSource(this.buildDir, "notifications.js");
@@ -343,6 +322,22 @@ export class MobileBuilder {
   }
 
   private async handleIosPlatform() {
+    if (this.allowShareTo) {
+      copyShareExtFiles(this.buildDir);
+      if (this.iosParams?.shareExtensionProvisioningProfile?.appGroupId)
+        modifyShareViewController(
+          this.buildDir,
+          this.iosParams?.shareExtensionProvisioningProfile?.appGroupId
+        );
+      // adds the share-ext target to App.xcodeproj - has to run before
+      // modifyXcodeProjectFile, which patches signing settings for a
+      // target it expects to already exist
+      createShareExtensionTarget(
+        this.buildDir,
+        this.appId,
+        this.iosParams?.shareExtensionProvisioningProfile?.appGroupId
+      );
+    }
     if (this.iosParams?.noProvisioningProfile !== true) {
       prepareExportOptionsPlist({
         buildDir: this.buildDir,
@@ -375,14 +370,6 @@ export class MobileBuilder {
         this.iosParams?.shareExtensionProvisioningProfile?.appGroupId
       );
       injectCodeSignEntitlements(this.buildDir);
-    }
-    if (this.allowShareTo) {
-      copyShareExtFiles(this.buildDir);
-      if (this.iosParams?.shareExtensionProvisioningProfile?.appGroupId)
-        modifyShareViewController(
-          this.buildDir,
-          this.iosParams?.shareExtensionProvisioningProfile?.appGroupId
-        );
     }
     modifyAppDelegate(
       this.buildDir,

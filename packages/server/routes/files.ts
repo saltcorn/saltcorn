@@ -78,7 +78,14 @@ router.use(
   })
 );
 
-const send_files_picker = async (folder: any, noSubdirs: any, inputId: any, req: Req, res: any, file_exts: any) => {
+const send_files_picker = async (
+  folder: any,
+  noSubdirs: any,
+  inputId: any,
+  req: Req,
+  res: any,
+  file_exts: any
+) => {
   res.set("SaltcornModalWidth", "1200px");
   res.sendWrap(req.__("Please select a file"), {
     above: [
@@ -660,9 +667,12 @@ router.post(
       file_for_redirect = many ? f[0] : f;
       const successMsg = req.__(
         `File %s uploaded`,
-        many ? f.map((fl: any) => text(fl.filename)).join(", ") : text(f.filename)
+        many
+          ? f.map((fl: any) => text(fl.filename)).join(", ")
+          : text(f.filename)
       );
-      const asLocation = (fl: any) => File.fieldValueFromRelative(fl.path_to_serve);
+      const asLocation = (fl: any) =>
+        File.fieldValueFromRelative(fl.path_to_serve);
       const asUrl = (fl: any) =>
         File.pathToServeUrl(asLocation(fl), { filename: fl.filename });
       if (!req.xhr) req.flash("success", successMsg);
@@ -706,7 +716,7 @@ router.post(
       return;
     }
     const result = await f.delete(
-      f.s3_store ? s3storage.unlinkObject : undefined as any
+      f.s3_store ? s3storage.unlinkObject : (undefined as any)
     );
     if (result && result.error) {
       if (req.xhr) {

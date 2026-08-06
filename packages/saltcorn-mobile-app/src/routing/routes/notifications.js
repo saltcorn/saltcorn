@@ -24,6 +24,10 @@ const buildSuccessMsg = (msg) => {
   );
 };
 
+// files have a real type (e.g. image/png); text/link shares are "text/plain"
+const isFileItem = (item) =>
+  item?.type && item.type !== "text/plain" && item.url;
+
 export const postShare = async (context) => {
   let content = "";
   const mobileCfg = saltcorn.data.state.getState().mobileConfig;
@@ -31,13 +35,34 @@ export const postShare = async (context) => {
     content = buildErrMsg("No network connection");
   else if (!(await checkSession())) content = buildErrMsg("Not authenticated");
   else {
-    const response = await apiCall({
-      method: "POST",
-      path: "/notifications/share-handler",
-      body: context.shareData,
-    });
-    if (response.error) content = buildErrMsg(response.error);
-    else content = buildSuccessMsg("Shared successfully");
+    try {
+      const { title, description, type, url, additionalItems } =
+        context.shareData || {};
+      let body = context.shareData;
+      if (isFileItem({ type, url })) {
+        const items = [{ title, type, url }, ...(additionalItems || [])];
+        // title is the real on-disk filename, location is where to find it
+        const files = [];
+        for (const item of items) {
+          const uploaded = await saltcorn.data.models.File.uploadFromPath(
+            item.url,
+            item.title || "shared-file",
+            item.type
+          );
+          files.push({ title: uploaded.filename, location: uploaded.location });
+        }
+        body = { description, files };
+      }
+      const response = await apiCall({
+        method: "POST",
+        path: "/notifications/share-handler",
+        body,
+      });
+      if (response.error) content = buildErrMsg(response.error);
+      else content = buildSuccessMsg("Shared successfully");
+    } catch (error) {
+      content = buildErrMsg(error.message || "Error sharing");
+    }
   }
   return await wrapContents(
     saltcorn.markup.tags.div(

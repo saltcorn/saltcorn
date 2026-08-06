@@ -92,6 +92,7 @@ class BuildAppCommand extends Command {
         );
         result = {
           appleTeamId: mainProfileVals.teamId,
+          isAdHoc: mainProfileVals.isAdHoc,
           mainProvisioningProfile: {
             guuid: mainProfileVals.guuid,
           },
@@ -169,26 +170,8 @@ class BuildAppCommand extends Command {
         keyStorePassword: flags.androidKeystorePassword,
         googleServicesFile: flags.googleServicesFile,
       });
-      let result;
-      switch (flags.mode) {
-        case "full":
-          getState().log(5, "Building completely");
-          result = await builder.fullBuild();
-          break;
-        case "prepare":
-          getState().log(5, "Preparing the ios build directory");
-          result = await builder.prepareStep();
-          break;
-        case "finish":
-          getState().log(
-            5,
-            "Finishing the ios build in the prepared ios folder"
-          );
-          result = await builder.finishStep();
-          break;
-        default:
-          throw new Error(`Unknown mode '${flags.mode}'`);
-      }
+      getState().log(5, "Building");
+      const result = await builder.build();
       process.exit(result);
     };
     if (
@@ -205,15 +188,6 @@ class BuildAppCommand extends Command {
 BuildAppCommand.description = "Build mobile app";
 
 BuildAppCommand.flags = {
-  mode: Flags.string({
-    name: "mode",
-    char: "m",
-    description:
-      "Build the app completely (full), " +
-      "prepare the ios build directory (prepare) or finish the ios build in the prepared ios folder (finish)",
-    options: ["full", "prepare", "finish"],
-    default: "full",
-  }),
   allowShareTo: Flags.boolean({
     name: "allow share to",
     string: "allowShareTo",

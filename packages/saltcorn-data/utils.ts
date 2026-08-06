@@ -796,7 +796,11 @@ const decodeProvisioningProfile = async (provisioningProfile: string) => {
     const teamId = dict.array[0].string[0];
     const specifier = dict.string[1];
     const identifier = dict.dict[0].string[0];
-    const result = { guuid, teamId, specifier, identifier };
+    // App Store/Enterprise profiles have no device list; Development/Ad Hoc
+    // do. Since this pipeline always signs with a Distribution identity
+    // (never a Development one), a device list here can only mean Ad Hoc.
+    const isAdHoc = (dict.key || []).includes("ProvisionedDevices");
+    const result = { guuid, teamId, specifier, identifier, isAdHoc };
     console.log(result);
     return result;
   } catch (error: any) {

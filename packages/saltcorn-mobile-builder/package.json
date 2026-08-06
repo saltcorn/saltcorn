@@ -7,7 +7,7 @@
   "author": "Christian Hugo",
   "scripts": {
     "test": "cd dist && node --test",
-    "tsc": "tsc -p tsconfig.json",
+    "tsc": "tsc -p tsconfig.json && node ./copy_static_assets.cjs",
     "clean": "rm -rf ./dist/*",
     "build": "webpack --mode development"
   },
