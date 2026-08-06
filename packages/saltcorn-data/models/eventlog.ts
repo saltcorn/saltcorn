@@ -178,7 +178,10 @@ class EventLog {
         event_type: "System",
         channel: "CoreUpgrade",
         occur_at: new Date(),
-        payload: JSON.stringify({ version: packagejson.version }),
+        payload: JSON.stringify({
+          new_version: packagejson.version,
+          old_version: storedVersion.body.version,
+        }),
       });
       await storedVersion.update({ body: { version: packagejson.version } });
     }
