@@ -114,7 +114,7 @@ class EventLog {
    */
   static async create(o: EventLogCfg): Promise<EventLog | void> {
     const settings = getState()!.getConfig("event_log_settings", {});
-    if (!settings[o.event_type]) return;
+    if (!settings[o.event_type] && o.event_type !== "UpgradeLog") return;
     const hasTable = EventLog.hasTable(o.event_type);
     if (hasTable && !settings[`${o.event_type}_${o.channel}`]) return;
     const hasChannel = EventLog.hasChannel(o.event_type);
@@ -174,14 +174,14 @@ class EventLog {
     //if same, do nothing
     //if different, write update log
     if (storedVersion.body.version !== packagejson.version) {
-      await db.insert("_sc_event_log", {
-        event_type: "System",
-        channel: "CoreUpgrade",
+      await EventLog.create({
+        event_type: "UpgradeLog",
+        channel: "Core",
         occur_at: new Date(),
-        payload: JSON.stringify({
+        payload: {
           new_version: packagejson.version,
           old_version: storedVersion.body.version,
-        }),
+        },
       });
       await storedVersion.update({ body: { version: packagejson.version } });
     }

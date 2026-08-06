@@ -14,7 +14,11 @@ import View from "./view.js";
 import fetchLib from "node-fetch";
 const fetch: any = fetchLib; // NodeNext default-import interop for node-fetch
 import { SelectOptions, Where } from "@saltcorn/db-common/internal";
-import { ViewTemplate, PluginSourceType, PluginLoaderResult } from "@saltcorn/types/base_types";
+import {
+  ViewTemplate,
+  PluginSourceType,
+  PluginLoaderResult,
+} from "@saltcorn/types/base_types";
 import type {
   PluginCfg,
   PluginPack,
@@ -30,6 +34,7 @@ import {
   pluginsFolderRoot,
   isRoot,
 } from "../utils.js";
+import EventLog from "./eventlog.js";
 
 let packagejson: any = null;
 try {
@@ -101,6 +106,20 @@ class Plugin implements AbstractPlugin {
     );
   }
 
+  async logUpgrade(new_version: string, old_version?: string) {
+    console.log("logUpgrade", new_version, this);
+
+    await EventLog.create({
+      event_type: "UpgradeLog",
+      channel: this.name,
+      occur_at: new Date(),
+      payload: {
+        new_version: new_version,
+        old_version: old_version || this.version,
+      },
+    });
+  }
+
   /**
    * Update or Insert plugin
    * @returns {Promise<void>}
@@ -145,7 +164,10 @@ class Plugin implements AbstractPlugin {
       const old_version = this.version;
       this.version = newVersion || "latest";
       const { version } = await requirePlugin(this, true);
+      console.log("upgrade version", { version, old_version });
+
       if (version && version !== old_version) {
+        await this.logUpgrade(String(version), String(old_version));
         this.version = version;
         await this.upsert();
       }
@@ -515,7 +537,10 @@ class Plugin implements AbstractPlugin {
    * @param force - force reinstall even if already present
    * @returns PluginInstaller result (`{ plugin_module, location, version, … }`)
    */
-  static async requirePlugin(plugin: Plugin, force?: boolean): Promise<PluginLoaderResult> {
+  static async requirePlugin(
+    plugin: Plugin,
+    force?: boolean
+  ): Promise<PluginLoaderResult> {
     const airgap = getState()!.getConfig("airgap", false);
     if (airgap && !Plugin.is_fixed_plugin(plugin.location))
       Plugin.ensureAirgapedVersion(

@@ -79,7 +79,7 @@ import {
   supportedVersion,
   isVersionSupported,
 } from "@saltcorn/plugins-loader/stable_versioning";
-import { Req, Res} from "@saltcorn/types/base_types";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 const getOnDoneRedirect = (req: Req, fallback = "/plugins") => {
   if (
@@ -254,8 +254,8 @@ const get_store_items = async (req: Req) => {
     description: pack.description,
   }));
 
-  return [...plugins_item, ...local_logins, ...pack_items].sort((a: any, b: any) =>
-    a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1
+  return [...plugins_item, ...local_logins, ...pack_items].sort(
+    (a: any, b: any) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1)
   );
 };
 
@@ -1655,7 +1655,10 @@ router.post(
     let plugin = null;
     if (version) {
       plugin = (await Plugin.findOne({ name: name }))!;
-      if (plugin) plugin.version = version;
+      if (plugin) {
+        await plugin.logUpgrade(version);
+        plugin.version = version;
+      }
     }
     if (!plugin) {
       plugin = await Plugin.store_by_name(decodeURIComponent(name));
