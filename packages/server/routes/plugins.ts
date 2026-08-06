@@ -1348,7 +1348,7 @@ router.get(
                     onClick: "press_store_button(this, true)",
                     href: `javascript:ajax_modal('/plugins/versions_dialog/${encodeURIComponent(
                       encodeURIComponent(plugin_db.name)
-                    )}', { onOpen: () => { restore_old_button('${domId}'); }, onError: (res: any) => { selectVersionError(res, '${domId}') } });`,
+                    )}', { onOpen: () => { restore_old_button('${domId}'); }, onError: (res) => { selectVersionError(res, '${domId}') } });`,
                   },
                   req.__("install a different version")
                 )
