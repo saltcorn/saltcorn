@@ -9,6 +9,16 @@ import { getState } from "../db/state.js";
 import db from "../db/index.js";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
 import moment from "moment";
+import MetaData from "./metadata.js";
+
+let packagejson: any = null;
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+try {
+  packagejson = require("../package.json");
+} catch (error: any) {
+  packagejson = require("../../package.json");
+}
 
 /**
  * EventLog Class
@@ -103,7 +113,6 @@ class EventLog {
    * @returns {Promise<EventLog>}
    */
   static async create(o: EventLogCfg): Promise<EventLog | void> {
-
     const settings = getState()!.getConfig("event_log_settings", {});
     if (!settings[o.event_type]) return;
     const hasTable = EventLog.hasTable(o.event_type);
@@ -143,6 +152,35 @@ class EventLog {
   get toJson(): any {
     const { id, ...rest } = this;
     return rest;
+  }
+
+  static async maintainCoreVersionLog() {
+    //get current version
+
+    //check metadata version
+    const storedVersion = await MetaData.findOne({
+      name: "CurrentSaltcornCoreVersion",
+      type: "SaltcornCore",
+    });
+    //if none, write. But not an upgrade
+    if (!storedVersion) {
+      await MetaData.create({
+        name: "CurrentSaltcornCoreVersion",
+        type: "SaltcornCore",
+        body: { version: packagejson.version },
+      });
+      return;
+    }
+    //if same, do nothing
+    //if different, write update log
+    if (storedVersion.body.version !== packagejson.version) {
+      await db.insert("_sc_event_log", {
+        event_type: "System",
+        channel: "CoreUpgrade",
+        occur_at: new Date(),
+        payload: JSON.stringify({ version: packagejson.version }),
+      });
+    }
   }
 }
 
