@@ -107,8 +107,6 @@ class Plugin implements AbstractPlugin {
   }
 
   async logUpgrade(new_version: string, old_version?: string) {
-    console.log("logUpgrade", new_version, this);
-
     await EventLog.create({
       event_type: "UpgradeLog",
       channel: this.name,
@@ -164,8 +162,6 @@ class Plugin implements AbstractPlugin {
       const old_version = this.version;
       this.version = newVersion || "latest";
       const { version } = await requirePlugin(this, true);
-      console.log("upgrade version", { version, old_version });
-
       if (version && version !== old_version) {
         await this.logUpgrade(String(version), String(old_version));
         this.version = version;
