@@ -800,18 +800,24 @@ export function modifyInfoPlist(
 }
 
 /**
- * Write `App.entitlements` with the APNs environment and optional app group.
+ * Write `App.entitlements` with the optional APNs environment and app group.
  * @param buildDir directory where the app will be built
  * @param buildType `"debug"` → development APNs, `"release"` → production APNs
+ * @param pushSync include the APNs environment entitlement
  * @param appGroupId optional app group ID for share extension data sharing
  */
 export function writeEntitlementsPlist(
   buildDir: string,
   buildType: "debug" | "release",
+  pushSync: boolean,
   appGroupId?: string
 ) {
   const file = join(buildDir, "ios", "App", "App", "App.entitlements");
   const apsEnv = buildType === "release" ? "production" : "development";
+  const apsEnvEntry = pushSync
+    ? `    <key>aps-environment</key>
+    <string>${apsEnv}</string>`
+    : "";
   const appGroupsEntry = appGroupId
     ? `    <key>com.apple.security.application-groups</key>
     <array>
@@ -825,8 +831,7 @@ export function writeEntitlementsPlist(
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>aps-environment</key>
-    <string>${apsEnv}</string>
+${apsEnvEntry}
 ${appGroupsEntry}
 </dict>
 </plist>`
@@ -856,7 +861,9 @@ export function injectCodeSignEntitlements(buildDir: string) {
   );
   try {
     let content = readFileSync(pbxprojPath, "utf8");
-    if (content.includes("CODE_SIGN_ENTITLEMENTS")) {
+    // check for this exact insertion, not just any CODE_SIGN_ENTITLEMENTS -
+    // the share-ext target sets its own, which isn't the same thing
+    if (content.includes("CODE_SIGN_ENTITLEMENTS = App/App.entitlements;")) {
       console.log("CODE_SIGN_ENTITLEMENTS already set in project.pbxproj");
       return;
     }

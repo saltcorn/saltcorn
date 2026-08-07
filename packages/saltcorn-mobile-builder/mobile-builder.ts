@@ -363,11 +363,15 @@ export class MobileBuilder {
       this.backgroundFetchEnabled,
       this.serverURL
     );
-    if (this.pushSync) {
+    // needed for push, or for share-to file uploads via the app group
+    const appGroupId =
+      this.iosParams?.shareExtensionProvisioningProfile?.appGroupId;
+    if (this.pushSync || (this.allowShareTo && appGroupId)) {
       writeEntitlementsPlist(
         this.buildDir,
         this.buildType,
-        this.iosParams?.shareExtensionProvisioningProfile?.appGroupId
+        this.pushSync,
+        appGroupId
       );
       injectCodeSignEntitlements(this.buildDir);
     }
