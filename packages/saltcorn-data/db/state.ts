@@ -252,6 +252,7 @@ class State {
   sendMessageToWorkers?: Function;
   mobile_push_handler: Record<string, Function>;
   pushHelper?: PushMessageHelper;
+  nodeHandles: Map<string, (payload?: any) => void>;
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -314,6 +315,7 @@ class State {
     this.hasJoinedLogSockets = false;
     this.hasJoinedDynamicUpdateSockets = false;
     this.hasJoinedCollabSockets = false;
+    this.nodeHandles = new Map();
     try {
       this.scVersion = require("../../package.json").version;
     } catch (e) {
@@ -1705,6 +1707,41 @@ class State {
         userIds: userIds,
       });
     }
+  }
+
+  /**
+   * Registers a callback so a message sent to this id (from any node)
+   * reaches this operation. Call the returned function when done.
+   * @param id - unique id for this operation
+   * @param onMessage - called when a message for this id arrives
+   * @returns unregister function
+   */
+  registerNodeHandle(id: string, onMessage: (payload?: any) => void): () => void {
+    this.nodeHandles.set(id, onMessage);
+    return () => {
+      // only remove it if it's still ours - a newer registration under the
+      // same id may have already replaced it
+      if (this.nodeHandles.get(id) === onMessage) this.nodeHandles.delete(id);
+    };
+  }
+
+  /**
+   * Broadcast a message to whichever node/worker has a handler registered
+   * for id (see registerNodeHandle). A no-op wherever nothing is registered.
+   */
+  sendToNodeHandle(id: string, payload?: any) {
+    this.processSend({
+      node_handle_msg: { id, payload },
+      tenant: db.getTenantSchema(),
+    });
+  }
+
+  /**
+   * Deliver a node-handle message on this node/worker. Called from the
+   * cross-node/cross-worker message dispatcher (see serve.js).
+   */
+  deliverNodeHandle(id: string, payload?: any) {
+    this.nodeHandles.get(id)?.(payload);
   }
 
   get icons() {

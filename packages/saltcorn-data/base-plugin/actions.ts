@@ -274,6 +274,10 @@ const run_code = async ({
       fn: () => Promise<any>,
       opts?: { timeoutMs?: number }
     ) => withLock(name, fn, opts),
+    registerNodeHandle: (id: string, onMessage: (payload?: any) => void) =>
+      sysState.registerNodeHandle(id, onMessage),
+    sendToNodeHandle: (id: string, payload?: any) =>
+      sysState.sendToNodeHandle(id, payload),
     commitBeginNewTransactionAndRefreshCache: async () => {
       await db.commitAndBeginNewTransaction();
       await sysState.refresh();

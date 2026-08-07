@@ -303,6 +303,12 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
       true
     );
   }
+  if (msg.node_handle_msg) {
+    getState().deliverNodeHandle(
+      msg.node_handle_msg.id,
+      msg.node_handle_msg.payload
+    );
+  }
   if (msg.real_time_collab_event) {
     getState().emitCollabMessage(
       tenant || "public",
@@ -584,6 +590,7 @@ async ({
         msg.real_time_chat_event ||
         msg.log_event ||
         msg.restore_progress_event ||
+        msg.node_handle_msg ||
         (msg.refresh && msg.refresh !== "ephemeral_config")
       ) {
         const payload = escapeSingleQuotes(JSON.stringify(msg));
