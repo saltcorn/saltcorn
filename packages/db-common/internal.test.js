@@ -401,6 +401,10 @@ describe("mkWhere", () => {
       values: [5, 7, 12],
       where: 'where ("id"=$1 or "x">$2 and "x"<$3)',
     });
+    expect(mkWhere({ or: [] })).toStrictEqual({
+      values: [],
+      where: "",
+    });
     expect(
       mkWhere({ y: 6, or: [{ id: 5 }, { x: [{ gt: 7 }, { lt: 12 }] }] })
     ).toStrictEqual({

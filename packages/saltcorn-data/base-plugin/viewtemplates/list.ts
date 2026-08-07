@@ -1308,7 +1308,6 @@ const run = async (
       );
     } else return true;
   });
-  console.log("list viewresults", viewResults);
 
   const tfields = layout?.list_columns
     ? get_viewable_fields_from_layout(
