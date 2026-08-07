@@ -1147,6 +1147,10 @@ const run = async (
             `Extra state formula for view ${view.name}`
           )
         : {};
+    let finder =
+      (row: GenObj) =>
+      (rowhtml: { html: string; row: GenObj }): boolean =>
+        rowhtml.row[pk_name] == row[pk_name];
     if (view.view_select.type === "RelationPath") {
       const relation = new Relation(
         segment.relation,
@@ -1191,6 +1195,10 @@ const run = async (
               ...get_extra_state(row),
             })),
           };
+          finder =
+            (row: GenObj) =>
+            (rowhtml: { html: string; row: GenObj }): boolean =>
+              rowhtml.row[refTable.pk_name] == row[relation.path[0]?.fkey];
           getRowState = (row: GenObj) => ({
             [refTable.pk_name]: row[relation.targetTblName],
             ...get_extra_state(row),
@@ -1218,7 +1226,7 @@ const run = async (
     if (view.viewtemplateObj?.runMany) {
       const runs = await view.runMany(stateMany, extraOpts);
       viewResults[segment.view + segment.relation] = (row: GenObj) =>
-        runs.find((rh: GenObj) => rh.row[pk_name] == row[pk_name])?.html;
+        runs.find(finder(row))?.html;
     } else if (view.viewtemplateObj?.renderRows) {
       const rendered = await view.viewtemplateObj.renderRows(
         view.table,
@@ -1283,6 +1291,7 @@ const run = async (
       );
     } else return true;
   });
+
   const tfields = layout?.list_columns
     ? get_viewable_fields_from_layout(
         viewname,

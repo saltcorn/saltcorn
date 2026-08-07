@@ -597,9 +597,10 @@ export const mkWhere = (
   const placeHolderStack = is_sqlite
     ? sqlitePlaceHolderStack()
     : postgresPlaceHolderStack(initCount);
+  const whereClauses = wheres.map(whereClause(placeHolderStack)).join(" and ");
   const where =
-    whereObj && wheres.length > 0
-      ? "where " + wheres.map(whereClause(placeHolderStack)).join(" and ")
+    whereObj && wheres.length > 0 && whereClauses.length
+      ? "where " + whereClauses
       : "";
   const values = placeHolderStack.getValues();
   return { where, values };
