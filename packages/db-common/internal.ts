@@ -663,9 +663,10 @@ export const mkWhereForDialect = (
   dialect: SqlDialect
 ): WhereAndVals => {
   const wheres = whereObj ? Object.entries(whereObj) : [];
+  const whereClauses = wheres.map(whereClause(dialect)).join(" and ");
   const where =
-    whereObj && wheres.length > 0
-      ? "where " + wheres.map(whereClause(dialect)).join(" and ")
+    whereObj && wheres.length > 0 && whereClauses.length
+      ? "where " + whereClauses
       : "";
   const values = dialect.getValues();
   return { where, values };
