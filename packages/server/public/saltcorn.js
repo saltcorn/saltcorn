@@ -1065,13 +1065,12 @@ function builderMenuChanged(e) {
 function poll_mobile_build_finished(
   outDirName,
   buildDir,
-  mode,
   pollCount,
   orginalBtnHtml
 ) {
   $.ajax("/admin/build-mobile-app/finished", {
     type: "GET",
-    data: { out_dir_name: outDirName, mode: mode },
+    data: { out_dir_name: outDirName },
     success: function (res) {
       if (!res.finished) {
         if (pollCount >= 150) {
@@ -1085,7 +1084,6 @@ function poll_mobile_build_finished(
             poll_mobile_build_finished(
               outDirName,
               buildDir,
-              mode,
               ++pollCount,
               orginalBtnHtml
             );
@@ -1095,32 +1093,7 @@ function poll_mobile_build_finished(
         href_to(
           `/admin/build-mobile-app/result?out_dir_name=${encodeURIComponent(
             outDirName
-          )}&build_dir=${encodeURIComponent(buildDir)}&mode=${mode}`
-        );
-      }
-    },
-  });
-}
-
-function finish_mobile_app(button, outDirName, buildDir) {
-  $.ajax("/admin/build-mobile-app/finish", {
-    type: "POST",
-    headers: {
-      "CSRF-Token": _sc_globalCsrf,
-    },
-    data: { out_dir_name: outDirName, build_dir: buildDir },
-    success: function (data) {
-      if (data.success) {
-        notifyAlert("Finishing the app, please wait.", true);
-        for (const msg of data.msgs || []) notifyAlert(msg);
-        const orginalBtnHtml = $("#finishMobileAppBtnId").html();
-        press_store_button(button);
-        poll_mobile_build_finished(
-          outDirName,
-          buildDir,
-          "finish",
-          0,
-          orginalBtnHtml
+          )}&build_dir=${encodeURIComponent(buildDir)}`
         );
       }
     },
@@ -1206,7 +1179,6 @@ function _do_build_mobile_app(button, params) {
         poll_mobile_build_finished(
           data.out_dir_name,
           data.build_dir,
-          data.mode,
           0,
           orginalBtnHtml
         );

@@ -167,7 +167,11 @@ const initSession = async () => {
       state.mobileConfig.isPublicUser = !!row.isPublicUser;
       state.mobileConfig.hasSession = true;
       if (row.isPublicUser) {
-        state.mobileConfig.user = { role_id: 100, email: "public", language: "en" };
+        state.mobileConfig.user = {
+          role_id: 100,
+          email: "public",
+          language: "en",
+        };
       } else if (row.userJson) {
         try {
           state.mobileConfig.user = JSON.parse(row.userJson);
@@ -304,7 +308,7 @@ const notEmpty = (shareData) => {
   }
 };
 
-const postShare = async (shareData) => {
+export const postShare = async (shareData) => {
   const page = await router.resolve({
     pathname: "post/notifications/share",
     shareData,

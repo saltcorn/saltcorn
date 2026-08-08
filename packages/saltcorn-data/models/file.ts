@@ -1039,7 +1039,7 @@ class File {
       await file.mv(newPath);
       // create file
       return await this.create({
-        filename: file.name,
+        filename: path.basename(newPath),
         location: newPath,
         uploaded_at: new Date(),
         size_kb: Math.round(file.size / 1024),
@@ -1229,8 +1229,9 @@ class File {
     file: { blob: Blob; fileObj: any } | (Blob & { name?: string })
   ): Promise<any> {
     const state = getState()!;
-    const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000";
-    const url = `${base_url}/files/upload`;
+    const serverUrl = state.mobileConfig?.server_path;
+    if (!serverUrl) throw new Error("mobileConfig.server_path is not set");
+    const url = `${serverUrl}/files/upload`;
     const csrfToken = state.mobileConfig?.csrfToken;
     // camera-captured files arrive wrapped as {blob, fileObj}; files picked
     // directly via <input type=file> are a plain Blob/File.
@@ -1274,6 +1275,41 @@ class File {
         () => {}
       );
     }
+  }
+
+  /**
+   * Uploads a file that already exists on disk, e.g. one shared into the
+   * app from another app.
+   * @param path - local path of the file to upload
+   * @param filename - name to give the uploaded file
+   * @param mimeType - file's mime type
+   */
+  static async uploadFromPath(
+    path: string,
+    filename: string,
+    mimeType: string
+  ): Promise<any> {
+    const state = getState()!;
+    const serverUrl = state.mobileConfig?.server_path;
+    if (!serverUrl) throw new Error("mobileConfig.server_path is not set");
+    const url = `${serverUrl}/files/upload`;
+    const csrfToken = state.mobileConfig?.csrfToken;
+    const headers: any = {
+      "X-Requested-With": "XMLHttpRequest",
+      "X-Saltcorn-Client": "mobile-app",
+    };
+    if (csrfToken) headers["CSRF-Token"] = csrfToken;
+    const { FileTransfer } = (globalThis as any).Capacitor.Plugins;
+    const result = await FileTransfer.uploadFile({
+      url,
+      path,
+      fileKey: "file",
+      mimeType,
+      headers,
+      webFetchExtra: { credentials: "include" },
+    });
+    const data = JSON.parse(result.response || "{}");
+    return data.success;
   }
 
   static async set_xattr_of_existing_file(

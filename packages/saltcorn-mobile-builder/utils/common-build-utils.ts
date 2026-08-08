@@ -664,6 +664,7 @@ export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
             }</string>`;
   };
   try {
+    const method = iosParams.isAdHoc ? "ad-hoc" : "app-store-connect";
     writeFileSync(
       join(buildDir, "ExportOptions.plist"),
       `<?xml version="1.0" encoding="UTF-8"?>
@@ -671,7 +672,7 @@ export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
       <plist version="1.0">
         <dict>
           <key>method</key>
-          <string>app-store-connect</string>
+          <string>${method}</string>
           <key>provisioningProfiles</key>
           <dict>          
             <key>${appId}</key>
@@ -799,18 +800,24 @@ export function modifyInfoPlist(
 }
 
 /**
- * Write `App.entitlements` with the APNs environment and optional app group.
+ * Write `App.entitlements` with the optional APNs environment and app group.
  * @param buildDir directory where the app will be built
  * @param buildType `"debug"` → development APNs, `"release"` → production APNs
+ * @param pushSync include the APNs environment entitlement
  * @param appGroupId optional app group ID for share extension data sharing
  */
 export function writeEntitlementsPlist(
   buildDir: string,
   buildType: "debug" | "release",
+  pushSync: boolean,
   appGroupId?: string
 ) {
   const file = join(buildDir, "ios", "App", "App", "App.entitlements");
   const apsEnv = buildType === "release" ? "production" : "development";
+  const apsEnvEntry = pushSync
+    ? `    <key>aps-environment</key>
+    <string>${apsEnv}</string>`
+    : "";
   const appGroupsEntry = appGroupId
     ? `    <key>com.apple.security.application-groups</key>
     <array>
@@ -824,8 +831,7 @@ export function writeEntitlementsPlist(
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>aps-environment</key>
-    <string>${apsEnv}</string>
+${apsEnvEntry}
 ${appGroupsEntry}
 </dict>
 </plist>`
@@ -855,7 +861,9 @@ export function injectCodeSignEntitlements(buildDir: string) {
   );
   try {
     let content = readFileSync(pbxprojPath, "utf8");
-    if (content.includes("CODE_SIGN_ENTITLEMENTS")) {
+    // check for this exact insertion, not just any CODE_SIGN_ENTITLEMENTS -
+    // the share-ext target sets its own, which isn't the same thing
+    if (content.includes("CODE_SIGN_ENTITLEMENTS = App/App.entitlements;")) {
       console.log("CODE_SIGN_ENTITLEMENTS already set in project.pbxproj");
       return;
     }
@@ -913,6 +921,67 @@ export function modifyShareViewController(buildDir: string, groupId: string) {
 }
 
 /**
+ * Write the entitlements plist for the share extension target (app group
+ * only - no APNs entry, extensions don't receive push notifications).
+ * @param buildDir directory where the app will be built
+ * @param appGroupId app group ID shared with the main app
+ * @returns path to the entitlements file, relative to `ios/App`
+ */
+function writeShareExtEntitlementsPlist(
+  buildDir: string,
+  appGroupId: string
+): string {
+  const relPath = join("share-ext", "ShareExtension.entitlements");
+  const file = join(buildDir, "ios", "App", relPath);
+  writeFileSync(
+    file,
+    `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>${appGroupId}</string>
+    </array>
+</dict>
+</plist>`
+  );
+  return relPath;
+}
+
+/**
+ * Add a "share-ext" Share Extension target to `App.xcodeproj`, so the app
+ * can be built with iOS share-to support without ever opening Xcode.
+ * @param buildDir directory where the app will be built
+ * @param appId main app's bundle id - the extension's is `${appId}.share-ext`
+ * @param appGroupId optional app group ID, wired into a matching
+ *   entitlements plist for the new target
+ */
+export function createShareExtensionTarget(
+  buildDir: string,
+  appId: string,
+  appGroupId?: string
+) {
+  const iosAppDir = join(buildDir, "ios", "App");
+  const projectPath = join(iosAppDir, "App.xcodeproj");
+  const entitlementsRelPath = appGroupId
+    ? writeShareExtEntitlementsPlist(buildDir, appGroupId)
+    : undefined;
+  const scriptPath = join(__dirname, "xcode", "create_share_extension.rb");
+  const args = [scriptPath, projectPath, `${appId}.share-ext`];
+  if (entitlementsRelPath) args.push(entitlementsRelPath);
+  const result = spawnSync("ruby", args, { cwd: iosAppDir });
+  if (result.status !== 0) {
+    throw new Error(
+      `Unable to create the share extension target: ${
+        result.stderr?.toString() || result.error?.message || "unknown error"
+      }`
+    );
+  }
+  console.log(result.stdout?.toString());
+}
+
+/**
  * Patch `AppDelegate.swift` to register background tasks and push handlers.
  * @param buildDir directory where the app will be built
  * @param pushSyncEnabled register remote-notification handler
@@ -940,7 +1009,7 @@ export function modifyAppDelegate(
     `func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
 
-       
+
        ${
          backgroundFetchEnabled
            ? `// [capacitor-background-fetch]

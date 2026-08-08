@@ -783,7 +783,7 @@ export type MobileConfig = {
   version_tag: string;
   entry_point: string;
   entryPointType: "view" | "page" | "byrole";
-  // server_path <=> base_url
+  server_path?: string; // <=> base_url
 
   synchedTables: string[];
   autoPublicLogin: boolean;
