@@ -167,129 +167,6 @@ const app_files_table = (files: any, buildDirName: any, req: Req) =>
     files
   );
 
-const tutorial_step = (
-  stepNumber: any,
-  headline: any,
-  description: any,
-  imageName: any,
-  imageWidth: any = "100%",
-  footer: any = ""
-) => {
-  return div(
-    {
-      class: "tutorial-step mb-4 p-3",
-      style: "border:1px solid #ddd; border-radius:8px; background:#fafafa;",
-    },
-    h5({ style: "margin-bottom:10px;" }, `Step ${stepNumber}: ${headline}`),
-    p(description),
-    img({
-      src: `/static_assets/${db.connectObj.version_tag}/ios_share_tutorial/${imageName}`,
-      style: `max-width:${imageWidth}; border:1px solid #ccc; border-radius:6px;`,
-    }),
-    footer ? p({ class: "fst-italic mt-3 mb-1" }, footer) : ""
-  );
-};
-
-const intermediate_build_result = (outDirName: any, buildDir: any, req: Req, appFilesTbl: any) => {
-  return div(
-    h3("Intermediate build result"),
-    div(
-      { class: "mb-3" },
-      "The build has paused because the Share To feature is enabled for iOS. " +
-        "Before continuing, a few additional configurations must be completed in the Xcode IDE. " +
-        "Please follow the steps shown in the screenshots below."
-    ),
-
-    p(
-      { class: "h5 ps-1 mt-3" },
-      button(
-        {
-          class: "btn btn-outline-secondary p-1 me-2",
-          type: "button",
-          "data-bs-toggle": "collapse",
-          "data-bs-target": "#xCodeStepsId",
-          "aria-expanded": "true",
-          "aria-controls": "xCodeStepsId",
-        },
-        i({ class: "fas fa-chevron-down" })
-      ) + "Steps to configure the Xcode project"
-    ),
-
-    div(
-      {
-        class: "form-group border border-2 p-3 rounded collapse show",
-        id: "xCodeStepsId",
-      },
-
-      tutorial_step(
-        1,
-        "Open existing Xcode project",
-        "Open Xcode and click 'Open Existing Project':",
-        "01_xcode_open_exisiting.png",
-        "50%"
-      ),
-      tutorial_step(
-        2,
-        "Locate xcworkspace file",
-        "Open the 'App.xcworkspace' file. It should be located in <code>/YOUR_HOME_DIR/mobile_app_build/ios/App/App</code>:",
-        "02_open_xc_ws_file.png",
-        "50%"
-      ),
-      tutorial_step(
-        3,
-        "Open add share extension target",
-        "In Xcode, click <strong>File → New → Target</strong>. " +
-          "In the dialog that appears, select <strong>Share Extension</strong> and proceed:",
-        "03_share_extension_dialog.png",
-        "50%"
-      ),
-      tutorial_step(
-        4,
-        "Add share extension target",
-        "Enter <strong>share-ext</strong> as the product name, select your your Team Id and proceed:",
-        "04_share_extension_dialog_b.png",
-        "50%"
-      ),
-      tutorial_step(
-        5,
-        "Activate the new target",
-        "Click <strong>Activate</strong>:",
-        "05_activate.png",
-        "50%"
-      ),
-      tutorial_step(
-        6,
-        "Locate target in project navigator",
-        "The <strong>share-ext</strong> target should be visible in the navigator on the left:",
-        "06_show_new_share_ext_target.png",
-        "50%"
-      ),
-      tutorial_step(
-        7,
-        "Convert the extension target to a group",
-        "Right-click on the <strong>share-ext</strong> target and click <strong>Convert to Group</strong>:",
-        "07_convert_to_group.png",
-        "50%",
-        "Now close Xcode and click <strong>Finish the build</strong>."
-      )
-    ),
-    appFilesTbl,
-    div(
-      button(
-        {
-          id: "finishMobileAppBtnId",
-          type: "button",
-          onClick: `finish_mobile_app(this, '${outDirName}', '${buildDir}');`,
-          class: "btn btn-warning",
-        },
-        i({ class: "fas fa-hammer pe-2" }),
-
-        req.__("Finish the build")
-      )
-    )
-  );
-};
-
 admin_config_route({
   router,
   path: "/",
@@ -4506,18 +4383,9 @@ router.get(
   "/build-mobile-app/finished",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    const { out_dir_name, mode } = req.query;
-    const stepDesc =
-      mode === "prepare"
-        ? "_prepare_step"
-        : mode === "finish"
-          ? "_finish_step"
-          : "";
+    const { out_dir_name } = req.query;
     res.json({
-      finished: await checkFiles(out_dir_name, [
-        `logs${stepDesc}.txt`,
-        `error_logs${stepDesc}.txt`,
-      ]),
+      finished: await checkFiles(out_dir_name, [`logs.txt`, `error_logs.txt`]),
     });
   })
 );
@@ -4552,7 +4420,7 @@ router.get(
   "/build-mobile-app/result",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    const { out_dir_name, build_dir, mode } = req.query;
+    const { out_dir_name } = req.query;
     if (!validateBuildDirName(out_dir_name)) {
       return res.sendWrap(req.__(`Admin`), {
         above: [
@@ -4584,119 +4452,20 @@ router.get(
         .map(async (outFile: any) => await File.from_file_on_disk(outFile, buildDir))
     );
 
-    const stepDesc =
-      mode === "prepare"
-        ? "_prepare_step"
-        : mode === "finish"
-          ? "_finish_step"
-          : "";
-    const resultMsg = files.find(
-      (file: any) => file.filename === `logs${stepDesc}.txt`
-    )!
+    const resultMsg = files.find((file: any) => file.filename === `logs.txt`)!
       ? req.__("The build was successfully")
       : req.__("Unable to build the app");
     const appFilesTbl =
       files.length > 0 ? app_files_table(files, out_dir_name, req) : "";
     res.sendWrap(req.__(`Admin`), {
       above: [
-        mode !== "prepare"
-          ? [
-              {
-                type: "card",
-                title: req.__("Build Result"),
-                contents: div(resultMsg),
-              },
-              appFilesTbl,
-            ]
-          : "",
-
-        mode === "prepare"
-          ? intermediate_build_result(out_dir_name, build_dir, req, appFilesTbl)
-          : "",
+        {
+          type: "card",
+          title: req.__("Build Result"),
+          contents: div(resultMsg),
+        },
+        appFilesTbl,
       ],
-    });
-  })
-);
-
-router.post(
-  "/build-mobile-app/finish",
-  isAdmin,
-  error_catcher(async (req: Req, res: Res) => {
-    const { out_dir_name, build_dir } = req.body || {};
-    const content = await fs.promises.readFile(
-      path.join(build_dir, "spawnParams.json"), "utf8"
-    );
-    const spawnParams = JSON.parse(content);
-    const rootFolder = await File.rootFolder();
-    const outDirFullPath = path.join(
-      rootFolder.location,
-      "mobile_app",
-      out_dir_name
-    );
-    res.json({
-      success: true,
-    });
-    const child = spawn(
-      getSafeSaltcornCmd(),
-      [...spawnParams, "-m", "finish"],
-      {
-        stdio: ["ignore", "pipe", "pipe"],
-        cwd: ".",
-      }
-    );
-    const childOutputs: any[] = [];
-    child.stdout.on("data", (data: any) => {
-      const outMsg = data.toString();
-      getState()!.log(5, outMsg);
-      if (data) childOutputs.push(outMsg);
-    });
-    child.stderr.on("data", (data: any) => {
-      const errMsg = data ? data.toString() : req.__("An error occurred");
-      getState()!.log(5, errMsg);
-      childOutputs.push(errMsg);
-    });
-    child.on("exit", async (exitCode: any, signal: any) => {
-      const logFile =
-        exitCode === 0 ? "logs_finish_step.txt" : "error_logs_finish_step.txt";
-      try {
-        const exitMsg = childOutputs.join("\n");
-        await fs.promises.writeFile(
-          path.join(outDirFullPath, logFile),
-          exitMsg
-        );
-        await File.set_xattr_of_existing_file(
-          logFile,
-          outDirFullPath,
-          req.user!
-        );
-      } catch (error: any) {
-        console.log(`unable to write '${logFile}' to '${outDirFullPath}'`);
-        console.log(error);
-      }
-    });
-    child.on("error", (msg: any) => {
-      const message = msg.message ? msg.message : msg.code;
-      const stack = msg.stack ? msg.stack : "";
-      const logFile = "error_logs.txt";
-      const errMsg = [message, stack].join("\n");
-      getState()!.log(5, msg);
-      fs.writeFile(
-        path.join(outDirFullPath, "error_logs.txt"),
-        errMsg,
-        async (error: any) => {
-          if (error) {
-            console.log(`unable to write logFile to '${outDirFullPath}'`);
-            console.log(error);
-          } else {
-            // no transaction, '/build-mobile-app/finished' filters for valid attributes
-            await File.set_xattr_of_existing_file(
-              logFile,
-              outDirFullPath,
-              req.user!
-            );
-          }
-        }
-      );
     });
   })
 );
@@ -4761,7 +4530,6 @@ router.post(
       `starting mobile build: ${JSON.stringify(req.body || {})}`
     );
     const msgs: any[] = [];
-    let mode = "full";
     let {
       entryPoint,
       entryPointType,
@@ -4920,7 +4688,6 @@ router.post(
     if (provisioningProfile)
       spawnParams.push("--provisioningProfile", provisioningProfile);
     if (allowShareTo && iOSPlatform) {
-      mode = "prepare";
       spawnParams.push(
         "--shareExtensionProvisioningProfile",
         shareProvisioningProfile
@@ -4985,15 +4752,14 @@ router.post(
       }
     }
 
-    // end http call, return the out directory name, the build directory path and the mode
-    // the gui polls for results
+    // end http call, return the out directory name and the build directory
+    // path - the gui polls for results
     res.json({
       out_dir_name: outDirName,
       build_dir: buildDir,
-      mode: mode,
       msgs,
     });
-    const child = spawn(getSafeSaltcornCmd(), [...spawnParams, "-m", mode], {
+    const child = spawn(getSafeSaltcornCmd(), spawnParams, {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: ".",
     });
@@ -5009,20 +4775,7 @@ router.post(
       childOutputs.push(errMsg);
     });
     child.on("exit", async (exitCode: any, signal: any) => {
-      if (mode === "prepare" && exitCode === 0) {
-        try {
-          fs.promises.writeFile(
-            path.join(buildDir, "spawnParams.json"),
-            JSON.stringify(spawnParams)
-          );
-        } catch (error: any) {
-          console.log(`unable to write spawnParams to '${buildDir}'`);
-          console.log(error);
-        }
-      }
-      const stepDesc = mode === "prepare" ? "_prepare_step" : "";
-      const logFile =
-        exitCode === 0 ? `logs${stepDesc}.txt` : `error_logs${stepDesc}.txt`;
+      const logFile = exitCode === 0 ? `logs.txt` : `error_logs.txt`;
       try {
         const exitMsg = childOutputs.join("\n");
         await fs.promises.writeFile(path.join(outDir, logFile), exitMsg);

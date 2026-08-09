@@ -1,4 +1,4 @@
-import { init } from "./init";
+import { init, postShare } from "./init";
 import * as api from "./helpers/api";
 import * as auth from "./helpers/auth";
 import * as common from "./helpers/common";
@@ -12,7 +12,7 @@ import { router } from "./routing/index";
 let notifications = undefined;
 try {
   notifications = require("./helpers/notifications");
-  console.log("Notifications module available");  
+  console.log("Notifications module available");
 } catch (err) {
   console.log("Notifications module not available");
 }
@@ -21,9 +21,8 @@ try {
 let backgroundSync = undefined;
 try {
   backgroundSync = require("./helpers/background_sync");
-  console.log("Background sync module available");  
-}
-catch (err) {
+  console.log("Background sync module available");
+} catch (err) {
   console.log("Background sync module not available");
 }
 
@@ -38,6 +37,7 @@ context.keys().forEach((key) => {
 
 export const mobileApp = {
   init,
+  postShare,
   api,
   auth,
   common,

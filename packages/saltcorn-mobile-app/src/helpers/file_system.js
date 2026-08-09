@@ -1,4 +1,7 @@
 import { Filesystem, Encoding, Directory } from "@capacitor/filesystem";
+// side-effect only: registers the plugin so it works on the web platform too,
+// same as Filesystem above (native platforms pick it up either way)
+import "@capacitor/file-transfer";
 
 export async function writeFile(name, directory, content) {
   try {
