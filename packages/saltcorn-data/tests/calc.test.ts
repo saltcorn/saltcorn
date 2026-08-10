@@ -248,6 +248,26 @@ describe("code pages in eval", () => {
   });
 });
 
+// When a stored calculated field is added to a table with more than 20 rows,
+// Field.create runs recalculate_for_stored in the background without awaiting
+// it. Poll for the value rather than sleeping a fixed time, which a loaded
+// machine will overrun. On timeout return the row as it is, so the caller's
+// assertion reports the actual value.
+const waitForStoredCalc = async (
+  table: Table,
+  id: any,
+  field: string,
+  timeout_ms: number = 30000
+): Promise<any> => {
+  const start = Date.now();
+  while (true) {
+    const row = await table.getRow({ id });
+    if (row?.[field] !== null && row?.[field] !== undefined) return row;
+    if (Date.now() - start > timeout_ms) return row;
+    await sleep(50);
+  }
+};
+
 describe("calculated", () => {
   it("how to use functions", () => {
     const f = new Function("{x,y}", "return x+y");
@@ -377,15 +397,16 @@ describe("calculated", () => {
 
     expect(row201.x).toBe(7);
     expect([null, 9]).toContain(row201.z);
-    await sleep(3000);
+    // recalculate_for_stored walks the rows in pk order, so the last row
+    // having been recalculated implies the first one has too
+    const rowlast = await waitForStoredCalc(table, id201, "z");
+    assertIsSet(rowlast);
+    expect(rowlast.z).toBe(9);
+    expect(rowlast.x).toBe(7);
     const row1 = await table.getRow({ id: id1 });
     assertIsSet(row1);
     expect(row1.x).toBe(6);
     expect(row1.z).toBe(15);
-    const rowlast = await table.getRow({ id: id201 });
-    assertIsSet(rowlast);
-    expect(rowlast.z).toBe(9);
-    expect(rowlast.x).toBe(7);
   });
   it("avoid nans in integer fields", async () => {
     const table = await Table.create("withcalcsintnans");

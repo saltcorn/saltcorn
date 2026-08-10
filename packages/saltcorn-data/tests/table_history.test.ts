@@ -21,7 +21,6 @@ import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-co
 import { add_free_variables_to_joinfields } from "../plugin-helper.js";
 import * as expressionModule from "../models/expression.js";
 import { text } from "stream/consumers";
-import * as utils from "../utils.js";
 import User from "../models/user.js";
 const { freeVariables } = expressionModule;
 
@@ -221,9 +220,31 @@ describe("history compression", () => {
       await tc.updateRow({ number: 102 }, 1);
       await tc.updateRow({ number: 103 }, 1);
       await tc.updateRow({ number: 202 }, 2);
-      await utils.sleep(600);
       await tc.updateRow({ number: 104 }, 1);
       await tc.updateRow({ number: 205 }, 2);
+
+      // compression is by elapsed time between versions, so pin _time rather
+      // than depend on how fast the writes above ran: on a loaded machine two
+      // consecutive writes can be more than the compression interval apart.
+      // Earlier versions are bunched together, the last version of each row is
+      // well outside the interval.
+      const t0 = new Date();
+      const versionTimes: [number, number, number][] = [
+        [1, 1, 0],
+        [1, 2, 20],
+        [1, 3, 40],
+        [1, 4, 5000],
+        [2, 1, 0],
+        [2, 2, 20],
+        [2, 3, 5000],
+      ];
+      for (const [id, _version, offset_ms] of versionTimes)
+        await db.updateWhere(
+          "counttable32__history",
+          { _time: new Date(t0.getTime() + offset_ms) },
+          { id, _version }
+        );
+
       const h1 = await tc.get_history(1);
       expect(h1.length).toBe(4);
       expect(h1.map((h) => h.number)).toContain(101);
