@@ -239,7 +239,7 @@ const configuration_workflow = (req: Req) =>
               name: g.name,
             })
           );
-          const images = await File.find({ mime_super: "image" });
+          const images = await File.findImagesForBuilder();
           const library = (await Library.find({})).filter((l: GenObj) =>
             l.suitableFor("show")
           );
