@@ -28,6 +28,7 @@ import crypto from "crypto";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import type Field from "./models/field.js"; // only type, shouldn't cause require loop
+import { compileExpression, Scope } from "./expression_interp.js";
 import type User from "./models/user.js"; // only type, shouldn't cause require loop
 import fsExtra from "fs-extra";
 const { existsSync } = fsExtra;
@@ -519,30 +520,47 @@ const interpolate = (
         });
         return template({ row, user, process: undefined, ...(row || {}) });
       }
-      const sandbox = {
-        ...stateMod().getState()!.eval_context,
-        global: undefined,
-        globalThis: undefined,
-        process: undefined,
-        require: undefined,
-        module: undefined,
-        Function: undefined,
-        row,
-        user,
-        ...(row || {}),
+      const eval_context = stateMod().getState()!.eval_context;
+      // row keys last, so a field called `row` or `user` shadows those bindings
+      const scope = new Scope({ row, user, ...(row || {}) }, eval_context);
+
+      // built only if some token needs it
+      let vm: InstanceType<typeof VM> | undefined;
+      const getVM = () => {
+        if (!vm) {
+          vm = new VM({
+            sandbox: {
+              ...eval_context,
+              global: undefined,
+              globalThis: undefined,
+              process: undefined,
+              require: undefined,
+              module: undefined,
+              Function: undefined,
+              row,
+              user,
+              ...(row || {}),
+            },
+            eval: false,
+            wasm: false,
+            timeout: 200,
+          });
+        }
+        return vm;
       };
-      const vm = new VM({
-        sandbox,
-        eval: false,
-        wasm: false,
-        timeout: 200,
-      });
 
       const go_interp = (s: string): string =>
         s.replace(/\{\{([!=]?)([\s\S]+?)\}\}/g, renderToken);
 
       const renderToken = (_match: string, bang: string, code: string) => {
-        const val = vm.run(`(${code.trim()})`);
+        const trimmed = code.trim();
+        const compiled = compileExpression(trimmed);
+        console.log("renderToken", {
+          trimmed,
+          compiled,
+          compiledTrue: !!compiled,
+        });
+        const val = compiled ? compiled(scope) : getVM().run(`(${trimmed})`);
         const strVal =
           val === null || typeof val === "undefined" ? "" : String(val);
         return bang === "="
@@ -660,10 +678,13 @@ const jsIdentifierValidator = (
 };
 
 function isValidJsIdentifier(str: string): boolean {
-   if (typeof str !== 'string' || str.length === 0) return false;
-  if (!/^[\p{ID_Start}$_][\p{ID_Continue}$\u200C\u200D]*$/u.test(str)) return false;
+  if (typeof str !== "string" || str.length === 0) return false;
+  if (!/^[\p{ID_Start}$_][\p{ID_Continue}$\u200C\u200D]*$/u.test(str))
+    return false;
   try {
-    const fn = new Function(`"use strict"; return (async function ${str}() {});`)();
+    const fn = new Function(
+      `"use strict"; return (async function ${str}() {});`
+    )();
     return fn.name === str;
   } catch {
     return false;

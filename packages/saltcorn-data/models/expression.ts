@@ -27,6 +27,7 @@ import db from "../db/index.js";
 import * as utils from "../utils.js";
 import { GenObj } from "@saltcorn/db-common/types";
 import { mergeIntoWhere, isNode, isValidJsIdentifier } from "../utils.js";
+import { compileExpression, Scope } from "../expression_interp.js";
 const { VM } = vm2Pkg;
 
 function deproxy(value: any): any {
@@ -46,12 +47,20 @@ function vmRun(code: string, sandbox: any): any {
       eval: db.getTenantSchema() === db.connectObj.default_schema,
       wasm: false,
     }).run(code);
-    if (typeof result === "function")
-      return (...args: any[]) => deproxy(result(...args));
-    return deproxy(result);
+    return postProcessVmResult(result);
   } else {
     return runInNewContext(code, sandbox);
   }
+}
+
+/**
+ * Normalise a result. The interpreter uses this too: it has no proxies to
+ * unwrap, but the JSON round-trip is observable - a Date comes back as a string.
+ */
+function postProcessVmResult(result: any): any {
+  if (typeof result === "function")
+    return (...args: any[]) => deproxy(result(...args));
+  return deproxy(result);
 }
 
 /**
@@ -841,6 +850,18 @@ function eval_expression(
   try {
     const use_row = row || {};
     const field_names = Object.keys(use_row).filter(isValidJsIdentifier);
+
+    // no VM needed: the scope mirrors the argument list below
+    const compiled = expression ? compileExpression(expression) : null;
+    if (compiled) {
+      const vars: GenObj = { row: use_row };
+      for (const name of field_names) vars[name] = use_row[name];
+      if (!field_names.includes("user")) vars.user = user;
+      return postProcessVmResult(
+        compiled(new Scope(vars, getState()!.eval_context))
+      );
+    }
+
     const args = field_names.includes("user")
       ? `row, {${field_names.join()}}`
       : `row, {${field_names.join()}}, user`;
