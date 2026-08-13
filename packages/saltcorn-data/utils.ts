@@ -555,11 +555,6 @@ const interpolate = (
       const renderToken = (_match: string, bang: string, code: string) => {
         const trimmed = code.trim();
         const compiled = compileExpression(trimmed);
-        console.log("renderToken", {
-          trimmed,
-          compiled,
-          compiledTrue: !!compiled,
-        });
         const val = compiled ? compiled(scope) : getVM().run(`(${trimmed})`);
         const strVal =
           val === null || typeof val === "undefined" ? "" : String(val);

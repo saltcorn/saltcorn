@@ -396,11 +396,15 @@ const compileNode = (node: any): CompiledExpression => {
 
 const cache = new Map<string, CompiledExpression | null>();
 
+/** Escape hatch: send every expression to the VM. Used by the render benchmark. */
+const disabled = !!process.env.SALTCORN_DISABLE_EXPR_INTERP;
+
 /**
  * Compile an expression to a closure, or null if it is outside the supported
  * subset and the caller should use the VM.
  */
 export function compileExpression(source: string): CompiledExpression | null {
+  if (disabled) return null;
   const cached = cache.get(source);
   if (cached !== undefined) return cached;
 
