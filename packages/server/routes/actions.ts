@@ -11,6 +11,7 @@ import {
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
+  setTenant,
 } from "./utils.js";
 import {
   ppVal,
@@ -26,6 +27,7 @@ import TagEntry from "@saltcorn/data/models/tag_entry";
 import WorkflowStep from "@saltcorn/data/models/workflow_step";
 import WorkflowRun from "@saltcorn/data/models/workflow_run";
 import WorkflowTrace from "@saltcorn/data/models/workflow_trace";
+import File from "@saltcorn/data/models/file";
 import Tag from "@saltcorn/data/models/tag";
 import db from "@saltcorn/data/db";
 import MarkdownIt from "markdown-it";
@@ -2624,6 +2626,7 @@ const workflowRunPromiseHandler = (promise: any, run: any, req: Req) => {
 
 router.post(
   "/fill-workflow-form/:id",
+  setTenant, // TODO why is this needed?????
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
@@ -2645,10 +2648,24 @@ router.post(
 
     const form = await getWorkflowStepUserForm(run, trigger, step, req, res);
     form.validate(req.body || {});
+    console.log("formFields", form.fields);
+    console.log("req.files", req.files);
+
     if (form.hasErrors) {
       const title = "Fill form";
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } else {
+      for (const field of form.fields)
+        if (field.type === "File" && req.files[field.name]) {
+          const file = await File.from_req_files(
+            req.files[field.name],
+            req.user?.id,
+            (field.attributes && +field.attributes.min_role_read) || 1,
+            field.attributes.folder || ""
+          );
+          form.values[field.name] = file.path_to_serve;
+        }
+
       const run_async =
         getState()!.getConfig("enable_dynamic_updates") &&
         req.headers["page-load-tag"] &&
