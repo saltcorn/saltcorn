@@ -86,7 +86,7 @@ import {
   get_process_init_time,
 } from "@saltcorn/data/db/state";
 import _am_backup from "@saltcorn/admin-models/models/backup";
-const { backup_to_buffer, backup_file_name, restore, auto_backup_now } =
+const { backup_to_stream, backup_file_name, restore, auto_backup_now } =
   _am_backup;
 import _am_pack from "@saltcorn/admin-models/models/pack";
 const { install_pack, filter_pack } = _am_pack;
@@ -2029,13 +2029,20 @@ router.post(
   "/backup",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    // built in memory and sent straight to the browser - a manual backup
-    // never touches the server's disk
+    // streamed straight to the browser as it is built - a manual backup
+    // never touches the server's disk and is never held in memory
     const fileName = backup_file_name();
-    const zip = await backup_to_buffer();
     res.type("application/zip");
     res.attachment(fileName);
-    res.send(zip);
+    await backup_to_stream(
+      (body) =>
+        new Promise<void>((resolve, reject) => {
+          body.on("error", reject);
+          res.on("error", reject);
+          res.on("finish", resolve);
+          body.pipe(res as any);
+        })
+    );
   })
 );
 

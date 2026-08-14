@@ -67,9 +67,10 @@ import { validate as isValidUUID } from "uuid";
 
 import csvtojson from "csvtojson";
 import moment from "moment";
-import { createReadStream } from "fs";
+import { createReadStream, createWriteStream } from "fs";
 import { stat, readFile, writeFile } from "fs/promises";
-import { Writable } from "stream";
+import { PassThrough, Readable } from "stream";
+import { pipeline } from "stream/promises";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
 import {
@@ -3738,33 +3739,52 @@ class Table implements AbstractTable {
   }
 
   async dump_to_json(filePath: string) {
-    await writeFile(filePath, await this.dump_to_json_buffer());
+    await pipeline(this.dump_to_json_stream(), createWriteStream(filePath));
   }
   async dump_history_to_json(filePath: string) {
-    await writeFile(filePath, await this.dump_history_to_json_buffer());
+    await pipeline(
+      this.dump_history_to_json_stream(),
+      createWriteStream(filePath)
+    );
   }
 
   /**
-   * The table contents as a JSON array, in memory. Used by backups, which
-   * put the contents straight into the zip file rather than staging them
-   * on disk first.
+   * The table contents as a stream of JSON. Used by backups, which put the
+   * contents straight into the zip file: neither the caller nor the backup
+   * ever holds a whole table in memory.
    */
-  async dump_to_json_buffer(): Promise<Buffer> {
-    if (db.copyToJson) return await dump_table_to_json_buffer(this.name);
-    const rows = await this.getRows({}, { ignore_errors: true });
-    return Buffer.from(JSON.stringify(rows));
+  dump_to_json_stream(): Readable {
+    if (db.copyToJson) return Readable.from(dump_table_to_json(this.name));
+    return Readable.from(
+      (async function* (table: Table) {
+        const rows = await table.getRows({}, { ignore_errors: true });
+        yield Buffer.from(JSON.stringify(rows));
+      })(this)
+    );
   }
 
   /**
-   * The table history as a JSON array, in memory
+   * The table history as a stream of JSON
    */
-  async dump_history_to_json_buffer(): Promise<Buffer> {
+  dump_history_to_json_stream(): Readable {
     if (db.copyToJson)
-      return await dump_table_to_json_buffer(
-        `${sqlsanitize(this.name)}__history`
+      return Readable.from(
+        dump_table_to_json(`${sqlsanitize(this.name)}__history`)
       );
-    const rows = await this.get_history();
-    return Buffer.from(JSON.stringify(rows));
+    return Readable.from(
+      (async function* (table: Table) {
+        const rows = await table.get_history();
+        yield Buffer.from(JSON.stringify(rows));
+      })(this)
+    );
+  }
+
+  /** The table contents as a JSON array, in memory */
+  async dump_to_json_buffer(): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of this.dump_to_json_stream())
+      chunks.push(chunk as Buffer);
+    return Buffer.concat(chunks);
   }
   /**
    * Import CSV file to existing table
@@ -5150,26 +5170,37 @@ ${rejectDetails}`,
 }
 
 /**
- * Copy a table out of the database as a JSON array. Each row arrives as
- * `{...},\n`, so the trailing comma of the last row becomes the closing
- * bracket.
+ * Copy a table out of the database as a JSON array, a chunk at a time. Each
+ * row arrives as `{...},\n`, so the last two bytes are held back: the final
+ * row's trailing comma becomes the closing bracket.
  */
-async function dump_table_to_json_buffer(tableName: string): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  const collect = new Writable({
-    write(chunk: any, encoding: any, callback: any) {
-      chunks.push(Buffer.from(chunk));
-      callback();
-    },
-  });
+async function* dump_table_to_json(tableName: string): AsyncGenerator<Buffer> {
   const client = db.pools_connections ? await db.getClient() : db;
-  db.copyToJson && (await db.copyToJson(collect, tableName, client));
-  if (db.pools_connections) await client.release(true);
-  const rows = Buffer.concat(chunks);
-  if (rows.length < 2) return Buffer.from("[]");
-  const out = Buffer.concat([Buffer.from("["), rows]);
-  out[out.length - 2] = 0x5d; // "]" over the last row's comma
-  return out;
+  const rows = new PassThrough();
+  let copyError: any;
+  // the copy feeds `rows` while the loop below reads from it
+  const copying = db.copyToJson!(rows, tableName, client).catch((e: any) => {
+    copyError = e;
+    rows.destroy(e);
+  });
+  try {
+    yield Buffer.from("[");
+    let held = Buffer.alloc(0);
+    for await (const chunk of rows) {
+      const buf = Buffer.concat([held, chunk as Buffer]);
+      if (buf.length > 2) {
+        held = Buffer.from(buf.subarray(buf.length - 2));
+        yield buf.subarray(0, buf.length - 2);
+      } else held = buf;
+    }
+    await copying;
+    if (copyError) throw copyError;
+    if (held.length === 2 && held[0] === 0x2c /* , */) yield Buffer.from("]\n");
+    else if (held.length) yield Buffer.concat([held, Buffer.from("]")]);
+    else yield Buffer.from("]");
+  } finally {
+    if (db.pools_connections) await client.release(true);
+  }
 }
 
 // declaration merging

@@ -47,8 +47,7 @@ import {
 } from "../markup/admin.js";
 import fs from "fs";
 import path from "path";
-import Zip from "adm-zip";
-import stream from "stream";
+import { ZipBuilder } from "@saltcorn/admin-models/models/zip";
 import _am_backup from "@saltcorn/admin-models/models/backup";
 const { extract } = _am_backup;
 import createDOMPurify from "dompurify";
@@ -317,24 +316,38 @@ router.post(
     const user_id = req.user && req.user!.id;
     const files = (req.body || {}).files;
     const location = (req.body || {}).location;
-    const zip = new Zip();
 
-    for (const fileNm of files) {
-      const file = (await File.findOne(path.join(location, fileNm)))!;
-      if (
-        file &&
-        (role <= file.min_role_read || (user_id && user_id === file.user_id))
-      ) {
-        zip.addLocalFile(file.location);
-      }
-    }
-    const readStream = new stream.PassThrough();
-    readStream.end(zip.toBuffer());
     res.type("application/zip");
     res.attachment(
       `${getState()!.getConfig("site_name", db.getTenantSchema())}-files.zip`
     );
-    readStream.pipe(res as any);
+
+    // streamed to the browser as it is built, so downloading a large folder
+    // does not put the whole archive in memory first
+    const zip = await ZipBuilder.toStream();
+    const sent = new Promise<void>((resolve, reject) => {
+      zip.stream!.on("error", reject);
+      res.on("error", reject);
+      res.on("finish", resolve);
+      zip.stream!.pipe(res as any);
+    });
+    sent.catch((e) => zip.discard(e));
+    try {
+      for (const fileNm of files) {
+        const file = (await File.findOne(path.join(location, fileNm)))!;
+        if (
+          file &&
+          (role <= file.min_role_read || (user_id && user_id === file.user_id))
+        ) {
+          await zip.addLocalFile(path.basename(file.location), file.location);
+        }
+      }
+      await zip.finish();
+    } catch (e) {
+      await zip.discard(e);
+      throw e;
+    }
+    await sent;
   })
 );
 

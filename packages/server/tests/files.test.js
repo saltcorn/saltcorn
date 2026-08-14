@@ -19,6 +19,7 @@ import db from "@saltcorn/data/db";
 import { promises as fs } from "fs";
 import path from "path";
 import File from "@saltcorn/data/models/file";
+import Zip from "adm-zip";
 import Field from "@saltcorn/data/models/field";
 import Table from "@saltcorn/data/models/table";
 import View from "@saltcorn/data/models/view";
@@ -205,6 +206,52 @@ describe("files admin", () => {
   it("not download file to public", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/files/download/rick.png").expect(404);
+  });
+  it("downloads selected files as a zip", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    // the archive is streamed to the browser as it is built, so what arrives
+    // has to be a complete, readable zip
+    const res = await request(app)
+      .post("/files/download-zip")
+      .set("Cookie", loginCookie)
+      .send({ files: ["rick.png"], location: "." })
+      .expect(toSucceed());
+    const zip = new Zip(res.body);
+    expect(zip.getEntries().map((e) => e.entryName)).toEqual(["rick.png"]);
+    expect(zip.readFile("rick.png").toString()).toBe("nevergonnagiveyouup");
+  });
+  it("leaves a file the user may not read out of the zip", async () => {
+    await File.from_req_files(
+      {
+        mimetype: "image/png",
+        name: "adminonly.png",
+        mv: async (fnm) => {
+          await fs.writeFile(fnm, "for admin eyes only");
+        },
+        size: 19,
+      },
+      1,
+      1
+    );
+    // staff (role 40) may manage files here, and may read rick.png, but
+    // adminonly.png is readable from role 1 only
+    await getState().setConfig("min_role_edit_files", 40);
+    try {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getStaffLoginCookie();
+      const res = await request(app)
+        .post("/files/download-zip")
+        .set("Cookie", loginCookie)
+        .send({ files: ["rick.png", "adminonly.png"], location: "." })
+        .expect(toSucceed());
+      expect(new Zip(res.body).getEntries().map((e) => e.entryName)).toEqual([
+        "rick.png",
+      ]);
+    } finally {
+      await getState().setConfig("min_role_edit_files", 1);
+      await (await File.findOne("adminonly.png")).delete();
+    }
   });
   it("set file min role", async () => {
     const app = await getApp({ disableCsrf: true });

@@ -25,7 +25,8 @@ import {
   rm,
   stat,
 } from "fs/promises";
-import { existsSync, readdirSync } from "fs";
+import { createReadStream, existsSync, readdirSync } from "fs";
+import { Readable } from "stream";
 import { join, basename } from "path";
 import dateFormatLib from "dateformat";
 const dateFormat: any = dateFormatLib; // NodeNext default-import interop for dateformat
@@ -257,14 +258,16 @@ const add_table_jsons = async (zip: ZipBuilder): Promise<void> => {
 
   for (const t of tables) {
     if (!t.external && !t.provider_name) {
-      await zip.addBuffer(
+      // streamed out of the database and into the archive: a table larger
+      // than memory is never assembled anywhere
+      await zip.addStream(
         `tables/${sanitiseTableName(t.name)}.json`,
-        await t.dump_to_json_buffer()
+        t.dump_to_json_stream()
       );
       if (t.versioned && backup_history) {
-        await zip.addBuffer(
+        await zip.addStream(
           `tables/${sanitiseTableName(t.name)}__history.json`,
-          await t.dump_history_to_json_buffer()
+          t.dump_history_to_json_stream()
         );
       }
     }
@@ -410,48 +413,71 @@ const backup_file_name = (): string => {
 };
 
 /**
- * Build the backup archive. Every entry goes straight into the zip file:
- * nothing is staged in a temporary directory, so a backup needs no more disk
- * space than the finished archive.
- *
- * @param finish decides where the archive ends up - written to its final
- *   path, or returned as a buffer for a remote destination
+ * Put everything a backup consists of into the archive. Each entry goes
+ * straight in as it is produced - nothing is staged in a temporary directory,
+ * and the archive itself is streamed out as it is built, so the memory and
+ * the disk a backup needs do not grow with the size of the site.
  */
-const build_backup = async <T>(
-  finish: (zip: ZipBuilder) => Promise<T>
-): Promise<T> => {
-  const zip = await ZipBuilder.create(
-    getState()!.getConfig("backup_password", "")
-  );
-  try {
-    await add_pack(zip);
-    await add_table_jsons(zip);
-    await add_files(zip);
-    await add_config(zip);
-    await add_migrations(zip);
-    await add_info_file(zip);
-    await add_metadata(zip);
-  } catch (e) {
-    await zip.discard();
-    throw e;
-  }
-  return await finish(zip);
+const fill_backup = async (zip: ZipBuilder): Promise<void> => {
+  await add_pack(zip);
+  await add_table_jsons(zip);
+  await add_files(zip);
+  await add_config(zip);
+  await add_migrations(zip);
+  await add_info_file(zip);
+  await add_metadata(zip);
 };
+
+const backup_password = () => getState()!.getConfig("backup_password", "");
 
 /**
  * Write a backup to its final location. The archive is written where it
  * belongs, not written somewhere else and moved - moving it would fail
  * across filesystems (Docker volumes, external drives).
  */
-const write_backup_to_file = async (filePath: string): Promise<void> =>
-  await build_backup((zip) => zip.writeToFile(filePath));
+const write_backup_to_file = async (filePath: string): Promise<void> => {
+  const zip = await ZipBuilder.toFile(filePath, backup_password());
+  try {
+    await fill_backup(zip);
+  } catch (e) {
+    await zip.discard(e);
+    throw e;
+  }
+  await zip.finish();
+};
 
 /**
- * Build a backup in memory, for destinations written over the network
- * (S3, SFTP) where no local copy is wanted
+ * Build a backup and hand it to `consume` as a stream, for destinations
+ * written over the network (S3, SFTP) or straight to a browser, where no
+ * local copy is wanted. The archive is produced as the consumer reads it,
+ * so only a few buffers of it exist at a time.
  */
-const backup_to_buffer = async (): Promise<Buffer> =>
-  await build_backup((zip) => zip.toBuffer());
+const backup_to_stream = async <T>(
+  consume: (body: Readable) => Promise<T>
+): Promise<T> => {
+  const zip = await ZipBuilder.toStream(backup_password());
+  // start the consumer first: the archive is only produced as fast as it is
+  // read, so filling it before anything reads would deadlock
+  const consumed = consume(zip.stream!);
+  let consumeError: any;
+  // if the consumer gives up - a failed upload, a browser that went away -
+  // stop building rather than waiting forever for it to read more
+  consumed.catch((e) => {
+    consumeError = e;
+    zip.discard(e);
+  });
+  try {
+    await fill_backup(zip);
+    await zip.finish();
+  } catch (e) {
+    await zip.discard(e);
+    // let the consumer settle before reporting: when it was the consumer
+    // that failed, its error is the one worth showing
+    await consumed.catch(() => {});
+    throw consumeError || e;
+  }
+  return await consumed;
+};
 
 /**
  * Create backup
@@ -983,35 +1009,42 @@ const auto_backup_now_tenant = async (state: any) => {
       break;
     }
     case "SFTP server": {
-      // straight to the server: no local copy of the backup is made
-      const data = await backup_to_buffer();
-      const sftp = new SftpClient();
-      await sftp.connect({
-        host: state.getConfig("auto_backup_server"),
-        port: state.getConfig("auto_backup_port"),
-        username: state.getConfig("auto_backup_username"),
-        password: state.getConfig("auto_backup_password"),
-      });
       const remote = join(
         state.getConfig("auto_backup_directory", ""),
         fileName
       );
-      try {
-        const putres = await sftp.put(data, remote);
-        state.log(6, `SFTP Put response: ${putres}`);
-      } finally {
-        await sftp.end();
-      }
       const retain_dir = state.getConfig("auto_backup_retain_local_directory");
+
+      const upload = async (body: Readable) => {
+        const sftp = new SftpClient();
+        await sftp.connect({
+          host: state.getConfig("auto_backup_server"),
+          port: state.getConfig("auto_backup_port"),
+          username: state.getConfig("auto_backup_username"),
+          password: state.getConfig("auto_backup_password"),
+        });
+        try {
+          const putres = await sftp.put(body, remote);
+          state.log(6, `SFTP Put response: ${putres}`);
+        } finally {
+          await sftp.end();
+        }
+      };
+
       if (retain_dir) {
+        // a local copy is wanted, so write that first and send it from
+        // there rather than holding the archive in memory to do both
         await mkdir(retain_dir, { recursive: true });
-        await writeFile(join(retain_dir, fileName), data);
+        const retained = join(retain_dir, fileName);
+        await write_backup_to_file(retained);
+        await upload(createReadStream(retained));
+      } else {
+        // straight to the server: the archive is never on the local disk
+        await backup_to_stream(upload);
       }
       break;
     }
     case "S3": {
-      // straight to the bucket: no local copy of the backup is made
-      const body = await backup_to_buffer();
       const s3 = new (awsS3().S3)(s3ClientConfig(state));
 
       const bucket = state.getConfig("backup_s3_bucket");
@@ -1022,16 +1055,21 @@ const auto_backup_now_tenant = async (state: any) => {
         .filter((s) => s && s.length)
         .join("/");
       try {
-        const uploadResult = await new (awsLibStorage().Upload)({
-          client: s3,
-          params: {
-            Bucket: bucket,
-            Key: s3Key,
-            Body: body,
-            ACL: "private",
-            ContentType: "application/zip",
-          },
-        }).done();
+        // streamed to the bucket as it is built, in multipart chunks: the
+        // archive is neither held in memory nor written to the local disk
+        const uploadResult = await backup_to_stream(
+          async (body) =>
+            await new (awsLibStorage().Upload)({
+              client: s3,
+              params: {
+                Bucket: bucket,
+                Key: s3Key,
+                Body: body,
+                ACL: "private",
+                ContentType: "application/zip",
+              },
+            }).done()
+        );
 
         if (uploadResult.$metadata.httpStatusCode !== 200) {
           throw new Error(
@@ -1093,7 +1131,7 @@ const auto_backup_now = async () => {
 };
 export default {
   create_backup,
-  backup_to_buffer,
+  backup_to_stream,
   backup_file_name,
   restore,
   create_csv_from_rows,

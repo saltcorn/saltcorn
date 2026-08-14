@@ -1,33 +1,42 @@
 /**
  * Zip helpers running on a worker thread.
  *
- * Zipping and unzipping are synchronous, CPU-bound operations: doing them on
- * the main thread blocks the event loop for the whole duration of a backup or
- * a restore, which is why this used to shell out to the system `zip`/`unzip`
- * executables instead. A worker thread gives us the same non-blocking
- * behaviour without depending on anything being installed on the host, so
- * adm-zip is now the only implementation.
+ * Zipping and unzipping are CPU-bound, so doing them on the main thread would
+ * block the event loop for the whole duration of a backup or a restore, which
+ * is why this used to shell out to the system `zip`/`unzip` executables. A
+ * worker thread gives the same non-blocking behaviour without depending on
+ * anything being installed on the host.
  *
- * The builder is fed one entry at a time so that neither the caller nor the
- * main thread ever has to hold the whole archive: content generated in the
- * main thread (pack.json, table dumps, config) is handed over as a buffer,
- * while files already on disk are only named - the worker reads them itself.
+ * The archive is streamed, never assembled in memory: entries are compressed
+ * and written out as they are added (see zip-writer.ts), so a backup of a
+ * file store far larger than RAM works. Content generated in the main thread
+ * (pack.json, table dumps, config) is handed over a buffer at a time, while
+ * files already on disk are only named - the worker streams them itself.
  *
  * @category saltcorn-admin-models
  * @module models/zip
  */
 import { Worker } from "worker_threads";
+import { PassThrough, Readable } from "stream";
 
 /** Request sent from the main thread to the zip worker. */
 export type ZipRequest =
-  | { id: number; cmd: "createZip"; password?: string }
-  | { id: number; cmd: "openZip"; path: string; password?: string }
+  | { id: number; cmd: "beginFile"; path: string; password?: string }
+  | { id: number; cmd: "beginStream"; password?: string }
   | { id: number; cmd: "addBuffer"; entryName: string; data: Uint8Array }
   | { id: number; cmd: "addLocalFile"; entryName: string; localPath: string }
   | { id: number; cmd: "addDirectory"; entryName: string }
-  | { id: number; cmd: "writeToFile"; path: string }
-  | { id: number; cmd: "toBuffer" }
-  | { id: number; cmd: "extractAllTo"; dir: string };
+  | { id: number; cmd: "beginEntry"; entryName: string }
+  | { id: number; cmd: "entryChunk"; data: Uint8Array }
+  | { id: number; cmd: "endEntry" }
+  | { id: number; cmd: "finish" }
+  | {
+      id: number;
+      cmd: "extractAllTo";
+      path: string;
+      dir: string;
+      password?: string;
+    };
 
 /** Reply sent from the zip worker back to the main thread. */
 export type ZipResponse =
@@ -54,10 +63,14 @@ class ZipWorker {
     { resolve: (v: any) => void; reject: (e: any) => void }
   > = new Map();
   private dead?: Error;
+  /** where archive bytes go when the worker is streaming to us */
+  private sink?: PassThrough;
 
   constructor() {
     this.worker = new Worker(workerURL);
-    this.worker.on("message", (msg: ZipResponse) => {
+    this.worker.on("message", (msg: any) => {
+      if (msg?.type === "chunk") return this.takeChunk(msg.data);
+      if (msg?.type === "chunkEnd") return this.sink?.end();
       const waiter = this.pending.get(msg.id);
       if (!waiter) return;
       this.pending.delete(msg.id);
@@ -75,15 +88,43 @@ class ZipWorker {
     });
   }
 
+  /**
+   * Take a chunk of the archive and acknowledge it once the consumer has
+   * room for more. The worker sends the next chunk only after the
+   * acknowledgement, so a slow upload slows the whole pipeline down rather
+   * than filling memory.
+   */
+  private takeChunk(data: Uint8Array): void {
+    const sink = this.sink;
+    if (!sink || sink.destroyed)
+      return this.abandon(new Error("Zip output stream was closed"));
+    const ack = () => this.worker.postMessage({ cmd: "chunkAck" });
+    if (sink.write(Buffer.from(data.buffer, data.byteOffset, data.byteLength)))
+      ack();
+    else sink.once("drain", ack);
+  }
+
   private fail(e: Error) {
     this.dead = e;
     for (const waiter of this.pending.values()) waiter.reject(e);
     this.pending.clear();
+    this.sink?.destroy(e);
+  }
+
+  /**
+   * The output went away - a failed upload, a browser that closed the
+   * connection. Stop the worker rather than leaving it blocked forever on an
+   * acknowledgement that is never coming.
+   */
+  private abandon(e: Error): void {
+    if (this.dead) return;
+    this.fail(e);
+    this.worker.terminate();
   }
 
   /**
    * Send a request and wait for its reply. Buffers are transferred rather
-   * than copied when they own their whole ArrayBuffer - Node pools small
+   * than copied when they own their whole ArrayBuffer - node pools small
    * allocations, and transferring a pooled buffer would detach the pool.
    */
   send(req: ZipCommand): Promise<any> {
@@ -91,7 +132,7 @@ class ZipWorker {
     const id = ++this.seq;
     const message = { ...req, id } as ZipRequest;
     const transfer: Array<ArrayBufferLike> = [];
-    if (message.cmd === "addBuffer") {
+    if (message.cmd === "addBuffer" || message.cmd === "entryChunk") {
       const { data } = message;
       if (data.byteOffset === 0 && data.byteLength === data.buffer.byteLength)
         transfer.push(data.buffer);
@@ -102,6 +143,17 @@ class ZipWorker {
     });
   }
 
+  /** Start collecting the archive bytes the worker sends us */
+  openSink(): PassThrough {
+    const sink = new PassThrough();
+    // a consumer that fails takes the sink down with it; keep a listener of
+    // our own so that never becomes an unhandled error event, and stop
+    // producing bytes nobody is going to read
+    sink.on("error", (e: Error) => this.abandon(e));
+    this.sink = sink;
+    return sink;
+  }
+
   async close(): Promise<void> {
     await this.worker.terminate();
   }
@@ -110,31 +162,61 @@ class ZipWorker {
 /**
  * Builds a zip file, one entry at a time, on a worker thread.
  *
- * Terminal operations (writeToFile, toBuffer, discard) shut the worker down;
- * the builder cannot be used afterwards.
+ * `finish` completes the archive and shuts the worker down; the builder
+ * cannot be used afterwards.
  */
 export class ZipBuilder {
   private worker: ZipWorker;
   private closed: boolean = false;
+  /** set when the archive is streamed to the caller rather than to a file */
+  readonly stream?: Readable;
 
-  private constructor(worker: ZipWorker) {
+  private constructor(worker: ZipWorker, stream?: Readable) {
     this.worker = worker;
+    this.stream = stream;
   }
 
-  /**
-   * @param password if non-empty, entries are encrypted with the (ZipCrypto)
-   *   zip password scheme, as the system `zip -P` did
-   */
-  static async create(password?: string): Promise<ZipBuilder> {
+  private static async begin(
+    start: (worker: ZipWorker) => Promise<void>,
+    stream?: (worker: ZipWorker) => Readable
+  ): Promise<ZipBuilder> {
     const worker = new ZipWorker();
-    const builder = new ZipBuilder(worker);
+    const readable = stream?.(worker);
+    const builder = new ZipBuilder(worker, readable);
     try {
-      await worker.send({ cmd: "createZip", password: password || undefined });
+      await start(worker);
     } catch (e) {
-      await builder.discard();
+      await builder.discard(e);
       throw e;
     }
     return builder;
+  }
+
+  /**
+   * Build an archive at a path on disk. It is written where it belongs -
+   * writing it elsewhere and moving it would fail across filesystems.
+   *
+   * @param password if non-empty, entries are encrypted with the traditional
+   *   zip password scheme, as the system `zip -P` did
+   */
+  static async toFile(path: string, password?: string): Promise<ZipBuilder> {
+    return await ZipBuilder.begin((worker) =>
+      worker.send({ cmd: "beginFile", path, password: password || undefined })
+    );
+  }
+
+  /**
+   * Build an archive into a readable stream, for destinations written over
+   * the network (S3, SFTP) or straight to a browser, so that no copy is made
+   * on the local disk. Read `stream` while adding entries: the archive is
+   * produced as it is consumed.
+   */
+  static async toStream(password?: string): Promise<ZipBuilder> {
+    return await ZipBuilder.begin(
+      (worker) =>
+        worker.send({ cmd: "beginStream", password: password || undefined }),
+      (worker) => worker.openSink()
+    );
   }
 
   /** Add an entry from content held in memory */
@@ -142,9 +224,22 @@ export class ZipBuilder {
     await this.worker.send({ cmd: "addBuffer", entryName, data });
   }
 
-  /** Add an entry from a file on disk. The worker does the reading. */
+  /** Add an entry from a file on disk. The worker streams it. */
   async addLocalFile(entryName: string, localPath: string): Promise<void> {
     await this.worker.send({ cmd: "addLocalFile", entryName, localPath });
+  }
+
+  /**
+   * Add an entry from a stream of content produced in the main thread, for
+   * content too large to want as one buffer - a table dump, say. Each chunk
+   * is acknowledged before the next is sent, so the producer runs no faster
+   * than the archive is written.
+   */
+  async addStream(entryName: string, source: Readable): Promise<void> {
+    await this.worker.send({ cmd: "beginEntry", entryName });
+    for await (const chunk of source)
+      await this.worker.send({ cmd: "entryChunk", data: chunk as Buffer });
+    await this.worker.send({ cmd: "endEntry" });
   }
 
   /** Add a directory entry. A trailing slash is added if missing. */
@@ -152,33 +247,29 @@ export class ZipBuilder {
     await this.worker.send({ cmd: "addDirectory", entryName });
   }
 
-  /** Write the archive to its final location and close the worker */
-  async writeToFile(path: string): Promise<void> {
+  /** Complete the archive and close the worker */
+  async finish(): Promise<void> {
     try {
-      await this.worker.send({ cmd: "writeToFile", path });
-    } finally {
-      await this.discard();
+      await this.worker.send({ cmd: "finish" });
+    } catch (e) {
+      await this.discard(e);
+      throw e;
     }
+    this.closed = true;
+    await this.worker.close();
   }
 
   /**
-   * Return the archive as a buffer and close the worker. For destinations
-   * that are written over the network (S3, SFTP), so that no intermediate
-   * file is ever created on disk.
+   * Abandon a half-built archive and close the worker. Any consumer of
+   * `stream` is failed too, so a partial archive is never mistaken for a
+   * complete one.
    */
-  async toBuffer(): Promise<Buffer> {
-    try {
-      const data = await this.worker.send({ cmd: "toBuffer" });
-      return Buffer.from(data.buffer, data.byteOffset, data.byteLength);
-    } finally {
-      await this.discard();
-    }
-  }
-
-  /** Throw the half-built archive away and close the worker */
-  async discard(): Promise<void> {
+  async discard(cause?: any): Promise<void> {
     if (this.closed) return;
     this.closed = true;
+    (this.stream as PassThrough | undefined)?.destroy(
+      cause instanceof Error ? cause : new Error("Zip archive abandoned")
+    );
     await this.worker.close();
   }
 }
@@ -199,8 +290,7 @@ export const extractZip = async (
 ): Promise<void> => {
   const worker = new ZipWorker();
   try {
-    await worker.send({ cmd: "openZip", path: fnm, password });
-    await worker.send({ cmd: "extractAllTo", dir });
+    await worker.send({ cmd: "extractAllTo", path: fnm, dir, password });
   } finally {
     await worker.close();
   }
