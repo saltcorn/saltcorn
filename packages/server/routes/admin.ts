@@ -86,7 +86,8 @@ import {
   get_process_init_time,
 } from "@saltcorn/data/db/state";
 import _am_backup from "@saltcorn/admin-models/models/backup";
-const { create_backup, restore, auto_backup_now } = _am_backup;
+const { backup_to_buffer, backup_file_name, restore, auto_backup_now } =
+  _am_backup;
 import _am_pack from "@saltcorn/admin-models/models/pack";
 const { install_pack, filter_pack } = _am_pack;
 import Snapshot from "@saltcorn/admin-models/models/snapshot";
@@ -418,7 +419,8 @@ router.get(
       path.join(__dirname, "..", "..", "docs"),
       ...req.params.filepath
     );
-    if (fullPath && fs.existsSync(fullPath)) res.sendFile(fullPath, { dotfiles: "allow" });
+    if (fullPath && fs.existsSync(fullPath))
+      res.sendFile(fullPath, { dotfiles: "allow" });
     else {
       res.status(404);
       res.sendWrap(`File not found`, { above: ["Help file not found"] });
@@ -469,9 +471,8 @@ router.get(
     backupForm.values.auto_backup_directory = getState()!.getConfig(
       "auto_backup_directory"
     );
-    backupForm.values.auto_backup_retain_local_directory = getState()!.getConfig(
-      "auto_backup_retain_local_directory"
-    );
+    backupForm.values.auto_backup_retain_local_directory =
+      getState()!.getConfig("auto_backup_retain_local_directory");
     backupForm.values.auto_backup_username = getState()!.getConfig(
       "auto_backup_username"
     );
@@ -638,7 +639,9 @@ router.get(
       res.redirect("/admin/backup");
       return;
     }
-    const auto_backup_directory = getState()!.getConfig("auto_backup_directory");
+    const auto_backup_directory = getState()!.getConfig(
+      "auto_backup_directory"
+    );
 
     const backup_file_prefix = getState()!.getConfig("backup_file_prefix");
 
@@ -958,7 +961,9 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     if (req.files?.file?.tempFilePath) {
       try {
-        const pack = JSON.parse(fs.readFileSync(req.files?.file?.tempFilePath, "utf-8" ));
+        const pack = JSON.parse(
+          fs.readFileSync(req.files?.file?.tempFilePath, "utf-8")
+        );
         filter_pack(pack, req.body);
         await db.withTransaction(async () => {
           await install_pack(pack, undefined, (p: any) =>
@@ -983,7 +988,9 @@ router.get(
     const { filename } = req.params;
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const backup_file_prefix = getState()!.getConfig("backup_file_prefix");
-    const auto_backup_directory = getState()!.getConfig("auto_backup_directory");
+    const auto_backup_directory = getState()!.getConfig(
+      "auto_backup_directory"
+    );
     const fp = File.normalise_in_base(auto_backup_directory, filename);
 
     if (
@@ -1582,10 +1589,7 @@ router.get(
                   tr(th(req.__("Node.js version")), td(process.version)),
                   tr(
                     th(req.__("Database type")),
-                    td(
-                      `${db.sql_backend_display_name} `,
-                      dbversion
-                    )
+                    td(`${db.sql_backend_display_name} `, dbversion)
                   ),
                   isRoot
                     ? tr(
@@ -1899,7 +1903,13 @@ const cleanNodeModules = async () => {
   await PluginInstaller.cleanPluginsDirectory();
 };
 
-const doInstall = async (req: Req, res: Res, version: any, deepClean: any, runPull: any) => {
+const doInstall = async (
+  req: Req,
+  res: Res,
+  version: any,
+  deepClean: any,
+  runPull: any
+) => {
   const state = getState()!;
   let res_write = (s: any) => {
     try {
@@ -2019,14 +2029,13 @@ router.post(
   "/backup",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    const fileName = await create_backup();
+    // built in memory and sent straight to the browser - a manual backup
+    // never touches the server's disk
+    const fileName = backup_file_name();
+    const zip = await backup_to_buffer();
     res.type("application/zip");
     res.attachment(fileName);
-    const file = fs.createReadStream(fileName);
-    file.on("end", function () {
-      fs.unlink(fileName, function () {});
-    });
-    file.pipe(res as any);
+    res.send(zip);
   })
 );
 
@@ -2043,7 +2052,9 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const newPath = File.get_new_path();
     await req.files.file.mv(newPath);
-    const err = await restore(newPath, (p: any) => Plugin.loadAndSaveNewPlugin(p));
+    const err = await restore(newPath, (p: any) =>
+      Plugin.loadAndSaveNewPlugin(p)
+    );
     if (err) req.flash("error", err);
     else req.flash("success", req.__("Successfully restored backup"));
     await getState()!.refresh_plugins();
@@ -2156,7 +2167,10 @@ router.post(
 
       try {
         const file_store = db.connectObj.file_store;
-        const admin_users = (await User.find({ role_id: 1 }, { orderBy: "id" }))!;
+        const admin_users = (await User.find(
+          { role_id: 1 },
+          { orderBy: "id" }
+        ))!;
         // greenlock logic
         const Greenlock = require("greenlock");
         const greenlock = Greenlock.create({
@@ -2235,7 +2249,10 @@ router.post(
       }
       try {
         const file_store = db.connectObj.file_store;
-        const admin_users = (await User.find({ role_id: 1 }, { orderBy: "id" }))!;
+        const admin_users = (await User.find(
+          { role_id: 1 },
+          { orderBy: "id" }
+        ))!;
         // greenlock logic
         const Greenlock = require("greenlock");
         const greenlock = Greenlock.create({
@@ -2932,8 +2949,8 @@ router.get(
     const views = (await View.find())!;
     const pages = (await Page.find())!;
     const pageGroups = (await PageGroup.find())!;
-    const images = (await File.find({ mime_super: "image" })).filter((image: any) =>
-      image.filename?.endsWith(".png")
+    const images = (await File.find({ mime_super: "image" })).filter(
+      (image: any) => image.filename?.endsWith(".png")
     );
     const pushCfgFiles = (await File.find({
       folder: "/mobile-app-configurations",
@@ -4364,7 +4381,9 @@ const checkFiles = async (outDirName: any, fileNames: any) => {
   const unsafeFiles = await Promise.all(
     fs
       .readdirSync(outDir)
-      .map(async (outFile: any) => await File.from_file_on_disk(outFile, outDir))
+      .map(
+        async (outFile: any) => await File.from_file_on_disk(outFile, outDir)
+      )
   );
   const entries = unsafeFiles
     .filter(
@@ -4449,7 +4468,10 @@ router.get(
     const files = await Promise.all(
       fs
         .readdirSync(buildDir)
-        .map(async (outFile: any) => await File.from_file_on_disk(outFile, buildDir))
+        .map(
+          async (outFile: any) =>
+            await File.from_file_on_disk(outFile, buildDir)
+        )
     );
 
     const resultMsg = files.find((file: any) => file.filename === `logs.txt`)!
@@ -4715,7 +4737,10 @@ router.post(
     if (showContinueAsPublicUser)
       spawnParams.push("--showContinueAsPublicUser");
     if (synchedTables.length > 0)
-      spawnParams.push("--synchedTables", ...synchedTables.map((tbl: any) => tbl));
+      spawnParams.push(
+        "--synchedTables",
+        ...synchedTables.map((tbl: any) => tbl)
+      );
     if (includedPlugins.length > 0)
       spawnParams.push(
         "--includedPlugins",
@@ -4963,14 +4988,19 @@ router.post(
       await getState()!.refresh_triggers();
     }
     if (form.values.tables) {
-      await db.deleteWhere("_sc_model_instances",{});
-      await db.deleteWhere("_sc_models",{});
+      await db.deleteWhere("_sc_model_instances", {});
+      await db.deleteWhere("_sc_models", {});
 
       //in revers order of creation in case any provided tables depend on real tables
-      const tables = (await Table.find({}, { orderBy: "id", orderDesc: true }))!;
+      const tables = (await Table.find(
+        {},
+        { orderBy: "id", orderDesc: true }
+      ))!;
 
       for (const table of tables) {
-        const constraints = (await TableConstraint.find({ table_id: table.id }))!;
+        const constraints = (await TableConstraint.find({
+          table_id: table.id,
+        }))!;
 
         for (const con of constraints) {
           await con.delete();
@@ -5021,15 +5051,15 @@ router.post(
     }
 
     if (form.values.library) {
-      await db.deleteWhere("_sc_library",{});
+      await db.deleteWhere("_sc_library", {});
     }
     if (form.values.eventlog) {
-      await db.deleteWhere("_sc_event_log",{});
+      await db.deleteWhere("_sc_event_log", {});
     }
     if (form.values.config) {
       //config+crashes
-      await db.deleteWhere("_sc_errors",{});
-      await db.deleteWhere("_sc_metadata",{});
+      await db.deleteWhere("_sc_errors", {});
+      await db.deleteWhere("_sc_metadata", {});
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
       await getState()!.refresh();
       await standardMenu();
@@ -5037,7 +5067,7 @@ router.post(
     await getState()!.refresh();
 
     if (form.values.users) {
-      await db.deleteWhere("_sc_notifications",{});
+      await db.deleteWhere("_sc_notifications", {});
 
       const users1 = Table.findOne({ name: "users" })!;
       const userfields1 = await users1.getFields();
@@ -5046,7 +5076,7 @@ router.post(
         if (f.name !== "email" && f.name !== "id" && f.name !== "role_id")
           await f.delete();
       }
-      await db.deleteWhere("users",{});
+      await db.deleteWhere("users", {});
       await db.deleteWhere("_sc_roles", {
         not: { id: { in: [1, 40, 80, 100] } },
       });
@@ -5103,10 +5133,15 @@ router.get(
                 {
                   label: req.__("Timestamp"),
                   width: "15%",
-                  key() {return ""}
+                  key() {
+                    return "";
+                  },
                 },
-                { label: req.__("Message"),
-                  key() {return ""}
+                {
+                  label: req.__("Message"),
+                  key() {
+                    return "";
+                  },
                 },
               ],
               [],
@@ -5388,7 +5423,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       if (nm === "slugify") {
         ds.push(`function slugify(s: string): string`);
       } else if ("run" in f) {
-        let fany = f as any
+        let fany = f as any;
         if (f["arguments"]) {
           const returns = fany["tsreturns"]
             ? `: ${fany.tsreturns}`
@@ -5436,7 +5471,9 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
           )
           .join("\n")}
         ${trigger_actions
-          .map((tr: any) => `["${tr.name}"]: ({row}?:{row?: Row})=>Promise<void>,`)
+          .map(
+            (tr: any) => `["${tr.name}"]: ({row}?:{row?: Row})=>Promise<void>,`
+          )
           .join("\n")}
         }`
       );

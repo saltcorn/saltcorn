@@ -13,19 +13,19 @@ import Page from "@saltcorn/data/models/page";
 import PageGroup from "@saltcorn/data/models/page_group";
 import Plugin from "@saltcorn/data/models/plugin";
 import { getMigrationsInDB } from "@saltcorn/data/migrate";
-import Zip from "adm-zip";
-import { dir } from "tmp-promise";
+import { ZipBuilder, extractZip } from "./zip.js";
 import {
   writeFile,
   mkdir,
+  mkdtemp,
   copyFile,
-  rename,
   readFile,
   unlink,
   readdir,
+  rm,
   stat,
 } from "fs/promises";
-import { existsSync, readdirSync, statSync, createReadStream } from "fs";
+import { existsSync, readdirSync } from "fs";
 import { join, basename } from "path";
 import dateFormatLib from "dateformat";
 const dateFormat: any = dateFormatLib; // NodeNext default-import interop for dateformat
@@ -55,7 +55,6 @@ import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog from "@saltcorn/data/models/eventlog";
 import path from "path";
-import { exec, execSync, spawn } from "child_process";
 
 import SftpClient from "ssh2-sftp-client";
 import { CodePagePack } from "@saltcorn/types/base_types";
@@ -203,14 +202,29 @@ const create_pack_json = async (
 };
 
 /**
- * @param dirpath
+ * @param zip
  */
-const create_pack = async (dirpath: string): Promise<void> => {
+const add_pack = async (zip: ZipBuilder): Promise<void> => {
   const pack = await create_pack_json(
     getState()!.getConfig("backup_with_event_log", false)
   );
 
-  await writeFile(join(dirpath, "pack.json"), JSON.stringify(pack));
+  await zip.addBuffer("pack.json", Buffer.from(JSON.stringify(pack)));
+};
+
+/**
+ * @param rows
+ * @returns the rows as CSV, or null if there are no rows
+ */
+const csv_from_rows = (rows: Row[]): string | null => {
+  if (rows.length === 0) return null;
+
+  return stringify(rows, {
+    header: true,
+    cast: {
+      date: (value: Date) => value.toISOString(),
+    },
+  });
 };
 
 /**
@@ -222,14 +236,8 @@ const create_csv_from_rows = async (
   rows: Row[],
   fnm: string
 ): Promise<void> => {
-  if (rows.length === 0) return;
-
-  const s = stringify(rows, {
-    header: true,
-    cast: {
-      date: (value: Date) => value.toISOString(),
-    },
-  });
+  const s = csv_from_rows(rows);
+  if (s === null) return;
 
   await writeFile(fnm, s);
 };
@@ -237,37 +245,26 @@ const create_csv_from_rows = async (
 const sanitiseTableName = (nm: string): string => nm.replaceAll("/", "");
 
 /**
+ * Add the JSON dump of every non-external table (and its history, if the
+ * table is versioned) straight into the archive.
  * @function
- * @param {Table} table
- * @param {string} dirpath
- * @returns {Promise<void>}
- */
-const create_table_json = async (
-  table: Table,
-  dirpath: string
-): Promise<void> => {
-  await table.dump_to_json(
-    join(dirpath, sanitiseTableName(table.name) + ".json")
-  );
-};
-
-/**
- * @function
- * @param {string} root_dirpath
+ * @param {ZipBuilder} zip
  * @return {Promise<void>}
  */
-const create_table_jsons = async (root_dirpath: string): Promise<void> => {
-  const dirpath = join(root_dirpath, "tables");
-  await mkdir(dirpath, { recursive: true });
+const add_table_jsons = async (zip: ZipBuilder): Promise<void> => {
   const tables = await Table.find({});
   const backup_history = getState()!.getConfig("backup_history", true);
 
   for (const t of tables) {
     if (!t.external && !t.provider_name) {
-      await create_table_json(t, dirpath);
+      await zip.addBuffer(
+        `tables/${sanitiseTableName(t.name)}.json`,
+        await t.dump_to_json_buffer()
+      );
       if (t.versioned && backup_history) {
-        await t.dump_history_to_json(
-          join(dirpath, sanitiseTableName(t.name) + "__history.json")
+        await zip.addBuffer(
+          `tables/${sanitiseTableName(t.name)}__history.json`,
+          await t.dump_history_to_json_buffer()
         );
       }
     }
@@ -275,18 +272,17 @@ const create_table_jsons = async (root_dirpath: string): Promise<void> => {
 };
 
 /**
+ * Add the uploaded files to the archive. The files are read straight from
+ * the file store by the zip worker - they are never copied anywhere first.
  * @function
- * @param {string} root_dirpath
+ * @param {ZipBuilder} zip
  * @returns {Promise<void>}
  */
-const backup_files = async (root_dirpath: string): Promise<void> => {
+const add_files = async (zip: ZipBuilder): Promise<void> => {
   const backup_file_prefix = getState()!.getConfig("backup_file_prefix");
   const excludeGlobs = parseGlobList(
     getState()!.getConfig("backup_exclude_file_globs", "")
   );
-
-  const dirpath = join(root_dirpath, "files");
-  await mkdir(dirpath);
 
   const allFiles: File[] = [];
   const iterFolder = async (folder?: string) => {
@@ -301,7 +297,7 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
       }
       if (f.isDirectory && (await f.is_symlink())) continue;
       else if (f.isDirectory && !(await f.is_symlink())) {
-        await mkdir(join(dirpath, f.path_to_serve as string));
+        await zip.addDirectory(`files/${f.path_to_serve}`);
         await iterFolder(f.path_to_serve as string);
       } else {
         //exclude auto backups
@@ -316,7 +312,10 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
           !f.user_id
         )
           continue;
-        await copyFile(f.location, join(dirpath, folder || "", base));
+        await zip.addLocalFile(
+          `files/${folder ? `${folder}/` : ""}${base}`,
+          f.location
+        );
       }
       f.location = path.join(folder || "", base);
       allFiles.push(f);
@@ -324,128 +323,81 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
   };
   await iterFolder();
 
-  await create_csv_from_rows(allFiles, join(root_dirpath, "files.csv"));
+  const csv = csv_from_rows(allFiles);
+  if (csv !== null) await zip.addBuffer("files.csv", Buffer.from(csv));
 };
 
-const backup_migrations = async (root_dirpath: string): Promise<void> => {
+const add_migrations = async (zip: ZipBuilder): Promise<void> => {
   const migrations = await getMigrationsInDB();
-  await writeFile(
-    join(root_dirpath, "migrations.json"),
-    JSON.stringify(migrations)
+  await zip.addBuffer(
+    "migrations.json",
+    Buffer.from(JSON.stringify(migrations))
   );
 };
 
-const backup_metadata = async (root_dirpath: string): Promise<void> => {
+const add_metadata = async (zip: ZipBuilder): Promise<void> => {
   const metadata = await MetaData.find({});
-  await writeFile(
-    join(root_dirpath, "metadata.json"),
-    JSON.stringify(metadata)
-  );
+  await zip.addBuffer("metadata.json", Buffer.from(JSON.stringify(metadata)));
 };
 
 /**
  * @function
- * @param {string} root_dirpath
+ * @param {ZipBuilder} zip
  * @returns {Promise<void>}
  */
-const backup_config = async (root_dirpath: string): Promise<void> => {
-  const dirpath = join(root_dirpath, "config");
-  await mkdir(dirpath);
-
+const add_config = async (zip: ZipBuilder): Promise<void> => {
   const cfgs = await db.select("_sc_config");
 
   const state = getState()!;
   for (const cfg of cfgs) {
     if (!state.isFixedConfig(cfg.key))
-      await writeFile(
-        join(dirpath, cfg.key),
-        JSON.stringify(
-          db.json_read_returns_string ? JSON.parse(cfg.value) : cfg.value
+      await zip.addBuffer(
+        `config/${cfg.key}`,
+        Buffer.from(
+          JSON.stringify(
+            db.json_read_returns_string ? JSON.parse(cfg.value) : cfg.value
+          )
         )
       );
   }
 };
 
-const backup_info_file = async (root_dirpath: string): Promise<void> => {
-  const state = getState()!;
+const add_info_file = async (zip: ZipBuilder): Promise<void> => {
   const migrations_run = await getMigrationsInDB();
   const dbversion = await db.getVersion(true);
   const saltcorn_version = db.connectObj.sc_version;
 
-  await writeFile(
-    join(root_dirpath, "backup-info.json"),
-    JSON.stringify(
-      {
-        saltcorn_version,
-        migrations_run,
-        backup_date: new Date().toISOString(),
-        node_version: process.version,
-        database_type: db.sql_backend_display_name,
-        database_version: dbversion,
-        os: {
-          platform: os.platform(),
-          arch: os.arch(),
-          machine: os.machine(),
-          version: os.version(),
-          type: os.type(),
-          release: os.release(),
+  await zip.addBuffer(
+    "backup-info.json",
+    Buffer.from(
+      JSON.stringify(
+        {
+          saltcorn_version,
+          migrations_run,
+          backup_date: new Date().toISOString(),
+          node_version: process.version,
+          database_type: db.sql_backend_display_name,
+          database_version: dbversion,
+          os: {
+            platform: os.platform(),
+            arch: os.arch(),
+            machine: os.machine(),
+            version: os.version(),
+            type: os.type(),
+            release: os.release(),
+          },
         },
-      },
-      null,
-      2
+        null,
+        2
+      )
     )
   );
 };
 
-const zipFolder = async (folder: string, zipFileName: string) => {
-  const backup_with_system_zip = executableIsAvailable("zip");
-  const backup_password = getState()!.getConfig("backup_password", "");
-  if (backup_with_system_zip) {
-    return await new Promise((resolve, reject) => {
-      const absZipPath = path.join(process.cwd(), zipFileName);
-      const args = [
-        "-5",
-        "-rq",
-        ...(backup_password ? [`-P`, backup_password] : []),
-        absZipPath,
-        ".",
-      ];
-
-      const subprocess = spawn("zip", args, { cwd: folder });
-      subprocess.stdout.on("data", (data: any) => {
-        getState()!.log(6, data.toString());
-      });
-
-      subprocess.stderr.on("data", (data: any) => {
-        getState()!.log(1, data.toString());
-      });
-
-      subprocess.on("close", (exitCode: any) => {
-        if (exitCode !== 0) reject(new Error("zip failed"));
-        else resolve(undefined);
-      });
-    });
-  } else {
-    const zip = new Zip();
-    zip.addLocalFolder(folder);
-    zip.writeZip(zipFileName);
-  }
-};
 /**
- * Create backup
- * @param fnm
+ * The name a backup taken now gets, e.g. sc-backup-Saltcorn-2026-08-14-09-15.zip
  */
-const create_backup = async (fnm?: string): Promise<string> => {
-  const tmpDir = await dir({ unsafeCleanup: true });
-
-  await create_pack(tmpDir.path);
-  await create_table_jsons(tmpDir.path);
-  await backup_files(tmpDir.path);
-  await backup_config(tmpDir.path);
-  await backup_migrations(tmpDir.path);
-  await backup_info_file(tmpDir.path);
-  await backup_metadata(tmpDir.path);
-
+const backup_file_name = (): string => {
   const day = dateFormat(new Date(), "yyyy-mm-dd-HH-MM");
 
   const ten = db.getTenantSchema();
@@ -454,25 +406,66 @@ const create_backup = async (fnm?: string): Promise<string> => {
       ? getState()!.getConfig("site_name", "Saltcorn")
       : ten;
   const backup_file_prefix = getState()!.getConfig("backup_file_prefix");
-  const zipFileName = fnm || `${backup_file_prefix}${tens}-${day}.zip`;
+  return `${backup_file_prefix}${tens}-${day}.zip`;
+};
 
-  await zipFolder(tmpDir.path, zipFileName);
-  await tmpDir.cleanup();
+/**
+ * Build the backup archive. Every entry goes straight into the zip file:
+ * nothing is staged in a temporary directory, so a backup needs no more disk
+ * space than the finished archive.
+ *
+ * @param finish decides where the archive ends up - written to its final
+ *   path, or returned as a buffer for a remote destination
+ */
+const build_backup = async <T>(
+  finish: (zip: ZipBuilder) => Promise<T>
+): Promise<T> => {
+  const zip = await ZipBuilder.create(
+    getState()!.getConfig("backup_password", "")
+  );
+  try {
+    await add_pack(zip);
+    await add_table_jsons(zip);
+    await add_files(zip);
+    await add_config(zip);
+    await add_migrations(zip);
+    await add_info_file(zip);
+    await add_metadata(zip);
+  } catch (e) {
+    await zip.discard();
+    throw e;
+  }
+  return await finish(zip);
+};
+
+/**
+ * Write a backup to its final location. The archive is written where it
+ * belongs, not written somewhere else and moved - moving it would fail
+ * across filesystems (Docker volumes, external drives).
+ */
+const write_backup_to_file = async (filePath: string): Promise<void> =>
+  await build_backup((zip) => zip.writeToFile(filePath));
+
+/**
+ * Build a backup in memory, for destinations written over the network
+ * (S3, SFTP) where no local copy is wanted
+ */
+const backup_to_buffer = async (): Promise<Buffer> =>
+  await build_backup((zip) => zip.toBuffer());
+
+/**
+ * Create backup
+ * @param fnm optional file name, otherwise a name based on the site name
+ *   and the current time
+ */
+const create_backup = async (fnm?: string): Promise<string> => {
+  const zipFileName = fnm || backup_file_name();
+  await write_backup_to_file(zipFileName);
   return zipFileName;
 };
 
-// https://stackoverflow.com/a/74743490/19839414
-function executableIsAvailable(name: string) {
-  const shell = (cmd: string) => execSync(cmd, { encoding: "utf8" });
-  try {
-    shell(`which ${name}`);
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
-
 /**
+ * Extract a zip file into a directory
  * @function
  * @param {string} fnm
  * @param {string} dir
@@ -483,55 +476,26 @@ const extract = async (
   dir: string,
   password?: string
 ): Promise<void> => {
-  const state = getState()!;
-  const backup_with_system_zip = executableIsAvailable("unzip");
+  await extractZip(File.normalise(fnm), dir, password);
+};
 
-  if (backup_with_system_zip) {
-    return await new Promise((resolve, reject) => {
-      const args = [
-        ...(password ? [`-P${password}`] : []),
-        File.normalise(fnm),
-        "-d",
-        dir,
-      ];
-
-      const subprocess = spawn("unzip", args);
-
-      subprocess.stdout.on("data", (data: any) => {
-        state.log(6, data.toString());
-      });
-
-      subprocess.stderr.on("data", (data: any) => {
-        const output = data.toString();
-        state.log(1, output);
-        if (output.includes("password") || output.includes("encrypted")) {
-          reject({ requiresPassword: true });
-        }
-      });
-
-      subprocess.on("close", (exitCode: any) => {
-        if (exitCode !== 0) reject(new Error("unzip failed"));
-        else resolve();
-      });
-    });
-  } else {
-    const zip = new Zip(fnm);
-    try {
-      if (password) {
-        zip.extractAllTo(dir, true, false, password);
-      } else {
-        zip.extractAllTo(dir, true, false);
-      }
-    } catch (error: any) {
-      if (
-        error.message.includes("password") ||
-        error.message.includes("encrypted")
-      ) {
-        error.requiresPassword = true;
-      }
-      throw error;
-    }
-  }
+/**
+ * A scratch directory for a restore, on the same volume as the file store.
+ * Deliberately not the OS temporary directory: that is small, or in RAM, on
+ * many distributions, while the file store is sized for the app's data.
+ */
+const staging_dir = async (
+  prefix: string
+): Promise<{ path: string; cleanup: () => Promise<void> }> => {
+  const base = join(db.connectObj.file_store || process.cwd(), ".saltcorn-tmp");
+  await mkdir(base, { recursive: true });
+  const dirPath = await mkdtemp(join(base, prefix));
+  return {
+    path: dirPath,
+    cleanup: async () => {
+      await rm(dirPath, { recursive: true, force: true });
+    },
+  };
 };
 
 /**
@@ -739,90 +703,92 @@ const restore = async (
   };
   log(`Starting restore to tenant ${db.getTenantSchema()}`);
 
-  const tmpDir = await dir({ unsafeCleanup: true });
+  const tmpDir = await staging_dir("sc-restore-");
+  try {
+    await extract(fnm, tmpDir.path, password);
 
-  await extract(fnm, tmpDir.path, password);
+    log(`Unzip done`);
 
-  log(`Unzip done`);
+    let basePath = tmpDir.path;
+    // safari re-compressed. Safari unpacks zip files on download. If the user
+    // chooses compress in finder, the backup dir is nested inside the zip file
+    if (!existsSync(join(basePath, "pack.json"))) {
+      const files = await readdir(basePath);
+      let found = false;
+      for (const file of files) {
+        if (existsSync(join(basePath, file, "pack.json"))) {
+          basePath = join(basePath, file);
+          found = true;
+          break;
+        }
+      }
+      if (!found) return "Not a valid backup file";
+    }
+    let err;
 
-  let basePath = tmpDir.path;
-  // safari re-compressed. Safari unpacks zip files on download. If the user
-  // chooses compress in finder, the backup dir is nested inside the zip file
-  if (!existsSync(join(basePath, "pack.json"))) {
-    const files = await readdir(basePath);
-    let found = false;
-    for (const file of files) {
-      if (existsSync(join(basePath, file, "pack.json"))) {
-        basePath = join(basePath, file);
-        found = true;
-        break;
+    if (existsSync(join(basePath, "backup-info.json"))) {
+      const info = JSON.parse(
+        (await readFile(join(basePath, "backup-info.json"))).toString()
+      );
+      const saltcorn_version = db.connectObj.sc_version;
+
+      if (
+        info.saltcorn_version &&
+        semver.gt(info.saltcorn_version, saltcorn_version)
+      ) {
+        err = `Warning: backup is from a more recent version (${
+          info.saltcorn_version
+        }) than the installed version (${saltcorn_version}). `;
       }
     }
-    if (!found) return "Not a valid backup file";
-  }
-  let err;
 
-  if (existsSync(join(basePath, "backup-info.json"))) {
-    const info = JSON.parse(
-      (await readFile(join(basePath, "backup-info.json"))).toString()
+    //install pack
+    log(`Reading pack`);
+    const pack = JSON.parse(
+      (await readFile(join(basePath, "pack.json"))).toString()
     );
-    const saltcorn_version = db.connectObj.sc_version;
 
-    if (
-      info.saltcorn_version &&
-      semver.gt(info.saltcorn_version, saltcorn_version)
-    ) {
-      err = `Warning: backup is from a more recent version (${
-        info.saltcorn_version
-      }) than the installed version (${saltcorn_version}). `;
-    }
-  }
-
-  //install pack
-  log(`Reading pack`);
-  const pack = JSON.parse(
-    (await readFile(join(basePath, "pack.json"))).toString()
-  );
-
-  const can_restore = await can_install_pack(pack);
-  if (typeof can_restore !== "boolean" && can_restore.error) {
-    return `Cannot restore backup, clashing entities:
+    const can_restore = await can_install_pack(pack);
+    if (typeof can_restore !== "boolean" && can_restore.error) {
+      return `Cannot restore backup, clashing entities:
     ${can_restore.error || ""}
     Delete these entities or restore to a pristine instance.
     `;
+    }
+    //config
+    log(`Restoring config`);
+    await restore_config(basePath);
+
+    log(`Restoring pack`);
+    await install_pack(pack, undefined, loadAndSaveNewPlugin, true, log);
+
+    // files
+    log(`Restoring files`);
+    const { file_users, newLocations } = await restore_files(basePath);
+
+    //table csvs
+    log(`Restoring tables`);
+    const tabres = await restore_tables(basePath, restore_first_user, log);
+    if (tabres) err = (err || "") + tabres;
+
+    log(`Restoring metadata`);
+    await restore_metadata(basePath);
+
+    if (Object.keys(newLocations).length > 0)
+      await correct_fileid_references_to_location(newLocations);
+    await restore_file_users(file_users);
+
+    state.log(
+      2,
+      `Completed restore to tenant ${db.getTenantSchema()}${
+        err ? ` with errors ${err}` : " successfully"
+      }`
+    );
+
+    return err;
+  } finally {
+    await tmpDir.cleanup();
   }
-  //config
-  log(`Restoring config`);
-  await restore_config(basePath);
-
-  log(`Restoring pack`);
-  await install_pack(pack, undefined, loadAndSaveNewPlugin, true, log);
-
-  // files
-  log(`Restoring files`);
-  const { file_users, newLocations } = await restore_files(basePath);
-
-  //table csvs
-  log(`Restoring tables`);
-  const tabres = await restore_tables(basePath, restore_first_user, log);
-  if (tabres) err = (err || "") + tabres;
-
-  log(`Restoring metadata`);
-  await restore_metadata(basePath);
-
-  if (Object.keys(newLocations).length > 0)
-    await correct_fileid_references_to_location(newLocations);
-  await restore_file_users(file_users);
-
-  await tmpDir.cleanup();
-  state.log(
-    2,
-    `Completed restore to tenant ${db.getTenantSchema()}${
-      err ? ` with errors ${err}` : " successfully"
-    }`
-  );
-
-  return err;
 };
 
 /**
@@ -973,27 +939,27 @@ const delete_old_backups = async () => {
  * Do autobackup now
  */
 const auto_backup_now_tenant = async (state: any) => {
-  state.log(6, `Creating backup file`);
-  const fileName = await create_backup();
-  state.log(6, `Created backup file with name ${fileName}`);
-
   const destination = state.getConfig(
     "auto_backup_destination",
     "Saltcorn files"
   );
   const directory = state.getConfig("auto_backup_directory", "");
   if (directory === null) throw new Error("Directory is unspecified");
-  state.log(6, `Backup to destination`);
+
+  // the backup is built straight into its destination, so decide where that
+  // is before building it
+  const fileName = backup_file_name();
+  state.log(6, `Creating backup ${fileName} for destination ${destination}`);
 
   switch (destination) {
-    case "Saltcorn files":
+    case "Saltcorn files": {
       if (directory.length > 0) {
         await File.new_folder(directory);
       }
 
       const newPath = File.get_new_path(join(directory, fileName));
-      const stats = statSync(fileName);
-      await copyFile(fileName, newPath);
+      await write_backup_to_file(newPath);
+      const stats = await stat(newPath);
       await File.create({
         filename: fileName,
         location: newPath,
@@ -1003,60 +969,65 @@ const auto_backup_now_tenant = async (state: any) => {
         mime_sub: "zip",
         min_role_read: 1,
       });
-      await unlink(fileName);
       break;
-    case "Local directory":
-      //const directory = state.getConfig("auto_backup_directory");
-
+    }
+    case "Local directory": {
       if (directory.length > 0) {
         await mkdir(directory, { recursive: true });
       }
 
-      await rename(fileName, join(directory, fileName));
+      // written in place rather than written elsewhere and renamed: a rename
+      // into a Docker volume or an external drive fails with EXDEV
+      await write_backup_to_file(join(directory, fileName));
       await delete_old_backups();
       break;
-    case "SFTP server":
-      let sftp = new SftpClient();
+    }
+    case "SFTP server": {
+      // straight to the server: no local copy of the backup is made
+      const data = await backup_to_buffer();
+      const sftp = new SftpClient();
       await sftp.connect({
         host: state.getConfig("auto_backup_server"),
         port: state.getConfig("auto_backup_port"),
         username: state.getConfig("auto_backup_username"),
         password: state.getConfig("auto_backup_password"),
       });
-      let data = createReadStream(fileName);
-      let remote = join(
+      const remote = join(
         state.getConfig("auto_backup_directory", ""),
-        basename(fileName)
+        fileName
       );
-      const putres = await sftp.put(data, remote);
-      state.log(6, `SFTP Put response: ${putres}`);
-
-      await sftp.end();
+      try {
+        const putres = await sftp.put(data, remote);
+        state.log(6, `SFTP Put response: ${putres}`);
+      } finally {
+        await sftp.end();
+      }
       const retain_dir = state.getConfig("auto_backup_retain_local_directory");
       if (retain_dir) {
         await mkdir(retain_dir, { recursive: true });
-        await copyFile(fileName, join(retain_dir, fileName));
+        await writeFile(join(retain_dir, fileName), data);
       }
-      await unlink(fileName);
       break;
-    case "S3":
+    }
+    case "S3": {
+      // straight to the bucket: no local copy of the backup is made
+      const body = await backup_to_buffer();
       const s3 = new (awsS3().S3)(s3ClientConfig(state));
 
       const bucket = state.getConfig("backup_s3_bucket");
       const pathPrefix = (state.getConfig("backup_s3_path_prefix", "") || "")
         .toString()
         .replace(/^\/+|\/+$/g, "");
-      const s3Key = [pathPrefix, basename(fileName)]
+      const s3Key = [pathPrefix, fileName]
         .filter((s) => s && s.length)
         .join("/");
-      const fileStream = () => createReadStream(fileName);
       try {
         const uploadResult = await new (awsLibStorage().Upload)({
           client: s3,
           params: {
             Bucket: bucket,
             Key: s3Key,
-            Body: fileStream(),
+            Body: body,
             ACL: "private",
             ContentType: "application/zip",
           },
@@ -1073,9 +1044,11 @@ const auto_backup_now_tenant = async (state: any) => {
       }
       await delete_old_backups();
       break;
+    }
     default:
       throw new Error("Unknown destination: " + destination);
   }
+  state.log(6, `Backup ${fileName} written to destination ${destination}`);
 };
 const auto_backup_now = async () => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
@@ -1120,6 +1093,8 @@ const auto_backup_now = async () => {
 };
 export default {
   create_backup,
+  backup_to_buffer,
+  backup_file_name,
   restore,
   create_csv_from_rows,
   auto_backup_now,

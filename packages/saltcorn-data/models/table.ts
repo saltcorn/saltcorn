@@ -67,8 +67,9 @@ import { validate as isValidUUID } from "uuid";
 
 import csvtojson from "csvtojson";
 import moment from "moment";
-import { createReadStream, createWriteStream } from "fs";
-import { stat, readFile, writeFile, open } from "fs/promises";
+import { createReadStream } from "fs";
+import { stat, readFile, writeFile } from "fs/promises";
+import { Writable } from "stream";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
 import {
@@ -3737,23 +3738,33 @@ class Table implements AbstractTable {
   }
 
   async dump_to_json(filePath: string) {
-    if (db.copyToJson) {
-      await dump_table_to_json_file(filePath, this.name);
-    } else {
-      const rows = await this.getRows({}, { ignore_errors: true });
-      await writeFile(filePath, JSON.stringify(rows));
-    }
+    await writeFile(filePath, await this.dump_to_json_buffer());
   }
   async dump_history_to_json(filePath: string) {
-    if (db.copyToJson) {
-      await dump_table_to_json_file(
-        filePath,
+    await writeFile(filePath, await this.dump_history_to_json_buffer());
+  }
+
+  /**
+   * The table contents as a JSON array, in memory. Used by backups, which
+   * put the contents straight into the zip file rather than staging them
+   * on disk first.
+   */
+  async dump_to_json_buffer(): Promise<Buffer> {
+    if (db.copyToJson) return await dump_table_to_json_buffer(this.name);
+    const rows = await this.getRows({}, { ignore_errors: true });
+    return Buffer.from(JSON.stringify(rows));
+  }
+
+  /**
+   * The table history as a JSON array, in memory
+   */
+  async dump_history_to_json_buffer(): Promise<Buffer> {
+    if (db.copyToJson)
+      return await dump_table_to_json_buffer(
         `${sqlsanitize(this.name)}__history`
       );
-    } else {
-      const rows = await this.get_history();
-      await writeFile(filePath, JSON.stringify(rows));
-    }
+    const rows = await this.get_history();
+    return Buffer.from(JSON.stringify(rows));
   }
   /**
    * Import CSV file to existing table
@@ -4229,7 +4240,8 @@ ${rejectDetails}`,
             rec[f.name] = JSON.stringify(rec[f.name]);
         });
         if (this.name === "users") {
-          if (rec.role_id < 11 && rec.role_id > 1) rec.role_id = rec.role_id * 10;
+          if (rec.role_id < 11 && rec.role_id > 1)
+            rec.role_id = rec.role_id * 10;
           // Backups made before last_mobile_login was dropped still have it.
           delete rec.last_mobile_login;
         }
@@ -4849,7 +4861,7 @@ ${rejectDetails}`,
 
   /**
    * Get rows along with joined and aggregated fields. The argument to `getJoinedRows` is an object
-   * with several different possible fields, all of which are optional 
+   * with several different possible fields, all of which are optional
    *
    * * `where`: A Where expression indicating the criterion to match
    * * `joinFields`: An object with the joinfields to retrieve
@@ -5137,18 +5149,27 @@ ${rejectDetails}`,
   }
 }
 
-async function dump_table_to_json_file(filePath: string, tableName: string) {
-  const writeStream = createWriteStream(filePath);
+/**
+ * Copy a table out of the database as a JSON array. Each row arrives as
+ * `{...},\n`, so the trailing comma of the last row becomes the closing
+ * bracket.
+ */
+async function dump_table_to_json_buffer(tableName: string): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  const collect = new Writable({
+    write(chunk: any, encoding: any, callback: any) {
+      chunks.push(Buffer.from(chunk));
+      callback();
+    },
+  });
   const client = db.pools_connections ? await db.getClient() : db;
-  writeStream.write("[");
-  db.copyToJson && (await db.copyToJson(writeStream, tableName, client));
+  db.copyToJson && (await db.copyToJson(collect, tableName, client));
   if (db.pools_connections) await client.release(true);
-  writeStream.destroy();
-  const h = await open(filePath, "r+");
-  const stat = await h.stat();
-  if (stat.size > 2) await h.write("]", stat.size - 2);
-  else await h.write("]", stat.size);
-  await h.close();
+  const rows = Buffer.concat(chunks);
+  if (rows.length < 2) return Buffer.from("[]");
+  const out = Buffer.concat([Buffer.from("["), rows]);
+  out[out.length - 2] = 0x5d; // "]" over the last row's comma
+  return out;
 }
 
 // declaration merging

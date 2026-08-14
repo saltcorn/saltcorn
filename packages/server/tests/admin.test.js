@@ -19,6 +19,7 @@ import File from "@saltcorn/data/models/file";
 import User from "@saltcorn/data/models/user";
 import EventLog from "@saltcorn/data/models/eventlog";
 import _am_backup from "@saltcorn/admin-models/models/backup";
+import Zip from "adm-zip";
 const { create_backup, restore, auto_backup_now } = _am_backup;
 jest.setTimeout(30000000);
 
@@ -98,10 +99,14 @@ describe("admin page", () => {
   it("show download backup", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
-    await request(app)
+    const res = await request(app)
       .post("/admin/backup")
       .set("Cookie", loginCookie)
       .expect(toSucceed());
+    // the download is built in memory and streamed straight to the browser,
+    // so what arrives is the complete zip
+    const entries = new Zip(res.body).getEntries().map((e) => e.entryName);
+    expect(entries).toContain("pack.json");
   });
   adminPageContains([
     ["/admin/backup", "Retention mode"],
