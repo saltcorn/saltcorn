@@ -281,6 +281,11 @@ class WorkflowRun {
             attributes: { options: ["Yes", "No"] },
             fieldview: "radio_group",
           };
+        case "File upload":
+          return {
+            type: "File",
+            attributes: { folder: q.folder },
+          };
         case "Checkbox":
           return { type: "Bool" };
         case "Free text":

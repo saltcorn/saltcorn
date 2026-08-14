@@ -11,6 +11,7 @@ const {
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
+  setTenant
 } = require("./utils.js");
 const {
   ppVal,
@@ -23,6 +24,7 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { getTriggerList } = require("./common_lists");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
+const File = require("@saltcorn/data/models/file");
 const WorkflowStep = require("@saltcorn/data/models/workflow_step");
 const WorkflowRun = require("@saltcorn/data/models/workflow_run");
 const WorkflowTrace = require("@saltcorn/data/models/workflow_trace");
@@ -2604,6 +2606,7 @@ const workflowRunPromiseHandler = (promise, run, req) => {
 
 router.post(
   "/fill-workflow-form/:id",
+  setTenant, // TODO why is this needed?????
   error_catcher(async (req, res) => {
     const { id } = req.params;
 
@@ -2625,10 +2628,24 @@ router.post(
 
     const form = await getWorkflowStepUserForm(run, trigger, step, req, res);
     form.validate(req.body || {});
+    console.log("formFields", form.fields);
+    console.log("req.files", req.files);
+
     if (form.hasErrors) {
       const title = "Fill form";
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } else {
+      for (const field of form.fields)
+        if (field.type === "File" && req.files[field.name]) {
+          const file = await File.from_req_files(
+            req.files[field.name],
+            req.user?.id,
+            (field.attributes && +field.attributes.min_role_read) || 1,
+            field.attributes.folder || ""
+          );
+          form.values[field.name] = file.path_to_serve;
+        }
+
       const run_async =
         getState().getConfig("enable_dynamic_updates") &&
         req.headers["page-load-tag"] &&

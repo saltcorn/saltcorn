@@ -858,7 +858,7 @@ class WorkflowStep {
                 "Integer",
                 "Float",
                 "Date",
-                //"File upload",
+                "File upload",
               ],
             },
           },
@@ -868,6 +868,12 @@ class WorkflowStep {
             type: "String",
             sublabel: "Comma separated list of multiple choice options",
             showIf: { qtype: ["Multiple choice", "Multiple checks"] },
+          },
+          {
+            label: "Folder",
+            name: "folder",
+            type: "String",
+            showIf: { qtype: ["File upload"] },
           },
           {
             label: "Day only",
