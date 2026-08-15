@@ -13,7 +13,8 @@ import Page from "@saltcorn/data/models/page";
 import PageGroup from "@saltcorn/data/models/page_group";
 import Plugin from "@saltcorn/data/models/plugin";
 import { getMigrationsInDB } from "@saltcorn/data/migrate";
-import { ZipBuilder, extractZip } from "./zip.js";
+import { ZipBuilder } from "./zip.js";
+import { extractZip } from "./zip-extract.js";
 import {
   writeFile,
   mkdir,

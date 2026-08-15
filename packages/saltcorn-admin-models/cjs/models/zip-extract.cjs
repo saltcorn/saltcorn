@@ -1,7 +1,7 @@
 // CommonJS interop shim — AUTO-GENERATED, DO NOT EDIT.
 // See gen-cjs-shims.cjs.
 "use strict";
-const m = require("../../dist/models/zip-reader.js");
+const m = require("../../dist/models/zip-extract.js");
 const e = m && m.__esModule && "default" in m ? m.default : m;
 module.exports = e;
 if (e !== m && e && (typeof e === "object" || typeof e === "function")) {

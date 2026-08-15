@@ -1,11 +1,11 @@
 /**
- * Zip helpers running on a worker thread.
+ * Building a zip file on a worker thread.
  *
- * Zipping and unzipping are CPU-bound, so doing them on the main thread would
- * block the event loop for the whole duration of a backup or a restore, which
- * is why this used to shell out to the system `zip`/`unzip` executables. A
- * worker thread gives the same non-blocking behaviour without depending on
- * anything being installed on the host.
+ * Zipping is CPU-bound, so doing it on the main thread would block the event
+ * loop for the whole duration of a backup, which is why this used to shell
+ * out to the system `zip` executable. A worker thread gives the same
+ * non-blocking behaviour without depending on anything being installed on the
+ * host. (Reading is a different matter - see zip-extract.ts.)
  *
  * The archive is streamed, never assembled in memory: entries are compressed
  * and written out as they are added (see zip-writer.ts), so a backup of a
@@ -29,19 +29,12 @@ export type ZipRequest =
   | { id: number; cmd: "beginEntry"; entryName: string }
   | { id: number; cmd: "entryChunk"; data: Uint8Array }
   | { id: number; cmd: "endEntry" }
-  | { id: number; cmd: "finish" }
-  | {
-      id: number;
-      cmd: "extractAllTo";
-      path: string;
-      dir: string;
-      password?: string;
-    };
+  | { id: number; cmd: "finish" };
 
 /** Reply sent from the zip worker back to the main thread. */
 export type ZipResponse =
   | { id: number; ok: true; result?: any }
-  | { id: number; ok: false; error: string; requiresPassword?: boolean };
+  | { id: number; ok: false; error: string };
 
 /** Omit that distributes over the members of a union */
 type UnionOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : never;
@@ -75,11 +68,7 @@ class ZipWorker {
       if (!waiter) return;
       this.pending.delete(msg.id);
       if (msg.ok) waiter.resolve(msg.result);
-      else {
-        const e: any = new Error(msg.error);
-        if (msg.requiresPassword) e.requiresPassword = true;
-        waiter.reject(e);
-      }
+      else waiter.reject(new Error(msg.error));
     });
     this.worker.on("error", (e: Error) => this.fail(e));
     this.worker.on("exit", (code: number) => {
@@ -123,23 +112,21 @@ class ZipWorker {
   }
 
   /**
-   * Send a request and wait for its reply. Buffers are transferred rather
-   * than copied when they own their whole ArrayBuffer - node pools small
-   * allocations, and transferring a pooled buffer would detach the pool.
+   * Send a request and wait for its reply.
+   *
+   * Content buffers are copied, not transferred. Transferring would save the
+   * copy, but the buffer belongs to whoever passed it in: a producer that
+   * fills and reuses one buffer - which a Readable is free to do - would find
+   * it detached under it, and would go on writing zero-length chunks with no
+   * error anywhere. The copy is a memcpy against a deflate; it does not show.
    */
   send(req: ZipCommand): Promise<any> {
     if (this.dead) return Promise.reject(this.dead);
     const id = ++this.seq;
     const message = { ...req, id } as ZipRequest;
-    const transfer: Array<ArrayBufferLike> = [];
-    if (message.cmd === "addBuffer" || message.cmd === "entryChunk") {
-      const { data } = message;
-      if (data.byteOffset === 0 && data.byteLength === data.buffer.byteLength)
-        transfer.push(data.buffer);
-    }
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      this.worker.postMessage(message, transfer as any);
+      this.worker.postMessage(message);
     });
   }
 
@@ -273,25 +260,3 @@ export class ZipBuilder {
     await this.worker.close();
   }
 }
-
-/**
- * Extract a zip file to a directory on a worker thread.
- *
- * @param fnm path of the zip file
- * @param dir directory to extract into
- * @param password password for encrypted archives. If the archive is
- *   encrypted and this is missing or wrong, the thrown error carries
- *   `requiresPassword: true`.
- */
-export const extractZip = async (
-  fnm: string,
-  dir: string,
-  password?: string
-): Promise<void> => {
-  const worker = new ZipWorker();
-  try {
-    await worker.send({ cmd: "extractAllTo", path: fnm, dir, password });
-  } finally {
-    await worker.close();
-  }
-};

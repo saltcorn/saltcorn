@@ -1,6 +1,7 @@
 /**
- * Constants and primitives of the ZIP file format, shared by the streaming
- * writer (zip-writer.ts) and reader (zip-reader.ts).
+ * Constants and primitives of the ZIP file format, used by the streaming
+ * writer (zip-writer.ts). The CRC is also used on the reading side, to check
+ * what unzipper hands back (zip-extract.ts).
  *
  * @category saltcorn-admin-models
  * @module models/zip-format
@@ -73,8 +74,8 @@ const crc32update = (crc: number, byte: number): number =>
  * standards, but it is what the zip format offers without going outside the
  * standard, and what Saltcorn backups have always used.
  *
- * The cipher is stateful across the whole entry, so one instance encrypts or
- * decrypts one entry, chunk by chunk.
+ * The cipher is stateful across the whole entry, so one instance encrypts one
+ * entry, chunk by chunk.
  */
 export class ZipCrypto {
   private keys: Uint32Array;
@@ -105,16 +106,6 @@ export class ZipCrypto {
     }
     return out;
   }
-
-  decrypt(data: Buffer): Buffer {
-    const out = Buffer.alloc(data.length);
-    for (let i = 0; i < data.length; i++) {
-      const plain = data[i] ^ this.nextKeyByte();
-      out[i] = plain;
-      this.updateKeys(plain);
-    }
-    return out;
-  }
 }
 
 /** MS-DOS date and time fields for a timestamp */
@@ -127,28 +118,6 @@ export const dosDateTime = (d: Date): { time: number; date: number } => {
   };
 };
 
-/** the timestamp of an MS-DOS date and time field pair */
-export const fromDosDateTime = (time: number, date: number): Date =>
-  new Date(
-    ((date >> 9) & 0x7f) + 1980,
-    ((date >> 5) & 0x0f) - 1,
-    date & 0x1f,
-    (time >> 11) & 0x1f,
-    (time >> 5) & 0x3f,
-    (time & 0x1f) * 2
-  );
-
-/**
- * Read a possibly 64-bit unsigned integer as a number. Values above
- * Number.MAX_SAFE_INTEGER cannot occur in a file we could store anyway.
- */
-export const readUInt64 = (buf: Buffer, offset: number): number => {
-  const value = buf.readBigUInt64LE(offset);
-  if (value > BigInt(Number.MAX_SAFE_INTEGER))
-    throw new Error("Zip entry is too large to read");
-  return Number(value);
-};
-
 /** Write a 64-bit unsigned integer */
 export const writeUInt64 = (
   buf: Buffer,
@@ -156,41 +125,4 @@ export const writeUInt64 = (
   offset: number
 ): void => {
   buf.writeBigUInt64LE(BigInt(value), offset);
-};
-
-/**
- * The fields of the zip64 extended information extra field, in the order the
- * format defines: only the fields whose base value is the "look in zip64"
- * marker are present.
- */
-export const parseZip64Extra = (
-  extra: Buffer,
-  wanted: {
-    uncompressedSize?: boolean;
-    compressedSize?: boolean;
-    offset?: boolean;
-  }
-): { uncompressedSize?: number; compressedSize?: number; offset?: number } => {
-  const out: any = {};
-  let pos = 0;
-  while (pos + 4 <= extra.length) {
-    const id = extra.readUInt16LE(pos);
-    const size = extra.readUInt16LE(pos + 2);
-    if (id === ZIP64_EXTRA_ID) {
-      const field = extra.subarray(pos + 4, pos + 4 + size);
-      let fpos = 0;
-      const take = () => {
-        if (fpos + 8 > field.length) return undefined;
-        const v = readUInt64(field, fpos);
-        fpos += 8;
-        return v;
-      };
-      if (wanted.uncompressedSize) out.uncompressedSize = take();
-      if (wanted.compressedSize) out.compressedSize = take();
-      if (wanted.offset) out.offset = take();
-      return out;
-    }
-    pos += 4 + size;
-  }
-  return out;
 };

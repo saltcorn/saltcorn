@@ -12,7 +12,6 @@ import { dirname } from "path";
 import { PassThrough, Writable } from "stream";
 import { once } from "events";
 import { ZipStreamWriter } from "./zip-writer.js";
-import { ZipStreamReader } from "./zip-reader.js";
 import type { ZipRequest, ZipResponse } from "./zip.js";
 
 /** archive bytes are shipped to the main thread in batches of at least this */
@@ -29,9 +28,11 @@ let outputClosed: Promise<void> = Promise.resolve();
 let chunkAck: (() => void) | null = null;
 
 /**
- * Transfer a buffer rather than copying it, but only when it owns its whole
- * ArrayBuffer - node pools small allocations, and transferring a pooled
- * buffer would detach the pool out from under everything else in it.
+ * Transfer a buffer rather than copying it. Safe in this direction because
+ * the buffer shipped out is the Buffer.concat below, which nothing else
+ * holds; only transfer it when it owns its whole ArrayBuffer, since node
+ * pools small allocations and transferring a pooled buffer would detach the
+ * pool out from under everything else in it.
  */
 const transferable = (data: Buffer): any =>
   data.byteOffset === 0 && data.byteLength === data.buffer.byteLength
@@ -151,11 +152,6 @@ const handle = async (req: ZipRequest): Promise<void> => {
       output = null;
       return;
     }
-    case "extractAllTo": {
-      const reader = await ZipStreamReader.open(req.path, req.password);
-      await reader.extractAllTo(req.dir);
-      return;
-    }
     default:
       throw new Error(`Unknown zip worker command`);
   }
@@ -178,13 +174,10 @@ parentPort?.on("message", (msg: ZipRequest | { cmd: "chunkAck" }) => {
       await handle(req);
       parentPort!.postMessage({ id: req.id, ok: true } as ZipResponse);
     } catch (e: any) {
-      const error = e?.message || String(e);
       parentPort!.postMessage({
         id: req.id,
         ok: false,
-        error,
-        requiresPassword:
-          !!e?.requiresPassword || /password|encrypted/i.test(error),
+        error: e?.message || String(e),
       } as ZipResponse);
     }
   });

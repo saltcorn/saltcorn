@@ -5,9 +5,10 @@ import { Readable } from "stream";
 import { join } from "path";
 import { tmpdir } from "os";
 import Zip from "adm-zip";
-import { ZipBuilder, extractZip } from "../models/zip.js";
+import { Open } from "unzipper";
+import { ZipBuilder } from "../models/zip.js";
+import { extractZip } from "../models/zip-extract.js";
 import { ZipStreamWriter } from "../models/zip-writer.js";
-import { ZipStreamReader } from "../models/zip-reader.js";
 import {
   afterAll,
   beforeAll,
@@ -27,6 +28,23 @@ let sourceDir: string;
  * so that it does not compress away to nothing on the way.
  */
 const bigContent = Buffer.alloc(6 * 1024 * 1024);
+
+/**
+ * An archive made by `zip -X -r -P 'hunter2!'` of a "hello world" small.txt
+ * and a files/big.txt of 100,000 x's - the shape of a backup from before the
+ * zip writer was brought in-process.
+ */
+const LEGACY_ZIP_BASE64 =
+  "UEsDBAoACQAAAARJD12FEUoNFwAAAAsAAAAJAAAAc21hbGwudHh0EMEQLQZe6Qx3/ZjBiV" +
+  "K8M4BlVk1MBIRQSwcIhRFKDRcAAAALAAAAUEsDBAoAAAAAAARJD10AAAAAAAAAAAAAAAAG" +
+  "AAAAZmlsZXMvUEsDBBQACQAIAARJD11xEQf+fgAAAKCGAQANAAAAZmlsZXMvYmlnLnR4dD" +
+  "tuR/AdZQjw43ZCt1y8UL6+ryS38VIMZ4RU0tjnf0dWfV4lZ0f5FjWnuw+OoGJL0TXGIK/a" +
+  "qDql9X9/n2GffctLzTmZJJouu5IyCPV2AharTlHVwtPTvYCwF/w1x+FT14MtEQWbCLioU4" +
+  "WeHDO32GpxHsMFX6MP0o8wYGDpnVBLBwhxEQf+fgAAAKCGAQBQSwECHgMKAAkAAAAESQ9d" +
+  "hRFKDRcAAAALAAAACQAAAAAAAAABAAAAtIEAAAAAc21hbGwudHh0UEsBAh4DCgAAAAAABE" +
+  "kPXQAAAAAAAAAAAAAAAAYAAAAAAAAAAAAQAP1BTgAAAGZpbGVzL1BLAQIeAxQACQAIAARJ" +
+  "D11xEQf+fgAAAKCGAQANAAAAAAAAAAEAAAC0gXIAAABmaWxlcy9iaWcudHh0UEsFBgAAAA" +
+  "ADAAMApgAAACsBAAAAAA==";
 
 beforeAll(async () => {
   dir = await mkdtemp(join(tmpdir(), "sc-zip-test-"));
@@ -206,6 +224,32 @@ describe("zip streaming", () => {
     );
   });
 
+  it("takes every chunk from a source that reuses its buffer", async () => {
+    // a Readable is free to fill and push one buffer over and over. Handing
+    // that buffer to the worker thread must not leave the producer holding a
+    // detached one, which would silently drop every chunk after the first
+    const zipPath = join(dir, "reused-buffer.zip");
+    const chunk = Buffer.alloc(64 * 1024, 65);
+    let pushed = 0;
+    const source = new Readable({
+      read() {
+        this.push(pushed++ < 8 ? chunk : null);
+      },
+    });
+
+    const zip = await ZipBuilder.toFile(zipPath);
+    await zip.addStream("reused.bin", source);
+    await zip.finish();
+
+    const out = join(dir, "reused-buffer-out");
+    await extractZip(zipPath, out);
+    const written = await readFile(join(out, "reused.bin"));
+    expect(written.length).toBe(chunk.length * 8);
+    expect(Buffer.compare(written, Buffer.concat(Array(8).fill(chunk)))).toBe(
+      0
+    );
+  });
+
   it("stops building when the consumer gives up", async () => {
     const zip = await ZipBuilder.toStream();
     zip.stream!.destroy(new Error("consumer went away"));
@@ -265,6 +309,30 @@ describe("zip encryption", () => {
     });
     expect(wrong?.requiresPassword).toBe(true);
   });
+
+  it("restores a backup encrypted by an older Saltcorn", async () => {
+    // Backups used to be made by the system `zip -P`, which puts the sizes in
+    // the local header and takes the password check byte from the CRC, where
+    // the writer here uses a data descriptor and the modification time. Those
+    // archives are still out there and still have to restore.
+    const zipPath = join(dir, "legacy.zip");
+    await writeFile(zipPath, Buffer.from(LEGACY_ZIP_BASE64, "base64"));
+
+    const out = join(dir, "legacy-out");
+    await extractZip(zipPath, out, password);
+    expect((await readFile(join(out, "small.txt"))).toString()).toBe(
+      "hello world"
+    );
+    const big = await readFile(join(out, "files/big.txt"));
+    expect(big.length).toBe(100000);
+    expect(big.toString()).toBe("x".repeat(100000));
+
+    let missing: any;
+    await extractZip(zipPath, join(dir, "legacy-missing")).catch((e) => {
+      missing = e;
+    });
+    expect(missing?.requiresPassword).toBe(true);
+  });
 });
 
 describe("zip64", () => {
@@ -295,9 +363,8 @@ describe("zip64", () => {
       await w.addBuffer("tiny.txt", Buffer.from("small enough"));
     });
 
-    const reader = await ZipStreamReader.open(zipPath);
     const out = join(dir, "zip64entry-out");
-    await reader.extractAllTo(out);
+    await extractZip(zipPath, out);
     expect(
       Buffer.compare(await readFile(join(out, "big.bin")), bigContent)
     ).toBe(0);
@@ -318,9 +385,8 @@ describe("zip64", () => {
       await w.addStream("short.bin", Readable.from([Buffer.from("brief")]));
     });
 
-    const reader = await ZipStreamReader.open(zipPath);
     const out = join(dir, "zip64stream-out");
-    await reader.extractAllTo(out);
+    await extractZip(zipPath, out);
     expect(
       Buffer.compare(await readFile(join(out, "long.bin")), bigContent)
     ).toBe(0);
@@ -335,9 +401,8 @@ describe("zip64", () => {
         await w.addBuffer(`e/${i}.txt`, Buffer.from(`entry ${i}`));
     });
 
-    const reader = await ZipStreamReader.open(zipPath);
-    const entries = reader.entries();
+    const entries = (await Open.file(zipPath)).files;
     expect(entries.length).toBe(count);
-    expect(entries[count - 1].name).toBe(`e/${count - 1}.txt`);
+    expect(entries[count - 1].path).toBe(`e/${count - 1}.txt`);
   });
 });
