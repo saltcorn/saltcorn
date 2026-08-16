@@ -6,6 +6,7 @@
   "scripts": {
     "test": "cd dist && NODE_ENV=test node --require ../setup-test-schema.cjs --test --test-concurrency=4 --test-force-exit",
     "remote-queries-test": "REMOTE_QUERIES=true node --test --test-force-exit dist/tests/exact_views.test.js",
+    "bench:render": "node benchmarks/render.mjs",
     "gen:cjs-shims": "node gen-cjs-shims.cjs",
     "pretsc": "node gen-cjs-shims.cjs",
     "tsc": "tsc -p tsconfig.json",
