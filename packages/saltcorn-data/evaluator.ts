@@ -109,7 +109,6 @@ export class Evaluator {
 
   /** The shared sandbox: the eval_context, with the host blanked out. */
   private getVM(): InstanceType<typeof VM> {
-    // console.debug("********", { globals: this.globals, vm: this.vm });
     if (!this.vm)
       this.vm = new VM({
         sandbox: {
