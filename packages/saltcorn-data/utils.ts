@@ -28,11 +28,9 @@ import crypto from "crypto";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import type Field from "./models/field.js"; // only type, shouldn't cause require loop
-import { compileExpression, Scope } from "./expression_interp.js";
 import type User from "./models/user.js"; // only type, shouldn't cause require loop
 import fsExtra from "fs-extra";
 const { existsSync } = fsExtra;
-import { VM } from "vm2";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import path from "path";
 import os from "os";
@@ -520,42 +518,15 @@ const interpolate = (
         });
         return template({ row, user, process: undefined, ...(row || {}) });
       }
-      const eval_context = stateMod().getState()!.eval_context;
+      const evaluator = stateMod().getState()!.evaluator;
       // row keys last, so a field called `row` or `user` shadows those bindings
-      const scope = new Scope({ row, user, ...(row || {}) }, eval_context);
-
-      // built only if some token needs it
-      let vm: InstanceType<typeof VM> | undefined;
-      const getVM = () => {
-        if (!vm) {
-          vm = new VM({
-            sandbox: {
-              ...eval_context,
-              global: undefined,
-              globalThis: undefined,
-              process: undefined,
-              require: undefined,
-              module: undefined,
-              Function: undefined,
-              row,
-              user,
-              ...(row || {}),
-            },
-            eval: false,
-            wasm: false,
-            timeout: 200,
-          });
-        }
-        return vm;
-      };
+      const context = { row, user, ...(row || {}) };
 
       const go_interp = (s: string): string =>
         s.replace(/\{\{([!=]?)([\s\S]+?)\}\}/g, renderToken);
 
       const renderToken = (_match: string, bang: string, code: string) => {
-        const trimmed = code.trim();
-        const compiled = compileExpression(trimmed);
-        const val = compiled ? compiled(scope) : getVM().run(`(${trimmed})`);
+        const val = evaluator.evaluate(code.trim(), context);
         const strVal =
           val === null || typeof val === "undefined" ? "" : String(val);
         return bang === "="

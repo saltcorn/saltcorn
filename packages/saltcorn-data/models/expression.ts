@@ -27,7 +27,6 @@ import db from "../db/index.js";
 import * as utils from "../utils.js";
 import { GenObj } from "@saltcorn/db-common/types";
 import { mergeIntoWhere, isNode, isValidJsIdentifier } from "../utils.js";
-import { compileExpression, Scope } from "../expression_interp.js";
 const { VM } = vm2Pkg;
 
 function deproxy(value: any): any {
@@ -851,25 +850,15 @@ function eval_expression(
     const use_row = row || {};
     const field_names = Object.keys(use_row).filter(isValidJsIdentifier);
 
-    // no VM needed: the scope mirrors the argument list below
-    const compiled = expression ? compileExpression(expression) : null;
-    if (compiled) {
-      const vars: GenObj = { row: use_row };
-      for (const name of field_names) vars[name] = use_row[name];
-      if (!field_names.includes("user")) vars.user = user;
-      return postProcessVmResult(
-        compiled(new Scope(vars, getState()!.eval_context))
-      );
-    }
+    // same bindings as before - `row`, then the row's own fields (so a field
+    // called `row` shadows it), then `user` unless the row supplies one
+    const context: GenObj = { row: use_row };
+    for (const name of field_names) context[name] = use_row[name];
+    if (!field_names.includes("user")) context.user = user;
 
-    const args = field_names.includes("user")
-      ? `row, {${field_names.join()}}`
-      : `row, {${field_names.join()}}, user`;
-    return vmRun(`((${args})=>(${expression}))(row, row, user)`, {
-      ...getState()!.eval_context,
-      row: use_row,
-      user,
-    });
+    return postProcessVmResult(
+      getState()!.evaluator.evaluate(expression || "", context)
+    );
   } catch (e: any) {
     e.message = `In evaluating the expression ${expression}${
       errorLocation ? ` in ${errorLocation}` : ""
