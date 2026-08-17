@@ -217,8 +217,8 @@ describeS3("S3 file storage", () => {
 });
 
 describeS3("Backup to S3", () => {
-  // create_backup writes the zip into the process cwd; the S3 destination
-  // uploads it but does not remove it, so sweep up between tests
+  // the backup is uploaded from memory and never written to the local disk,
+  // but sweep up between tests in case that regresses
   const removeLocalBackups = async () => {
     const prefix = getState().getConfig("backup_file_prefix", "sc-backup-");
     for (const f of await readdir(process.cwd()))

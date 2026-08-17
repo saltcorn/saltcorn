@@ -1,5 +1,6 @@
 import * as multiTenant from "./multi-tenant.js";
-import { ReadStream, WriteStream } from "fs";
+import { ReadStream } from "fs";
+import { Writable } from "stream";
 import { Row, Where, SelectOptions, PrimaryKeyValue } from "./internal.js";
 
 type RequestContext = {
@@ -90,7 +91,8 @@ export type DbExportsType = {
   reset_sequence: (table: string, column?: string) => Promise<void>;
   time: () => Promise<Date>;
   copyToJson?: (
-    writeStream: WriteStream,
+    // any writable: backups collect the dump in memory rather than on disk
+    writeStream: Writable,
     table: string,
     opts?: any
   ) => Promise<void>;

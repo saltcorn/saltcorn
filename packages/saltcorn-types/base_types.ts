@@ -515,7 +515,7 @@ export type Req = {
 };
 export type Res = {
   redirect: (url: string) => void;
-  send: (contents: string) => void;
+  send: (contents: string | Buffer) => void;
   sendWrap: (...contents: any[]) => void;
   json: (value: unknown) => void;
   status: (http_code: number) => Res;

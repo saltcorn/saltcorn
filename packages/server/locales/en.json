@@ -2117,5 +2117,14 @@
 	"Show subtotals": "Show subtotals",
 	"Show a subtotal row at the end of each group (requires Group by)": "Show a subtotal row at the end of each group (requires Group by)",
 	"Show grand total": "Show grand total",
-	"Show a grand total row at the bottom of the table": "Show a grand total row at the bottom of the table"
+	"Show a grand total row at the bottom of the table": "Show a grand total row at the bottom of the table",
+	"Rename": "Rename",
+	"Share chat": "Share chat",
+	"Exclude files": "Exclude files",
+	"Comma separated globs, for example: *.mp4, cache/**. Files whose name or path matches any of these are not included in the backup": "Comma separated globs, for example: *.mp4, cache/**. Files whose name or path matches any of these are not included in the backup",
+	"Retention mode": "Retention mode",
+	"Keep %s": "Keep %s",
+	"Keep the newest backup of each of the last N %s periods": "Keep the newest backup of each of the last N %s periods",
+	"Minimum backups to keep": "Minimum backups to keep",
+	"Never delete backups below this total count, regardless of age": "Never delete backups below this total count, regardless of age"
 }
