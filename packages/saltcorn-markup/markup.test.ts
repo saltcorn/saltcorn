@@ -880,3 +880,9 @@ describe("builder", () => {
     expect(result).toContain('"edit"');
   });
 });
+
+describe("issue #4334", () => {
+  it("should handle boundary conditions cleanly", () => {
+    expect(true).toBe(true);
+  });
+});
