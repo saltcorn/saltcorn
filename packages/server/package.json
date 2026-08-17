@@ -64,7 +64,6 @@
     "@saltcorn/sbadmin2": "1.7.0-alpha.0",
     "@socket.io/cluster-adapter": "^0.2.1",
     "@socket.io/sticky": "^1.0.1",
-    "adm-zip": "0.5.16",
     "compression": "1.8.1",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^9.0.1",
@@ -127,6 +126,7 @@
     "@types/adm-zip": "^0.5.7",
     "@types/jsonwebtoken": "^9.0.0",
     "@types/semver": "^7.7.1",
+    "adm-zip": "0.5.16",
     "imapflow": "^1.6.1",
     "mailparser": "^3.9.14",
     "supertest-fetch": "^2.0.0"
