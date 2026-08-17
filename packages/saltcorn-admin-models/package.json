@@ -64,7 +64,8 @@
     "node-fetch": "2.6.9",
     "semver": "^7.6.3",
     "ssh2-sftp-client": "11.0.0",
-    "tmp-promise": "^3.0.3"
+    "tmp-promise": "^3.0.3",
+    "unzipper": "^0.12.5"
   },
   "repository": "github:saltcorn/saltcorn",
   "publishConfig": {
@@ -81,6 +82,7 @@
     "@types/semver": "^7.7.1",
     "@types/ssh2-sftp-client": "9.0.3",
     "@types/tmp": "^0.2.3",
+    "@types/unzipper": "0.10.11",
     "typescript": "5.9.2"
   },
   "overrides": {

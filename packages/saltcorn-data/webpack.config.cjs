@@ -9,6 +9,9 @@ const nodeMocks = {
   assert: join(mocksDir, "node", "assert"),
   "fs-extra": join(mocksDir, "node", "fs-extra"),
   "fs/promises": join(mocksDir, "node", "fs", "promises"),
+  // stream-browserify (the "stream" fallback) has no promises submodule, so
+  // "stream/promises" would otherwise resolve into the middle of its index.js
+  "stream/promises": join(mocksDir, "node", "stream", "promises"),
   v8: join(mocksDir, "node", "v8"),
   async_hooks: join(mocksDir, "node", "async_hooks"),
   child_process: join(mocksDir, "node", "child_process"),

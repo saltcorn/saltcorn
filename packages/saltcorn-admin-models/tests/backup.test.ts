@@ -6,8 +6,9 @@ import backup from "../models/backup.js";
 const { create_backup, restore, auto_backup_now } = backup;
 import reset from "@saltcorn/data/db/reset_schema";
 import fixtures from "@saltcorn/data/db/fixtures";
-import { unlink, mkdtemp, writeFile, readdir, rm } from "fs/promises";
+import { unlink, mkdtemp, writeFile, readdir, rm, stat } from "fs/promises";
 import { join } from "path";
+import { tmpdir } from "os";
 import Table from "@saltcorn/data/models/table";
 import View from "@saltcorn/data/models/view";
 import User from "@saltcorn/data/models/user";
@@ -230,9 +231,7 @@ describe("Backup and restore", () => {
 
 describe("auto backup retention to local directory", () => {
   it("deletes backups not retained by the tiered policy", async () => {
-    // in cwd rather than tmpdir: auto_backup_now renames the zip into the
-    // directory, and rename fails across filesystems
-    const dir = await mkdtemp(join(process.cwd(), "sc-backup-retention-"));
+    const dir = await mkdtemp(join(tmpdir(), "sc-backup-retention-"));
     const prefix = getState()!.getConfig("backup_file_prefix");
     await getState()!.setConfig("site_name", "RetTest");
     await getState()!.setConfig("auto_backup_destination", "Local directory");
@@ -267,9 +266,7 @@ describe("auto backup retention to local directory", () => {
   });
 
   it("does not delete anything when retention is not configured", async () => {
-    // in cwd rather than tmpdir: auto_backup_now renames the zip into the
-    // directory, and rename fails across filesystems
-    const dir = await mkdtemp(join(process.cwd(), "sc-backup-retention-"));
+    const dir = await mkdtemp(join(tmpdir(), "sc-backup-retention-"));
     const prefix = getState()!.getConfig("backup_file_prefix");
     await getState()!.setConfig("auto_backup_directory", dir);
     await getState()!.setConfig("auto_backup_retention_mode", "Expiration");
@@ -343,5 +340,129 @@ describe("backup file exclusion", () => {
     expect(entries.includes("bigvideo.mp4")).toBe(true);
     expect(entries.includes("keepme.png")).toBe(true);
     expect(entries.includes("thumb.png")).toBe(true);
+  });
+});
+
+describe("backup destinations", () => {
+  // backup file names are built from the site name, and the other test files
+  // run in parallel in this same working directory - so give this file's
+  // backups a name only it produces
+  const siteName = "DestTest";
+
+  /** zips of this site left lying around in the working directory */
+  const strayBackups = async () => {
+    const prefix = getState()!.getConfig("backup_file_prefix");
+    return (await readdir(process.cwd())).filter(
+      (f) => f.startsWith(`${prefix}${siteName}-`) && f.endsWith(".zip")
+    );
+  };
+
+  it("writes a local directory backup into the directory itself", async () => {
+    // the OS temporary directory is usually a different filesystem (tmpfs on
+    // most Linux distributions), like the Docker volumes and external drives
+    // of issue #4332: the backup must be written where it belongs rather than
+    // written elsewhere and renamed, because renaming across filesystems
+    // fails with EXDEV
+    const dir = await mkdtemp(join(tmpdir(), "sc-backup-dest-"));
+    await getState()!.setConfig("site_name", siteName);
+    await getState()!.setConfig("auto_backup_destination", "Local directory");
+    await getState()!.setConfig("auto_backup_directory", dir);
+    await getState()!.setConfig("auto_backup_retention_mode", "Expiration");
+    await getState()!.setConfig("auto_backup_expire_days", null);
+
+    await auto_backup_now();
+
+    const written = (await readdir(dir)).filter((f) => f.endsWith(".zip"));
+    expect(written).toHaveLength(1);
+    // and it is a readable backup, not a truncated or empty file
+    const zip = new Zip(join(dir, written[0]));
+    expect(zip.getEntries().map((e: any) => e.entryName)).toContain(
+      "pack.json"
+    );
+    // nothing was staged in the working directory on the way there
+    expect(await strayBackups()).toHaveLength(0);
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("creates no local file when backing up to Saltcorn files", async () => {
+    await File.ensure_file_store();
+    await getState()!.setConfig("site_name", siteName);
+    await getState()!.setConfig("auto_backup_destination", "Saltcorn files");
+    // in a folder of its own: on SQLite every test file shares one file
+    // store, and a file appearing and disappearing in its root upsets the
+    // test files listing it in parallel
+    await getState()!.setConfig("auto_backup_directory", "desttest-backups");
+
+    await auto_backup_now();
+
+    const backupFile = (
+      await File.find({ folder: "desttest-backups", mime_sub: "zip" })
+    ).find((f) =>
+      f.filename.startsWith(getState()!.getConfig("backup_file_prefix"))
+    );
+    assertIsSet(backupFile);
+    // the size recorded in the file listing is the size on disk
+    const stats = await stat(backupFile.location);
+    expect(backupFile.size_kb).toBe(Math.round(stats.size / 1024));
+    expect(await strayBackups()).toHaveLength(0);
+
+    await backupFile.delete();
+  });
+});
+
+describe("encrypted backups", () => {
+  const password = "hunter2!";
+
+  afterAll(async () => {
+    await getState()!.setConfig("backup_password", "");
+  });
+
+  it("encrypts the backup with the configured password", async () => {
+    await getState()!.setConfig("backup_password", password);
+    const fnm = await create_backup();
+    try {
+      const zip = new Zip(fnm);
+      // the entry names are readable, the contents are not
+      expect(zip.getEntries().map((e: any) => e.entryName)).toContain(
+        "pack.json"
+      );
+      expect(() => zip.readFile("pack.json")).toThrow();
+      const pack = JSON.parse(zip.readFile("pack.json", password)!.toString());
+      expect(Array.isArray(pack.tables)).toBe(true);
+    } finally {
+      await unlink(fnm);
+    }
+  });
+
+  it("restores an encrypted backup", async () => {
+    await getState()!.setConfig("backup_password", password);
+    const fnm = await create_backup();
+    try {
+      await reset();
+      expect(Table.findOne({ name: "books" })).toBe(null);
+
+      const err = await restore(fnm, (p) => {}, true, password);
+      expect(err).toBe(undefined);
+      const books = Table.findOne({ name: "books" });
+      assertIsSet(books);
+    } finally {
+      await unlink(fnm);
+    }
+  });
+
+  it("reports that a password is required when it is missing", async () => {
+    await getState()!.setConfig("backup_password", password);
+    const fnm = await create_backup();
+    try {
+      let error: any;
+      await restore(fnm, (p) => {}, true).catch((e) => {
+        error = e;
+      });
+      expect(error).toBeTruthy();
+      expect(error.requiresPassword).toBe(true);
+    } finally {
+      await unlink(fnm);
+    }
   });
 });
