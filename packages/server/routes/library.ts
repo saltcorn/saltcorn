@@ -32,8 +32,35 @@ router.post(
   "/savefrombuilder",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    await Library.create(req.body || {});
-    res.json({ success: "ok" });
+    const id = await Library.create(req.body || {});
+    res.json({ success: "ok", id });
+  })
+);
+
+/**
+ * @name get/content/:id
+ * @function
+ * @memberof module:routes/library~libraryRouter
+ * Current content of a library item, fetched fresh (not from whatever the
+ * builder's own page load happened to have) - a placed instance always
+ * starts from the latest saved content of the shared component.
+ */
+router.get(
+  "/content/:id",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+    const lib = await Library.findOne({ id });
+    if (!lib) {
+      res.status(404).json({ error: "Library item not found" });
+      return;
+    }
+    res.json({
+      id: lib.id,
+      name: lib.name,
+      icon: lib.icon,
+      layout: lib.layout,
+    });
   })
 );
 

@@ -43,12 +43,13 @@ import {
   ToolboxFilter,
   ToolboxList,
 } from "./Toolbox";
-import { craftToSaltcorn, layoutToNodes } from "./storage";
+import { craftToSaltcorn, layoutToNodes, resolveLibraryRefs } from "./storage";
 import { Card } from "./elements/Card";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Container } from "./elements/Container";
 import { Column } from "./elements/Column";
+import { LibraryInstance } from "./elements/LibraryInstance";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCopy,
@@ -786,7 +787,10 @@ const NextButton = ({ layout }) => {
   const options = useContext(optionsCtx);
 
   useEffect(() => {
-    layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
+    (async () => {
+      await resolveLibraryRefs(layout, options);
+      layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
+    })();
   }, []);
 
   /**
@@ -949,6 +953,7 @@ const Builder = ({ options, layout, mode }) => {
           ListColumn,
           ListColumns,
           LibraryElem,
+          LibraryInstance,
           Prompt,
           Page
         }}

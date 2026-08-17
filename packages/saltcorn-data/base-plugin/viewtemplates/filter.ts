@@ -345,6 +345,7 @@ const run = async (
   });
   evalCtx.session_id = getSessionId(extra.req);
   await traverse(layout, {
+    library: (segment: any) => Library.resolveSegment(segment, extra.req),
     aggregation: async (segment: GenObj) => {
       const { stat, agg_field, agg_fieldview, aggwhere } = segment;
       const where = stateFieldsToWhere({ fields, state, table, prefix: "a." });

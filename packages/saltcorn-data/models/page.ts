@@ -13,6 +13,7 @@ import db from "../db/index.js";
 import View from "./view.js";
 import Table from "./table.js";
 import File from "./file.js";
+import Library from "./library.js";
 import { readFile } from "fs/promises";
 import { parseDocument, DomUtils } from "htmlparser2";
 import * as layout from "./layout.js";
@@ -401,6 +402,8 @@ class Page implements AbstractPage {
         segment.type = "blank";
         segment.contents = html;
       },
+      library: (segment: any) =>
+        Library.resolveSegment(segment, extraArgs.req),
       link: (segment) => {
         if (segment.transfer_state) {
           segment.url += `?` + objectToQueryString(querystate || {});

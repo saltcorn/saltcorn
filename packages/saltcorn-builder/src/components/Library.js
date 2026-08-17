@@ -17,10 +17,11 @@ import { useEditor, useNode } from "@craftjs/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
-import { craftToSaltcorn, layoutToNodes } from "./storage";
+import { craftToSaltcorn, layoutToNodes, resolveLibraryRefs } from "./storage";
 import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
 import { isEqual, throttle, chunk } from "lodash";
+import { LibraryInstance } from "./elements/LibraryInstance";
 
 const getSelectedNodes = (selected) => {
   if (!selected) return [];
@@ -84,6 +85,8 @@ const useThrottle = (callback) => {
 };
 
 export /**
+ * Renders nothing - just wires up autosave and turns a freshly dropped
+ * library item into a real linked instance.
  * @param {object} props
  * @param {object} props.nodekeys
  * @returns {object[]}
@@ -139,6 +142,7 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
         .forEach((child) => {
           actions.delete(child);
         });
+      await resolveLibraryRefs(layout, options);
       layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
     } catch (e) {
       console.error("rebuild error", e);
@@ -179,14 +183,20 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
       options
     );
     const urlroot = options.page_id ? "pageedit" : "viewedit";
+    // also compare libraryUpdates - editing a shared component doesn't
+    // change this page's own layout, but still needs saving
+    const comparable = JSON.stringify({
+      layout: data.layout,
+      libraryUpdates: data.libraryUpdates,
+    });
     if (savedData.current === false) {
       //do not save on first call
-      savedData.current = JSON.stringify(data.layout);
+      savedData.current = comparable;
 
       return;
     }
-    if (isEqual(savedData.current, JSON.stringify(data.layout))) return;
-    savedData.current = JSON.stringify(data.layout);
+    if (isEqual(savedData.current, comparable)) return;
+    savedData.current = comparable;
     setSavingState({ isSaving: true });
 
     fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
@@ -199,13 +209,15 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
       body: JSON.stringify(data),
     })
       .then((response) => {
-        response.json().then((data) => {
-          if (typeof data?.error === "string") {
+        response.json().then((respData) => {
+          if (typeof respData?.error === "string") {
             // don't log duplicates
             if (!savingState.error)
-              window.notifyAlert({ type: "danger", text: data.error });
-            setSavingState({ isSaving: false, error: data.error });
-          } else setSavingState({ isSaving: false });
+              window.notifyAlert({ type: "danger", text: respData.error });
+            setSavingState({ isSaving: false, error: respData.error });
+          } else {
+            setSavingState({ isSaving: false });
+          }
         });
       })
       .catch((e) => {
@@ -245,17 +257,38 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
       const id = newNodeIds[0];
       const node = nodes[id];
       if (node.displayName === "LibraryElem") {
-        const layout = node.props.layout;
-        layoutToNodes(
-          layout.layout ? layout.layout : layout,
-          query,
-          actions,
-          node.parent,
-          options
-        );
-        setTimeout(() => {
-          actions.delete(id);
-        }, 0);
+        const parent = node.parent;
+        // fetch fresh rather than trust the sidebar's page-load snapshot -
+        // the shared component may have been edited since this page loaded
+        fetch(`/library/content/${node.props.id}`, {
+          headers: { "CSRF-Token": options.csrfToken },
+        })
+          .then((r) => r.json())
+          .then((lib) => {
+            if (lib.error) {
+              window.notifyAlert({ type: "danger", text: lib.error });
+              actions.delete(id);
+              return;
+            }
+            const libLayout = lib.layout.layout ? lib.layout.layout : lib.layout;
+            const wrapperNode = query
+              .parseReactElement(
+                <LibraryInstance
+                  library_id={lib.id}
+                  library_name={lib.name}
+                />
+              )
+              .toNodeTree();
+            actions.addNodeTree(wrapperNode, parent);
+            layoutToNodes(
+              libLayout,
+              query,
+              actions,
+              wrapperNode.rootNodeId,
+              options
+            );
+            actions.delete(id);
+          });
       } else if (node.displayName !== "Column") {
         actions.selectNode(id);
       }
@@ -267,14 +300,14 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
     const nodes = query.getSerializedNodes();
     nodekeys.current = Object.keys(nodes);
     actions.setOptions((options) => {
-      const oldf = options.onNodesChange(
-        (options.onNodesChange = oldf
-          ? (q) => {
-              oldf(q);
-              onNodesChange(q);
-            }
-          : onNodesChange)
-      );
+      // chain onto any existing handler instead of replacing it
+      const oldf = options.onNodesChange;
+      options.onNodesChange = oldf
+        ? (q) => {
+            oldf(q);
+            onNodesChange(q);
+          }
+        : onNodesChange;
     });
   }, []);
 
@@ -320,11 +353,36 @@ const Library = ({ expanded }) => {
         "CSRF-Token": options.csrfToken,
       },
       body: JSON.stringify(data),
-    });
+    })
+      .then((r) => r.json())
+      .then(({ id }) => {
+        // needed so this item can be linked (fetched by id) without a
+        // page reload, same as items already loaded from the server
+        setRecent((r) => [...r, { ...data, id }]);
+        // replace what was just saved with a linked instance of it, so the
+        // spot it was saved from also stays in sync with the library from now on
+        const savedNode = query.node(nodeToSave).get();
+        const parentId = savedNode.data.parent;
+        const siblings = query.node(parentId).get().data.nodes;
+        const ix = siblings.indexOf(nodeToSave);
+        const wrapperNode = query
+          .parseReactElement(
+            <LibraryInstance library_id={id} library_name={newName} />
+          )
+          .toNodeTree();
+        actions.addNodeTree(wrapperNode, parentId, ix);
+        layoutToNodes(
+          layout.layout,
+          query,
+          actions,
+          wrapperNode.rootNodeId,
+          options
+        );
+        actions.delete(nodeToSave);
+      });
     setAdding(false);
     setIcon();
     setNewName("");
-    setRecent([...recent, data]);
   };
 
   const elemRows = chunk(
@@ -337,7 +395,7 @@ const Library = ({ expanded }) => {
         <button
           className="btn btn-sm btn-secondary dropdown-toggle mt-2"
           type="button"
-          id="dropdownMenuButton"
+          id="library-add-btn"
           aria-haspopup="true"
           aria-expanded="false"
           disabled={!selected && selectedNodes.length === 0}
@@ -348,7 +406,7 @@ const Library = ({ expanded }) => {
         </button>
         <div
           className={`dropdown-menu py-3 px-4 ${adding ? "show" : ""}`}
-          aria-labelledby="dropdownMenuButton"
+          aria-labelledby="library-add-btn"
         >
           <label>{t("Name")}</label>
           <input
@@ -388,7 +446,11 @@ const Library = ({ expanded }) => {
                 icon={l.icon}
                 label={l.name}
               >
-                <LibraryElem name={l.name} layout={l.layout}></LibraryElem>
+                <LibraryElem
+                  id={l.id}
+                  name={l.name}
+                  layout={l.layout}
+                ></LibraryElem>
               </WrapElem>
             ))}
           </div>

@@ -1140,6 +1140,9 @@ const run = async (
     views[name] = view;
     return view;
   };
+  await traverse(layout, {
+    library: (segment: any) => Library.resolveSegment(segment, extraOpts.req),
+  });
   await eachView(layout, async (segment: GenObj) => {
     const view = await getView(segment.view, segment.relation);
     if (!view)

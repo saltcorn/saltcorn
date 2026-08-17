@@ -622,7 +622,7 @@ class PageLocators {
     this.dragElement = 'div.d-inline-flex.wrap-builder-elem[draggable="true"]';
     this.cardBoxClick = 'div.card.shadow.builder >> div.card-header';
     this.Library = 'div.bg-secondary.ps-1.text-white.w-100.mt-1';
-    this.plusAddButton = 'button#dropdownMenuButton';
+    this.plusAddButton = 'button#library-add-btn';
     this.nameField = 'input.form-control';
     this.selectIcon = '.rfipbtn__current .rfipbtn__icon--empty';
     this.selectIconFarFaAddress = 'span.rfipicons__icon[title="far fa-address-card"]';
@@ -637,6 +637,8 @@ class PageLocators {
     this.dragElement1 = 'div.d-inline-flex.wrap-builder-elem >> div.inner > i.fas.fa-address-card';
     this.testPage4 = 'li.breadcrumb-item.fw-bold[aria-current="page"] a';
     this.pageNameSave3 = 'a[href="/page/testpage3"]'
+    this.selectIconFasFaAdjust = 'span.rfipicons__icon[title="fas fa-adjust"]';
+    this.dragLibraryAdjustIcon = 'div.d-inline-flex.wrap-builder-elem >> div.inner > i.fas.fa-adjust';
     //'table.table >> tbody >> tr >> td:nth-child(3) >> a';
     this.actionButton = 'button.btn.btn-primary.selected-node';
     this.ClickToEditCheckBox = 'input[type="checkbox"][name="inline"]'

@@ -32,6 +32,7 @@ import { DropMenu } from "./elements/DropMenu";
 import { Container } from "./elements/Container";
 import { Prompt } from "./elements/Prompt";
 import { rand_ident } from "./elements/utils";
+import { LibraryInstance } from "./elements/LibraryInstance";
 
 /**
  * @param {object} segment
@@ -83,6 +84,48 @@ const allElements = [
   ListColumns,
   Prompt,
 ];
+
+export /**
+ * Looks up the current content for every shared component reference in a
+ * layout, always fresh, so a placed instance shows its latest version.
+ * @param {object} layout
+ * @param {object} options
+ * @returns {Promise<void>}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const resolveLibraryRefs = async (layout, options) => {
+  const jobs = [];
+  const go = (segment) => {
+    if (!segment) return;
+    if (Array.isArray(segment)) {
+      segment.forEach(go);
+      return;
+    }
+    if (segment.type === "library" && segment.library_id) {
+      jobs.push(
+        fetch(`/library/content/${segment.library_id}`, {
+          headers: { "CSRF-Token": options.csrfToken },
+        })
+          .then((r) => r.json())
+          .then((lib) => {
+            if (lib.error) return;
+            segment.library_name = lib.name;
+            segment.contents = lib.layout.layout
+              ? lib.layout.layout
+              : lib.layout;
+          })
+      );
+      return; // contents isn't resolved yet - nothing to recurse into
+    }
+    if (segment.above) go(segment.above);
+    else if (segment.besides) go(segment.besides);
+    else if (segment.contents) go(segment.contents);
+  };
+  go(layout);
+  await Promise.all(jobs);
+};
 
 export /**
  * @param {object} layout
@@ -234,6 +277,21 @@ const layoutToNodes = (
           minRole={segment.minRole || 10}
           isFormula={segment.isFormula || {}}
         />
+      );
+    } else if (segment.type === "library") {
+      // segment.contents/library_name must already be filled in by
+      // resolveLibraryRefs before this runs - toTag itself can't be async
+      return (
+        <Element
+          key={ix}
+          canvas
+          is={LibraryInstance}
+          library_id={segment.library_id}
+          library_name={segment.library_name}
+          custom={segment._custom || {}}
+        >
+          {toTag(segment.contents)}
+        </Element>
       );
     } else if (segment.type === "tabs") {
       let contentsArray = segment.contents.map(toTag);
@@ -406,6 +464,10 @@ export /**
  */
 const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
   var columns = [];
+  // shared components edited in place here save to their _sc_library row,
+  // not into this page/view's own layout - accumulated the same way
+  // `columns` is, as go() walks the tree
+  var libraryUpdates = [];
   /**
    * @param {object} node
    * @returns {void|object}
@@ -488,6 +550,21 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         lc[f.name] = node.props[f.name];
       });
       return lc;
+    }
+    if (node.displayName === LibraryInstance.craft.displayName) {
+      // Must come before the generic canvas case below, otherwise saving
+      // after a reload turns this into a plain copy and breaks the link.
+      // Saving this page writes the edited content to the shared library
+      // entry, not into the page - the page just keeps pointing to it.
+      libraryUpdates.push({
+        library_id: node.props.library_id,
+        layout: get_nodes(node),
+      });
+      return {
+        type: "library",
+        library_id: node.props.library_id,
+        ...customProps,
+      };
     }
     if (node.isCanvas) {
       return get_nodes(node);
@@ -675,5 +752,5 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
   /*console.log("nodes", JSON.stringify(nodes));
     console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));*/
-  return { columns, layout };
+  return { columns, layout, libraryUpdates };
 };

@@ -26,6 +26,7 @@ import Form from "@saltcorn/data/models/form";
 import Field from "@saltcorn/data/models/field";
 import Table from "@saltcorn/data/models/table";
 import View from "@saltcorn/data/models/view";
+import Library from "@saltcorn/data/models/library";
 import Workflow from "@saltcorn/data/models/workflow";
 import User from "@saltcorn/data/models/user";
 import Trigger from "@saltcorn/data/models/trigger";
@@ -908,14 +909,16 @@ router.post(
     const { id } = req.params;
 
     if (id && (req.body || {})) {
+      const { libraryUpdates, ...bodyRest } = req.body || {};
       const exview = (await View.findOne({ id }))!;
-      let newcfg = { ...exview.configuration, ...(req.body || {}) };
+      let newcfg = { ...exview.configuration, ...bodyRest };
       await View.update({ configuration: newcfg }, +id);
       await getState()!.refresh_views();
       Trigger.emitEvent("AppChange", `View ${exview.name}`, req.user, {
         entity_type: "View",
         entity_name: exview.name,
       });
+      if (libraryUpdates?.length) await Library.saveLibraryUpdates(libraryUpdates);
       res.json({ success: "ok" });
     } else {
       res.json({ error: req.__("Unable to save: No view") });
