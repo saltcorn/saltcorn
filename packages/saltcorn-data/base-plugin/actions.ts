@@ -2403,21 +2403,21 @@ export default {
         "Actions",
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models_table.Table.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_index.Table.html",
             target: "_blank",
           },
           "Table"
         ),
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models_file.File.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_index.File.html",
             target: "_blank",
           },
           "File"
         ),
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models_user.User.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_index.User.html",
             target: "_blank",
           },
           "User"

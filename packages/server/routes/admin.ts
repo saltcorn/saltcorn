@@ -411,14 +411,21 @@ router.get(
   })
 );
 
+// jsdoc are copied into the server package on release, but live in the
+// repository root when running from a source checkout
+const jsdocBaseDir = () =>
+  [
+    path.join(__dirname, "..", "..", "docs"),
+    path.join(__dirname, "..", "..", "..", "..", "docs"),
+  ].find((dir) => fs.existsSync(dir));
+
 router.get(
   "/jsdoc/*filepath",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
-    const fullPath = File.normalise_in_base(
-      path.join(__dirname, "..", "..", "docs"),
-      ...req.params.filepath
-    );
+    const baseDir = jsdocBaseDir();
+    const fullPath =
+      baseDir && File.normalise_in_base(baseDir, ...req.params.filepath);
     if (fullPath && fs.existsSync(fullPath))
       res.sendFile(fullPath, { dotfiles: "allow" });
     else {
@@ -5512,7 +5519,7 @@ router.get(
             "Only functions declared as <code>function name(...) {...}</code> or <code>async function name(...) {...}</code> will be available in formulae and code actions. Declare a constant <code>k</code> as <code>globalThis.k = ...</code> In scope: " +
             a(
               {
-                href: "/admin/jsdoc/classes/_saltcorn_data.models_table.Table.html",
+                href: "/admin/jsdoc/classes/_saltcorn_data.models_index.Table.html",
                 target: "_blank",
               },
               "Table"
