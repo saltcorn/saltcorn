@@ -663,6 +663,18 @@ describe("Table with row ownership joined formula nocalc", () => {
 
     await persons.insertRow({ lastname: "Joe", age: 12, department: 2 });
     await persons.insertRow({ lastname: "Sam", age: 13, department: 1 });
+    const owned_rows = await persons.getRows({}, { forUser: owner_user });
+    expect(owned_rows.length).toBe(1);
+    expect(owned_rows[0].lastname).toBe("Sam");
+    expect(owned_rows[0].department).toBe(1);
+    const selected_owned_rows = await persons.getRows(
+      {},
+      { forUser: owner_user, fields: ["lastname"] }
+    );
+    expect(selected_owned_rows.length).toBe(1);
+    expect(selected_owned_rows[0].lastname).toBe("Sam");
+    if (!db.isSQLite)
+      expect(selected_owned_rows).toStrictEqual([{ lastname: "Sam" }]);
     await test_person_table(persons);
     //insert
     await persons.insertRow(
