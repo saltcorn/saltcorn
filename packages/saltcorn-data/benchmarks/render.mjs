@@ -1,25 +1,15 @@
 /**
- * Render benchmark for expression evaluation (issue #4298).
- *
- * Renders a List view several ways, so the cost of evaluating expressions can
- * be separated from the cost of rendering markup:
- *
- *   as_text            no expression evaluation at all - the control
- *   show_with_html     one {{ }} token per cell   -> interpolate()
- *   cell_css_formula   one formula per cell       -> eval_expression()
- *   FormulaValue       one formula per cell       -> eval_expression()
- *
- * Usage, from packages/saltcorn-data (needs a database, as the tests do):
+ * Times rendering a List view four ways (issue #4298). All four render the same
+ * cells; as_text evaluates nothing, so the difference from it is the cost of
+ * evaluating expressions.
  *
  *   NODE_ENV=test PGDATABASE=saltcorn_test npm run bench:render
  *
- * Options (environment):
- *   BENCH_ROWS=15  BENCH_COLS=13  BENCH_ITERS=20
- *
- * reset_schema() below DROPS the schema it runs in, so this keeps to a schema
- * of its own unless SALTCORN_DEFAULT_SCHEMA names one - otherwise running the
- * benchmark wipes the test database, extensions included.
+ * Env: BENCH_ROWS, BENCH_COLS, BENCH_ITERS.
  */
+
+// reset_schema() DROPS the schema it runs in, so keep to one of our own unless
+// told otherwise - or running this wipes the test database
 process.env.SALTCORN_DEFAULT_SCHEMA =
   process.env.SALTCORN_DEFAULT_SCHEMA || "bench_render";
 
@@ -114,33 +104,6 @@ for (const [name, view] of Object.entries(views)) {
     throw new Error(`${name} rendered ${n} cells, expected ${CELLS}`);
 }
 
-// ---------------------------------------------------------------------------
-// The "before" for comparison. This is what the code did prior to the fix: a
-// fresh VM built for every evaluation, with the values put in its sandbox.
-// It lives here rather than behind a flag in the product, so the old cost can
-// still be measured without keeping the old code around.
-// ---------------------------------------------------------------------------
-const { VM } = await import("vm2");
-const evaluator = getState().evaluator;
-const currentEvaluate = evaluator.evaluate.bind(evaluator);
-
-const legacyEvaluate = (expression, context = {}) =>
-  new VM({
-    sandbox: {
-      ...evaluator.globals,
-      global: undefined,
-      globalThis: undefined,
-      process: undefined,
-      require: undefined,
-      module: undefined,
-      Function: undefined,
-      ...context,
-    },
-    eval: false,
-    wasm: false,
-    timeout: 200,
-  }).run(`(${expression})`);
-
 const time = async (view) => {
   for (let i = 0; i < 5; i++) await run(view); // warm up
   const t0 = process.hrtime.bigint();
@@ -148,40 +111,24 @@ const time = async (view) => {
   return Number(process.hrtime.bigint() - t0) / 1e6 / ITERS;
 };
 
+const pad = (s, n) => String(s).padEnd(n);
+
 console.log(
   `\nrendering a List view: ${ROWS} rows x ${COLS} cols = ${CELLS} cells, ` +
     `${ITERS} renders each\n`
 );
 
-const results = {};
-for (const [name, view] of Object.entries(views)) {
-  evaluator.evaluate = legacyEvaluate;
-  const before = await time(view);
-  evaluator.evaluate = currentEvaluate;
-  const after = await time(view);
-  results[name] = { before, after };
-}
+const rendered = {};
+for (const [name, view] of Object.entries(views)) rendered[name] = await time(view);
 
-const pad = (s, n) => String(s).padEnd(n);
-console.log(
-  `${pad("", 22)}${"a VM per eval".padStart(14)}${"reused VM".padStart(12)}`
-);
-console.log("-".repeat(48));
-for (const [name, r] of Object.entries(results))
-  console.log(
-    `${pad(name, 22)}${r.before.toFixed(2).padStart(11)} ms${r.after.toFixed(2).padStart(9)} ms`
-  );
+for (const [name, ms] of Object.entries(rendered))
+  console.log(`  ${pad(name, 20)}${ms.toFixed(2).padStart(9)} ms/render`);
 
-console.log("\nper-cell cost of evaluating, over the as_text control:");
-for (const [name, r] of Object.entries(results)) {
+console.log("\n  cost of evaluating, per cell, over the as_text control:");
+for (const [name, ms] of Object.entries(rendered)) {
   if (name === "as_text") continue;
-  const us = (t) => ((t - results.as_text.after) * 1000) / CELLS;
-  console.log(
-    `  ${pad(name, 20)}${us(r.before).toFixed(0).padStart(6)} us ->` +
-      `${us(r.after).toFixed(1).padStart(7)} us   ` +
-      `${(us(r.before) / us(r.after)).toFixed(0)}x`
-  );
+  const us = ((ms - rendered.as_text) * 1000) / CELLS;
+  console.log(`  ${pad(name, 20)}${us.toFixed(1).padStart(9)} us/cell`);
 }
-console.log("");
 
 await db.close();
