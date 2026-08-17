@@ -15,6 +15,7 @@ const require = createRequire(import.meta.url);
 // binding is only dereferenced when the function is actually called (by which
 // time expression has finished evaluating).
 import { today as _today } from "../models/expression.js";
+import { Evaluator } from "../evaluator.js";
 const today = (...args: any[]): any => _today(...args);
 import livePluginManagerPkg from "live-plugin-manager";
 import vm2Pkg from "vm2";
@@ -224,6 +225,7 @@ class State {
   roles: Array<AbstractRole>;
   function_context: Record<string, Function>;
   codepage_context: Record<string, unknown>;
+  private _evaluator?: Evaluator;
   plugins_cfg_context: any;
   functions: Record<string, Function | PluginFunction>;
   keyFieldviews: Record<string, FieldView>;
@@ -1208,6 +1210,9 @@ class State {
       else this.capacitorPlugins.push(capPlugin);
     });
 
+    // a plugin can add to function_context, which the evaluator holds
+    this.invalidate_evaluator();
+
     if (hasFunctions)
       this.refresh_codepages(true).catch((e) => console.error(e));
   }
@@ -1371,6 +1376,25 @@ class State {
   }
 
   /**
+   * Evaluates expressions and `{{ }}` interpolations, holding the eval_context
+   * and a cache of compiled expressions. Built on first use and discarded by
+   * invalidate_evaluator() whenever the eval_context changes.
+   */
+  get evaluator(): Evaluator {
+    if (!this._evaluator) this._evaluator = new Evaluator(this.eval_context);
+    return this._evaluator;
+  }
+
+  /**
+   * Drop the evaluator so the next use rebuilds it against the current
+   * eval_context. Invalidating rather than rebuilding here keeps a burst of
+   * registerPlugin() calls at startup to a single rebuild.
+   */
+  invalidate_evaluator() {
+    this._evaluator = undefined;
+  }
+
+  /**
    * Take the config 'function_code_pages' and build the 'codepage_context' member
    * @param noSignal - Do not signal reload to other cluster processes.
    * @param keepUnchanged - When 'function_code_pages' didn't change, true skips building it again
@@ -1476,6 +1500,7 @@ class State {
         errMsg = e?.message || e;
       }
     }
+    this.invalidate_evaluator(); // codepage_context has been rebuilt
     if (!noSignal && db.is_node)
       this.processSend({ refresh: "codepages", tenant: db.getTenantSchema() });
     this.oldCodePages = code_pages;

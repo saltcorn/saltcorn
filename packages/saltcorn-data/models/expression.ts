@@ -46,12 +46,20 @@ function vmRun(code: string, sandbox: any): any {
       eval: db.getTenantSchema() === db.connectObj.default_schema,
       wasm: false,
     }).run(code);
-    if (typeof result === "function")
-      return (...args: any[]) => deproxy(result(...args));
-    return deproxy(result);
+    return postProcessVmResult(result);
   } else {
     return runInNewContext(code, sandbox);
   }
+}
+
+/**
+ * Normalise a result. The interpreter uses this too: it has no proxies to
+ * unwrap, but the JSON round-trip is observable - a Date comes back as a string.
+ */
+function postProcessVmResult(result: any): any {
+  if (typeof result === "function")
+    return (...args: any[]) => deproxy(result(...args));
+  return deproxy(result);
 }
 
 /**
@@ -841,14 +849,16 @@ function eval_expression(
   try {
     const use_row = row || {};
     const field_names = Object.keys(use_row).filter(isValidJsIdentifier);
-    const args = field_names.includes("user")
-      ? `row, {${field_names.join()}}`
-      : `row, {${field_names.join()}}, user`;
-    return vmRun(`((${args})=>(${expression}))(row, row, user)`, {
-      ...getState()!.eval_context,
-      row: use_row,
-      user,
-    });
+
+    // same bindings as before - `row`, then the row's own fields (so a field
+    // called `row` shadows it), then `user` unless the row supplies one
+    const context: GenObj = { row: use_row };
+    for (const name of field_names) context[name] = use_row[name];
+    if (!field_names.includes("user")) context.user = user;
+
+    return postProcessVmResult(
+      getState()!.evaluator.evaluate(expression || "", context)
+    );
   } catch (e: any) {
     e.message = `In evaluating the expression ${expression}${
       errorLocation ? ` in ${errorLocation}` : ""
