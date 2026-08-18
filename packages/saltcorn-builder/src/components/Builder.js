@@ -66,7 +66,7 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import { Accordion, ErrorBoundary } from "./elements/utils";
 import { Display, Tablet, Phone } from "react-bootstrap-icons";
-import { InitNewElement, Library, LibraryElem } from "./Library";
+import { InitNewElement, Library, LibraryElem, hydratingRef } from "./Library";
 import { RenderNode } from "./RenderNode";
 import { ListColumn } from "./elements/ListColumn";
 import { ListColumns } from "./elements/ListColumns";
@@ -788,8 +788,13 @@ const NextButton = ({ layout }) => {
 
   useEffect(() => {
     (async () => {
-      await resolveLibraryRefs(layout, options);
-      layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
+      hydratingRef.current = true;
+      try {
+        await resolveLibraryRefs(layout, options);
+        layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
+      } finally {
+        hydratingRef.current = false;
+      }
     })();
   }, []);
 
@@ -797,11 +802,29 @@ const NextButton = ({ layout }) => {
    * @returns {void}
    */
   const onClick = () => {
-    const { columns, layout } = craftToSaltcorn(
+    const { columns, layout, libraryUpdates } = craftToSaltcorn(
       JSON.parse(query.serialize()),
       "ROOT",
       options
     );
+    if (libraryUpdates?.length) {
+      // fire-and-forget with keepalive, not awaited - the button must submit
+      // the form immediately, since the page navigates away right after
+      fetch(`/library/save-updates`, {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": options.csrfToken,
+        },
+        body: JSON.stringify({ libraryUpdates }),
+      }).catch(() => {
+        window.notifyAlert({
+          type: "danger",
+          text: "Unable to save shared component changes",
+        });
+      });
+    }
     document
       .querySelector("form#scbuildform input[name=columns]")
       .setAttribute("value", encodeURIComponent(JSON.stringify(columns)));

@@ -23,6 +23,10 @@ import { WrapElem } from "./Toolbox";
 import { isEqual, throttle, chunk } from "lodash";
 import { LibraryInstance } from "./elements/LibraryInstance";
 
+// true while loading a saved layout into the canvas, so nothing gets
+// accidentally auto-selected along the way
+export const hydratingRef = { current: false };
+
 const getSelectedNodes = (selected) => {
   if (!selected) return [];
   if (typeof selected.has === "function") {
@@ -134,6 +138,7 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
 
     try {
       rebuildInProgress.current = true;
+      hydratingRef.current = true;
       savedData.current = JSON.stringify(layout);
       actions.selectNode();
       query
@@ -148,6 +153,7 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
       console.error("rebuild error", e);
     } finally {
       rebuildInProgress.current = false;
+      hydratingRef.current = false;
     }
   };
 
@@ -289,7 +295,7 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
             );
             actions.delete(id);
           });
-      } else if (node.displayName !== "Column") {
+      } else if (node.displayName !== "Column" && !hydratingRef.current) {
         actions.selectNode(id);
       }
     }

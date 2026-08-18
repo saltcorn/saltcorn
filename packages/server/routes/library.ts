@@ -38,6 +38,24 @@ router.post(
 );
 
 /**
+ * Saves edits made inside shared components, independent of which page or
+ * view they were edited from. Used by the builder's "Next" button, which
+ * otherwise only submits the page/view's own layout.
+ * @name post/save-updates
+ * @function
+ * @memberof module:routes/library~libraryRouter
+ */
+router.post(
+  "/save-updates",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { libraryUpdates } = req.body || {};
+    if (libraryUpdates?.length) await Library.saveLibraryUpdates(libraryUpdates);
+    res.json({ success: "ok" });
+  })
+);
+
+/**
  * @name get/content/:id
  * @function
  * @memberof module:routes/library~libraryRouter
