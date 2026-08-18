@@ -405,7 +405,7 @@ router.get(
         res.status(404).send(req.__("Not found"));
       }
     } else {
-      getState()!.log(6, `Plugin serve heko: plogin not found ${plugin}`);
+      getState()!.log(6, `Plugin serve help: plugin not found ${plugin}`);
       res.status(404).send(req.__("Not found"));
     }
   })

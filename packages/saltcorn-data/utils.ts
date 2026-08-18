@@ -31,7 +31,6 @@ import type Field from "./models/field.js"; // only type, shouldn't cause requir
 import type User from "./models/user.js"; // only type, shouldn't cause require loop
 import fsExtra from "fs-extra";
 const { existsSync } = fsExtra;
-import { VM } from "vm2";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import path from "path";
 import os from "os";
@@ -519,30 +518,15 @@ const interpolate = (
         });
         return template({ row, user, process: undefined, ...(row || {}) });
       }
-      const sandbox = {
-        ...stateMod().getState()!.eval_context,
-        global: undefined,
-        globalThis: undefined,
-        process: undefined,
-        require: undefined,
-        module: undefined,
-        Function: undefined,
-        row,
-        user,
-        ...(row || {}),
-      };
-      const vm = new VM({
-        sandbox,
-        eval: false,
-        wasm: false,
-        timeout: 200,
-      });
+      const evaluator = stateMod().getState()!.evaluator;
+      // row keys last, so a field called `row` or `user` shadows those bindings
+      const context = { row, user, ...(row || {}) };
 
       const go_interp = (s: string): string =>
         s.replace(/\{\{([!=]?)([\s\S]+?)\}\}/g, renderToken);
 
       const renderToken = (_match: string, bang: string, code: string) => {
-        const val = vm.run(`(${code.trim()})`);
+        const val = evaluator.evaluate(code.trim(), context);
         const strVal =
           val === null || typeof val === "undefined" ? "" : String(val);
         return bang === "="
@@ -660,10 +644,13 @@ const jsIdentifierValidator = (
 };
 
 function isValidJsIdentifier(str: string): boolean {
-   if (typeof str !== 'string' || str.length === 0) return false;
-  if (!/^[\p{ID_Start}$_][\p{ID_Continue}$\u200C\u200D]*$/u.test(str)) return false;
+  if (typeof str !== "string" || str.length === 0) return false;
+  if (!/^[\p{ID_Start}$_][\p{ID_Continue}$\u200C\u200D]*$/u.test(str))
+    return false;
   try {
-    const fn = new Function(`"use strict"; return (async function ${str}() {});`)();
+    const fn = new Function(
+      `"use strict"; return (async function ${str}() {});`
+    )();
     return fn.name === str;
   } catch {
     return false;
