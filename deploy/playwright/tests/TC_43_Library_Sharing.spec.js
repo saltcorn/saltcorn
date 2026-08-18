@@ -140,4 +140,58 @@ test.describe('E2E Test Suite - Library sharing', () => {
             await expect(page.getByText('Updated shared text')).toBeVisible();
         });
     });
+
+    test('A shared component containing a table field renders instead of crashing', async () => {
+        // CSV upload gives us a table with a real field and real row data in
+        // one step, instead of building it up manually
+        await functions.click_table();
+        await page.click(pageobject.createfromcsvupload);
+        const fileInput = await page.waitForSelector('input[type="file"]');
+        await fileInput.setInputFiles('Csv_file_to_uplaod/People1.csv');
+        await functions.fill_Text(pageobject.InputName, 'LibFieldPeople');
+        await functions.submit();
+
+        // a fresh Show view auto-places its fields, with real row data shown
+        // right in the builder - that's the "Adam" text below
+        await functions.views();
+        await page.click(pageobject.createnewview);
+        await page.fill(pageobject.InputName, 'LibFieldShow');
+        await page.fill(pageobject.discriptiontext, 'source show view for field sharing test');
+        await customAssert('Select show view pattern for view', async () => {
+            const ShowPattern = await page.$('#inputviewtemplate');
+            await ShowPattern?.selectOption('Show');
+        });
+        await functions.submit();
+        await page.waitForTimeout(2000);
+
+        // turn the auto-placed field into a shared component - this is what
+        // used to crash on reload, since a field needs the row context that
+        // an isolated re-render of the library's content didn't have
+        await page.click('div.d-inline:has-text("Adam")');
+        await page.click(pageobject.Library);
+        await page.click(pageobject.plusAddButton);
+        await page.click(pageobject.nameField);
+        await functions.fill_Text(pageobject.nameField, 'FieldShare');
+        await page.click(pageobject.selectIcon);
+        await page.locator(pageobject.selectIconFasFaAlignCenter).click();
+        await page.click(pageobject.selectIconFlip);
+        await page.click(pageobject.addButtonAfterSelect);
+        await page.click(pageobject.PageSave);
+
+        // row ids aren't guaranteed to start at 1 (depends on what ran
+        // earlier in this DB), so look Adam's row up instead of guessing
+        const adamId = await page.evaluate(async () => {
+            const r = await fetch('/api/LibFieldPeople?full_name=Adam');
+            const { success } = await r.json();
+            return success[0].id;
+        });
+
+        // reload as a real visitor would - this is the render path that
+        // used to throw "unknown layout segment" for a field inside a
+        // shared component
+        await page.goto(`${baseURL}${derivedURL}view/LibFieldShow?id=${adamId}`);
+        await customAssert('The shared field component renders the real row value, not an error', async () => {
+            await expect(page.getByText('Adam')).toBeVisible();
+        });
+    });
 });

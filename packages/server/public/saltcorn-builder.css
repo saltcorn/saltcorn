@@ -171,6 +171,15 @@ div.wrap-builder-elem label {
   display: block;
 }
 
+/* fallback selection border for elements with no box of their own (eg a
+   display:contents LibraryInstance wrapper) - the ::after above can't draw
+   on those, so this is a separate, absolutely-positioned rectangle instead */
+.selected-indicator-border {
+  position: fixed;
+  border: 1px dashed #2680eb;
+  pointer-events: none;
+}
+
 .canvas {
   outline: 1px dashed #808080;
 }

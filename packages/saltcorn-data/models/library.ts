@@ -4,11 +4,11 @@
  * @module models/library
  * @subcategory models
  */
-import { traverseSync } from "./layout.js";
+import { traverseSync, traverse } from "./layout.js";
 import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { LibraryCfg } from "@saltcorn/types/model-abstracts/abstract_library";
-import renderLayout from "@saltcorn/markup/layout";
+import { structuredClone } from "../utils.js";
 
 
 /**
@@ -144,7 +144,7 @@ class Library {
 
   /**
    * Saves edits made inside a shared component back to its library row.
-   * Last write wins - no conflict detection yet.
+   * Last write wins - no live push or conflict detection.
    * @param libraryUpdates
    * @returns {Promise<void>}
    */
@@ -157,25 +157,35 @@ class Library {
   }
 
   /**
-   * Renders a shared component's current content in place of its
-   * {type: "library"} reference, wherever a layout gets rendered.
+   * Swaps a {type: "library"} reference for its real content, so it renders
+   * as if it had been part of the page all along.
    * @param segment
    * @param req
+   * @param visitedIds - library ids seen so far on this branch, so a library
+   *   that contains itself renders blank instead of looping forever
    * @returns {Promise<void>}
    */
-  static async resolveSegment(segment: any, req: any): Promise<void> {
-    const lib = await Library.findOne({ id: segment.library_id });
-    segment.type = "blank";
-    if (!lib) {
+  static async resolveSegment(
+    segment: any,
+    req: any,
+    visitedIds: Set<number> = new Set()
+  ): Promise<void> {
+    const libId = segment.library_id;
+    const lib = visitedIds.has(libId)
+      ? null
+      : await Library.findOne({ id: libId });
+    if (!lib || !lib.layout) {
+      Object.keys(segment).forEach((k) => delete segment[k]);
+      segment.type = "blank";
       segment.contents = "";
       return;
     }
     const libLayout = lib.layout.layout ? lib.layout.layout : lib.layout;
-    segment.contents = renderLayout({
-      blockDispatch: {},
-      role: req?.user?.role_id || 100,
-      req,
-      layout: libLayout,
+    Object.keys(segment).forEach((k) => delete segment[k]);
+    Object.assign(segment, structuredClone(libLayout));
+    const nextVisited = new Set(visitedIds).add(libId);
+    await traverse(segment, {
+      library: (seg: any) => Library.resolveSegment(seg, req, nextVisited),
     });
   }
 }

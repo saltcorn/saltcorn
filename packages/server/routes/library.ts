@@ -50,7 +50,8 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { libraryUpdates } = req.body || {};
-    if (libraryUpdates?.length) await Library.saveLibraryUpdates(libraryUpdates);
+    if (libraryUpdates?.length)
+      await Library.saveLibraryUpdates(libraryUpdates);
     res.json({ success: "ok" });
   })
 );

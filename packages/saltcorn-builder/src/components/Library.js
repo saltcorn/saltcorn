@@ -99,7 +99,6 @@ export /**
  * @namespace
  */
 const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
-  const [saveTimeout, setSaveTimeout] = useState(false);
   const savedData = useRef(false);
   const { actions, query, connectors } = useEditor((state, query) => {
     return {};
@@ -180,6 +179,14 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
     };
   }, [handlePageShow]);
 
+  // is id (or a child of it) selected? checked via Craft.js, since editing
+  // happens in the settings panel, not the canvas DOM
+  const isNodeSelected = (id) => {
+    const selectedIds = query.getEvent("selected").all();
+    const within = query.node(id).descendants(true);
+    return selectedIds.some((sid) => within.includes(sid));
+  };
+
   const doSave = (query, keepalive) => {
     if (!query.serialize) return;
     if (rebuildInProgress.current) return;
@@ -205,6 +212,16 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
     savedData.current = comparable;
     setSavingState({ isSaving: true });
 
+    // dedupe by library_id, preferring the selected placement, so an
+    // untouched duplicate can't overwrite the one being edited
+    const byLibraryId = {};
+    (data.libraryUpdates || []).forEach((u) => {
+      const existing = byLibraryId[u.library_id];
+      if (!existing || (u.node_id && isNodeSelected(u.node_id)))
+        byLibraryId[u.library_id] = u;
+    });
+    const libraryUpdates = Object.values(byLibraryId);
+
     fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
       method: "POST", // or 'PUT'
       keepalive, //this is conditional bec body size is limited to 64KB
@@ -212,7 +229,11 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
         "Content-Type": "application/json",
         "CSRF-Token": options.csrfToken,
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        layout: data.layout,
+        columns: data.columns,
+        libraryUpdates,
+      }),
     })
       .then((response) => {
         response.json().then((respData) => {
@@ -270,13 +291,16 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
           headers: { "CSRF-Token": options.csrfToken },
         })
           .then((r) => r.json())
-          .then((lib) => {
+          .then(async (lib) => {
             if (lib.error) {
               window.notifyAlert({ type: "danger", text: lib.error });
               actions.delete(id);
               return;
             }
-            const libLayout = lib.layout.layout ? lib.layout.layout : lib.layout;
+            const libLayout = lib.layout?.layout ? lib.layout.layout : lib.layout || {};
+            // resolve any library references nested inside this one too,
+            // so dropping a library-in-a-library doesn't leave a gap
+            await resolveLibraryRefs(libLayout, options, new Set([lib.id]));
             const wrapperNode = query
               .parseReactElement(
                 <LibraryInstance

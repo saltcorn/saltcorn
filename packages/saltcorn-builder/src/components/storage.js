@@ -87,44 +87,51 @@ const allElements = [
 
 export /**
  * Looks up the current content for every shared component reference in a
- * layout, always fresh, so a placed instance shows its latest version.
+ * layout, always fresh, so a placed instance shows its latest version. Also
+ * resolves references nested inside a fetched component, so one shared
+ * component embedded in another still renders.
  * @param {object} layout
  * @param {object} options
+ * @param {Set<number>} [visitedIds] - library ids seen on this branch, so a
+ *   library that contains itself resolves to nothing instead of looping forever
  * @returns {Promise<void>}
  * @category saltcorn-builder
  * @subcategory components
  * @namespace
  */
-const resolveLibraryRefs = async (layout, options) => {
-  const jobs = [];
-  const go = (segment) => {
+const resolveLibraryRefs = async (layout, options, visitedIds = new Set()) => {
+  const go = async (segment) => {
     if (!segment) return;
     if (Array.isArray(segment)) {
-      segment.forEach(go);
+      await Promise.all(segment.map(go));
       return;
     }
     if (segment.type === "library" && segment.library_id) {
-      jobs.push(
-        fetch(`/library/content/${segment.library_id}`, {
-          headers: { "CSRF-Token": options.csrfToken },
-        })
-          .then((r) => r.json())
-          .then((lib) => {
-            if (lib.error) return;
-            segment.library_name = lib.name;
-            segment.contents = lib.layout.layout
-              ? lib.layout.layout
-              : lib.layout;
-          })
+      if (visitedIds.has(segment.library_id)) {
+        segment.contents = {};
+        return;
+      }
+      const r = await fetch(`/library/content/${segment.library_id}`, {
+        headers: { "CSRF-Token": options.csrfToken },
+      });
+      const lib = await r.json();
+      if (lib.error) return;
+      segment.library_name = lib.name;
+      segment.contents = lib.layout?.layout
+        ? lib.layout.layout
+        : lib.layout || {};
+      await resolveLibraryRefs(
+        segment.contents,
+        options,
+        new Set(visitedIds).add(segment.library_id)
       );
-      return; // contents isn't resolved yet - nothing to recurse into
+      return;
     }
-    if (segment.above) go(segment.above);
-    else if (segment.besides) go(segment.besides);
-    else if (segment.contents) go(segment.contents);
+    if (segment.above) await go(segment.above);
+    else if (segment.besides) await go(segment.besides);
+    else if (segment.contents) await go(segment.contents);
   };
-  go(layout);
-  await Promise.all(jobs);
+  await go(layout);
 };
 
 export /**
@@ -481,15 +488,21 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
 
   const get_nodes = (node) => {
     if (!node.nodes || node.nodes.length == 0) return;
-    else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
-    else return removeEmpty({ above: node.nodes.map((nm) => go(nodes[nm])) });
+    else if (node.nodes.length == 1)
+      return go(nodes[node.nodes[0]], node.nodes[0]);
+    else
+      return removeEmpty({
+        above: node.nodes.map((nm) => go(nodes[nm], nm)),
+      });
   };
 
   /**
    * @param {object} node
+   * @param {string} [id] - this node's own id, so a LibraryInstance save can
+   *   be told apart from a sibling placement (see doSave)
    * @returns {object}
    */
-  const go = (node) => {
+  const go = (node, id) => {
     if (!node) return;
     let customProps = {};
     const mergedCustom = { ...(node?.props?.custom || {}), ...(node?.custom || {}) };
@@ -552,14 +565,16 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       return lc;
     }
     if (node.displayName === LibraryInstance.craft.displayName) {
-      // Must come before the generic canvas case below, otherwise saving
-      // after a reload turns this into a plain copy and breaks the link.
-      // Saving this page writes the edited content to the shared library
-      // entry, not into the page - the page just keeps pointing to it.
-      libraryUpdates.push({
-        library_id: node.props.library_id,
-        layout: get_nodes(node),
-      });
+      // must come before the generic canvas case below, or a reload turns
+      // this into a plain copy. skip if emptied out, so we don't blank the shared row
+      const childContent = get_nodes(node);
+      if (childContent !== undefined) {
+        libraryUpdates.push({
+          library_id: node.props.library_id,
+          layout: childContent,
+          node_id: id,
+        });
+      }
       return {
         type: "library",
         library_id: node.props.library_id,
@@ -748,7 +763,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       };
     }
   };
-  const layout = go(nodes[startFrom]) || {};
+  const layout = go(nodes[startFrom], startFrom) || {};
   /*console.log("nodes", JSON.stringify(nodes));
     console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));*/

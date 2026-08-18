@@ -918,7 +918,8 @@ router.post(
         entity_type: "View",
         entity_name: exview.name,
       });
-      if (libraryUpdates?.length) await Library.saveLibraryUpdates(libraryUpdates);
+      if (libraryUpdates?.length)
+        await Library.saveLibraryUpdates(libraryUpdates);
       res.json({ success: "ok" });
     } else {
       res.json({ error: req.__("Unable to save: No view") });

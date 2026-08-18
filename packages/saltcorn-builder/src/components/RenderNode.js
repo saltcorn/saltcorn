@@ -57,6 +57,7 @@ const RenderNode = ({ render }) => {
   }));
 
   const currentRef = useRef();
+  const borderRef = useRef();
 
   const getZoomFactor = useCallback(() => {
     const bw = document.body.offsetWidth;
@@ -65,11 +66,30 @@ const RenderNode = ({ render }) => {
     return factor || 1;
   }, []);
 
+  // a display:contents element (e.g. the LibraryInstance boundary) has no
+  // box of its own, so getBoundingClientRect() on it is all zeros - fall
+  // back to the union of its children's boxes so selection still has
+  // something real to draw a border around
+  const getRect = (dom) => {
+    if (!dom) return { top: 0, left: 0, bottom: 0, right: 0, height: 0, width: 0 };
+    const rect = dom.getBoundingClientRect();
+    if (rect.width || rect.height) return rect;
+    const childRects = Array.from(dom.children || []).map(getRect);
+    if (!childRects.length) return rect;
+    const top = Math.min(...childRects.map((r) => r.top));
+    const left = Math.min(...childRects.map((r) => r.left));
+    const bottom = Math.max(...childRects.map((r) => r.bottom));
+    const right = Math.max(...childRects.map((r) => r.right));
+    return { top, left, bottom, right, width: right - left, height: bottom - top };
+  };
+
   const getPos = useCallback((dom) => {
     const zoom = getZoomFactor();
-    const { top, left, bottom, height, width, right } = dom
-      ? dom.getBoundingClientRect()
-      : { top: 0, left: 0, bottom: 0, right: 0, height: 0, width: 0 };
+    const ownRect = dom?.getBoundingClientRect();
+    const hasOwnBox = !!(ownRect && (ownRect.width || ownRect.height));
+    const { top, left, bottom, height, width, right } = hasOwnBox
+      ? ownRect
+      : getRect(dom);
     const topAdj = (top > 0 ? top : bottom) / zoom;
     const leftAdj = left / zoom;
     const rightPos = window.innerWidth / zoom - right / zoom;
@@ -83,21 +103,23 @@ const RenderNode = ({ render }) => {
       height: height / zoom,
       width: width / zoom,
       bottom: bottom / zoom,
+      hasOwnBox,
     };
   }, [getZoomFactor]);
 
   const scroll = useCallback(() => {
-    const { current: currentDOM } = currentRef;
-    if (!currentDOM) return;
     const pos = getPos(dom);
-    currentDOM.style.top = pos.top;
-    if (options.isRTL) {
-      currentDOM.style.right = pos.right;
-      currentDOM.style.left = 'auto';
-    } else {
-      currentDOM.style.left = pos.left;
-      currentDOM.style.right = 'auto';
-    }
+    [currentRef.current, borderRef.current].forEach((el) => {
+      if (!el) return;
+      el.style.top = pos.top;
+      if (options.isRTL) {
+        el.style.right = pos.right;
+        el.style.left = "auto";
+      } else {
+        el.style.left = pos.left;
+        el.style.right = "auto";
+      }
+    });
   }, [dom, getPos, options.isRTL]);
 
   const hiddenColumnParents = new Set(["Card", "Container", "Table", "DropMenu"]);
@@ -209,6 +231,24 @@ const RenderNode = ({ render }) => {
                   ]
                 : null}
             </div>,
+            document.querySelector("#builder-main-canvas")
+          )
+        : null}
+      {isActive && id !== "ROOT" && !getPos(dom).hasOwnBox
+        ? ReactDOM.createPortal(
+            <div
+              ref={borderRef}
+              className="selected-indicator-border"
+              style={{
+                ...(options.isRTL
+                  ? { right: getPos(dom).right, left: "auto" }
+                  : { left: getPos(dom).left, right: "auto" }),
+                top: getPos(dom).top,
+                width: getPos(dom).width,
+                height: getPos(dom).height,
+                zIndex: 1028,
+              }}
+            />,
             document.querySelector("#builder-main-canvas")
           )
         : null}

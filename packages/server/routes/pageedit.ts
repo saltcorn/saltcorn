@@ -816,7 +816,8 @@ router.post(
         entity_name: page.name,
       });
       const { libraryUpdates } = req.body || {};
-      if (libraryUpdates?.length) await Library.saveLibraryUpdates(libraryUpdates);
+      if (libraryUpdates?.length)
+        await Library.saveLibraryUpdates(libraryUpdates);
       res.json({ success: "ok" });
     } else {
       res.json({ error: req.__("Unable to save: No page or no layout") });

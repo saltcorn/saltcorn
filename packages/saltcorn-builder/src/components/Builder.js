@@ -808,8 +808,7 @@ const NextButton = ({ layout }) => {
       options
     );
     if (libraryUpdates?.length) {
-      // fire-and-forget with keepalive, not awaited - the button must submit
-      // the form immediately, since the page navigates away right after
+      // fire-and-forget with keepalive - the form submits right after
       fetch(`/library/save-updates`, {
         method: "POST",
         keepalive: true,
