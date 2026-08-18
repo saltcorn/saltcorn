@@ -147,6 +147,7 @@ const transposeObjects = (objs: Row[]): Row => {
   }
   return res;
 };
+
 // Inline refs as literals, not params, so numeric-looking refs like "19"
 // don't get silently turned into "19.0" on iOS.
 const sqlTextLiteral = (v: any): string => `'${String(v).replace(/'/g, "''")}'`;
