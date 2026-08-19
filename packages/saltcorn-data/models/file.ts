@@ -206,17 +206,20 @@ class File {
   }
 
   static async findImagesForBuilder(): Promise<
-    Array<{ id: number | string; filename: string; location: string }>
+    Array<{ id: string; filename: string; location: string }>
   > {
     const images = await this.find(
       { mime_super: "image" },
       { recursive: true }
     );
-    return images.map((image) => ({
-      id: image.id ?? image.field_value,
-      filename: image.path_to_serve,
-      location: image.field_value,
-    }));
+
+    return images
+      .filter((image) => !image.isDirectory)
+      .map((image) => ({
+        id: image.field_value,
+        filename: image.path_to_serve,
+        location: image.field_value,
+      }));
   }
 
   static normalise(fpath: string): string {

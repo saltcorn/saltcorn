@@ -127,12 +127,12 @@ describe("File class", () => {
       const images = await File.findImagesForBuilder();
 
       expect(images).toContainEqual({
-        id: rootImage.id,
+        id: rootImage.field_value,
         filename: "builder-selector.png",
         location: "builder-selector.png",
       });
       expect(images).toContainEqual({
-        id: nestedImage.id,
+        id: nestedImage.field_value,
         filename: `${subfolder}/builder-selector.png`,
         location: `${subfolder}/builder-selector.png`,
       });
