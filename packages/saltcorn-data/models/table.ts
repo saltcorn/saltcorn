@@ -1564,12 +1564,34 @@ class Table implements AbstractTable {
       (this.constructor as typeof Table).fixed_user || forUser;
 
     const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
+    const ownershipJoinFields: JoinFields = {};
+    if (
+      !this.canEnforceRls() &&
+      role &&
+      role > this.min_role_read &&
+      this.ownership_formula
+    )
+      add_free_variables_to_joinfields(
+        freeVariables(this.ownership_formula),
+        ownershipJoinFields,
+        fields
+      );
+    const includePrimaryKeyForOwnership =
+      !db.isSQLite &&
+      Object.keys(ownershipJoinFields).length > 0 &&
+      !!selopts1.fields &&
+      !selopts1.fields.includes(this.pk_name);
     return this.withRlsUser(use_forUser, async () => {
       this.normalise_fkey_values(where);
       const row = await db.selectMaybeOne(
         this.name,
         where,
-        this.processSelectOptions(selopts1)
+        this.processSelectOptions({
+          ...selopts1,
+          fields: includePrimaryKeyForOwnership
+            ? [...(selopts1.fields || []), this.pk_name]
+            : selopts1.fields,
+        })
       );
       if (!row || !this.fields) return null;
       if (!this.canEnforceRls() && role && role > this.min_role_read) {
@@ -1584,13 +1606,22 @@ class Table implements AbstractTable {
           if (row[owner_field.name] !== (use_forUser as AbstractUser).id)
             return null;
         } else if (this.ownership_formula || this.name === "users") {
-          if (!this.is_owner(use_forUser, row)) return null;
+          if (Object.keys(ownershipJoinFields).length) {
+            const joinedRow = await this.getJoinedRow({
+              where: { [this.pk_name]: row[this.pk_name] },
+              forUser: use_forUser,
+              ignore_errors: selopts.ignore_errors,
+            });
+            if (!joinedRow) return null;
+          } else if (!this.is_owner(use_forUser, row)) return null;
         } else return null; //no ownership
       }
-      return apply_calculated_fields(
+      const result = apply_calculated_fields(
         [this.readFromDB(this.parse_json_fields(row))],
         this.fields
       )[0];
+      if (includePrimaryKeyForOwnership) delete result[this.pk_name];
+      return result;
     });
   }
 
