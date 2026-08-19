@@ -82,7 +82,7 @@
     "@types/ssh2-sftp-client": "9.0.3",
     "@types/tmp": "^0.2.3",
     "@types/unzipper": "0.10.11",
-    "adm-zip": "0.5.16",
+    "adm-zip": "0.6.0",
     "typescript": "5.9.2"
   },
   "overrides": {
