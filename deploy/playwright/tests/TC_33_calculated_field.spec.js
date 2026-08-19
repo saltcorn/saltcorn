@@ -118,11 +118,10 @@ test.describe('E2E Test Suite', () => {
 
         await functions.submit();
 
-        // JavaScript / TypeScript
-        const editor = page.locator('div.monaco-editor');
-        await editor.click();
-        await page.waitForTimeout(500);
-        await page.keyboard.type("2025-year_of_birth");
+        // JavaScript / TypeScript - clear any existing content and insert
+        // the formula atomically, rather than typing keystroke by keystroke
+        // into an editor that may not be fully ready yet
+        await functions.fill_Monaco_Text('div.monaco-editor', "2025-year_of_birth");
         await page.waitForTimeout(500);
         // click on finish button
         await functions.submit();
@@ -169,7 +168,10 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.nextoption);
         // click on finish button
         await page.selectOption(pageobject.destinationtype, { label: 'View' });
-        
+        // pick the destination explicitly - leaving it as whatever the
+        // browser defaults to depends on view ordering, which isn't reliable
+        await page.selectOption(pageobject.destinationview, { value: 'showView' });
+
         await page.waitForTimeout(500);
 
         await functions.submit();
