@@ -86,10 +86,8 @@ const allElements = [
 ];
 
 export /**
- * Looks up the current content for every shared component reference in a
- * layout, always fresh, so a placed instance shows its latest version. Also
- * resolves references nested inside a fetched component, so one shared
- * component embedded in another still renders.
+ * Fetches the latest content for every shared component in a layout,
+ * including ones nested inside another shared component.
  * @param {object} layout
  * @param {object} options
  * @param {Set<number>} [visitedIds] - library ids seen on this branch, so a
@@ -471,9 +469,8 @@ export /**
  */
 const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
   var columns = [];
-  // shared components edited in place here save to their _sc_library row,
-  // not into this page/view's own layout - accumulated the same way
-  // `columns` is, as go() walks the tree
+  // edits to shared components save to their own _sc_library row, not
+  // this page/view's layout - collected as go() walks the tree
   var libraryUpdates = [];
   /**
    * @param {object} node
