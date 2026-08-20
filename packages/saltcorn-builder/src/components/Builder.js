@@ -50,6 +50,7 @@ import { View } from "./elements/View";
 import { Container } from "./elements/Container";
 import { Column } from "./elements/Column";
 import { LibraryInstance } from "./elements/LibraryInstance";
+import { LibrarySlotInstance } from "./elements/LibrarySlotInstance";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCopy,
@@ -66,7 +67,7 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import { Accordion, ErrorBoundary } from "./elements/utils";
 import { Display, Tablet, Phone } from "react-bootstrap-icons";
-import { InitNewElement, Library, LibraryElem, hydratingRef } from "./Library";
+import { InitNewElement, Library, LibraryElem, LibrarySlotElem, hydratingRef } from "./Library";
 import { RenderNode } from "./RenderNode";
 import { ListColumn } from "./elements/ListColumn";
 import { ListColumns } from "./elements/ListColumns";
@@ -976,6 +977,8 @@ const Builder = ({ options, layout, mode }) => {
           ListColumns,
           LibraryElem,
           LibraryInstance,
+          LibrarySlotElem,
+          LibrarySlotInstance,
           Prompt,
           Page
         }}

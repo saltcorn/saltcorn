@@ -24,15 +24,15 @@ const LibraryInstance = ({ children }) => {
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
 
+  // a real box (not display:contents) so drops can actually be targeted
+  // inside it - display:contents has no geometry, so the builder's own
+  // drop-position hit-testing skips straight past it to its parent
   return (
     <div
       ref={(dom) => connect(drag(dom))}
-      className={selected ? "selected-node" : ""}
-      style={{ display: "contents" }}
+      className={`library-instance ${selected ? "selected-node" : ""}`}
     >
-      <div className="canvas" style={{ display: "contents" }}>
-        {children}
-      </div>
+      {children}
     </div>
   );
 };
@@ -67,6 +67,9 @@ const LibraryInstanceSettings = () => {
  */
 LibraryInstance.craft = {
   displayName: "LibraryInstance",
+  // declared here rather than relying on every caller to wrap it in
+  // <Element canvas> - some (eg Library.js's addSelected) create it bare
+  isCanvas: true,
   props: {
     library_id: undefined,
     library_name: "",

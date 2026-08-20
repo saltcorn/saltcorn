@@ -640,6 +640,9 @@ class PageLocators {
     this.selectIconFasFaAdjust = 'span.rfipicons__icon[title="fas fa-adjust"]';
     this.dragLibraryAdjustIcon = 'div.d-inline-flex.wrap-builder-elem >> div.inner > i.fas.fa-adjust';
     this.selectIconFasFaAlignCenter = 'span.rfipicons__icon[title="fas fa-align-center"]';
+    this.dragLibrarySlotIcon = 'div.d-inline-flex.wrap-builder-elem >> div.inner > i.fas.fa-square';
+    this.librarySlotInstance = '.library-slot-instance';
+    this.slotKindSelect = 'select.slot-kind';
     //'table.table >> tbody >> tr >> td:nth-child(3) >> a';
     this.actionButton = 'button.btn.btn-primary.selected-node';
     this.ClickToEditCheckBox = 'input[type="checkbox"][name="inline"]'

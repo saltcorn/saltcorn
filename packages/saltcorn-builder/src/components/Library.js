@@ -22,6 +22,9 @@ import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
 import { isEqual, throttle, chunk } from "lodash";
 import { LibraryInstance } from "./elements/LibraryInstance";
+import { LibrarySlotInstance } from "./elements/LibrarySlotInstance";
+import { ErrorBoundary } from "./elements/utils";
+import { rand_ident } from "./elements/utils";
 
 // true while loading a saved layout into the canvas, so nothing gets
 // accidentally auto-selected along the way
@@ -67,6 +70,39 @@ const LibraryElem = ({ name, layout }) => {
  */
 LibraryElem.craft = {
   displayName: "LibraryElem",
+};
+
+export /**
+ * A draggable placeholder for a new slot inside a shared component -
+ * dropped in while building a component, not while placing one.
+ * @returns {Fraggment}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const LibrarySlotElem = () => {
+  const {
+    selected,
+    connectors: { connect, drag },
+  } = useNode((node) => ({ selected: node.events.selected }));
+  return (
+    <Fragment>
+      <span
+        className={selected ? "selected-node" : ""}
+        ref={(dom) => connect(drag(dom))}
+      >
+        Slot
+      </span>
+      <br />
+    </Fragment>
+  );
+};
+
+/**
+ * @type {object}
+ */
+LibrarySlotElem.craft = {
+  displayName: "LibrarySlotElem",
 };
 
 // https://www.developerway.com/posts/debouncing-in-react
@@ -319,6 +355,36 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
             );
             actions.delete(id);
           });
+      } else if (node.displayName === "LibrarySlotElem") {
+        const parent = node.parent;
+        // a slot only means anything inside a shared component - reject the
+        // drop anywhere else instead of leaving an orphaned, unresolvable slot
+        const insideLibrary =
+          nodes[parent]?.displayName === LibraryInstance.craft.displayName ||
+          query
+            .node(parent)
+            .ancestors(true)
+            .some(
+              (aid) =>
+                nodes[aid]?.displayName === LibraryInstance.craft.displayName
+            );
+        if (!insideLibrary) {
+          window.notifyAlert({
+            type: "danger",
+            text: t(
+              "A slot can only be placed inside a shared component - drop it there instead"
+            ),
+          });
+          actions.delete(id);
+          return;
+        }
+        const wrapperNode = query
+          .parseReactElement(
+            <LibrarySlotInstance kind="field" slot_name={rand_ident()} />
+          )
+          .toNodeTree();
+        actions.addNodeTree(wrapperNode, parent);
+        actions.delete(id);
       } else if (node.displayName !== "Column" && !hydratingRef.current) {
         actions.selectNode(id);
       }
@@ -351,12 +417,16 @@ export /**
  * @namespace
  */
 const Library = ({ expanded }) => {
-  const { actions, selected, selectedNodes, query, connectors } = useEditor(
-    (state, query) => ({
+  const { actions, selected, selectedNodes, query, connectors, hasLibraryInstance } =
+    useEditor((state, query) => ({
       selected: getSelectedNodes(state.events.selected)[0] || null,
       selectedNodes: getSelectedNodes(state.events.selected),
-    })
-  );
+      // a slot only means anything inside a shared component - nothing to
+      // drop it into until at least one is placed
+      hasLibraryInstance: Object.values(state.nodes).some(
+        (n) => n.data.displayName === LibraryInstance.craft.displayName
+      ),
+    }));
   const { t } = useTranslation();
   const options = useContext(optionsCtx);
   const [adding, setAdding] = useState(false);
@@ -447,13 +517,18 @@ const Library = ({ expanded }) => {
           />
           <br />
           <label>{t("Icon")}</label>
-          <FontIconPicker
-            className="w-100"
-            value={icon}
-            icons={options.icons}
-            onChange={setIcon}
-            isMulti={false}
-          />
+          {/* this picker has a stray internal callback that can throw
+              after it closes, unrelated to anything the user did - catch it
+              here so it doesn't take down the whole builder */}
+          <ErrorBoundary>
+            <FontIconPicker
+              className="w-100"
+              value={icon}
+              icons={options.icons}
+              onChange={setIcon}
+              isMulti={false}
+            />
+          </ErrorBoundary>
           <button className={`btn btn-primary mt-3`} onClick={addSelected}>
             <FontAwesomeIcon icon={faPlus} className="me-1" />
             {t("Add")}
@@ -465,6 +540,21 @@ const Library = ({ expanded }) => {
             <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>
+      </div>
+      <div className="toolbar-row mt-2">
+        <WrapElem
+          connectors={connectors}
+          icon="fas fa-square"
+          label={t("Slot")}
+          disable={!hasLibraryInstance}
+          title={
+            hasLibraryInstance
+              ? undefined
+              : t("Place a shared component first - a slot goes inside one")
+          }
+        >
+          <LibrarySlotElem />
+        </WrapElem>
       </div>
       <div className="card mt-2">
         {elemRows.map((els, ix) => (

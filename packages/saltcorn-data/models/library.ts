@@ -171,6 +171,7 @@ class Library {
     visitedIds: Set<number> = new Set()
   ): Promise<void> {
     const libId = segment.library_id;
+    const slots = segment.slots;
     const lib = visitedIds.has(libId)
       ? null
       : await Library.findOne({ id: libId });
@@ -183,6 +184,28 @@ class Library {
     const libLayout = lib.layout.layout ? lib.layout.layout : lib.layout;
     Object.keys(segment).forEach((k) => delete segment[k]);
     Object.assign(segment, structuredClone(libLayout));
+    // fill each slot with its saved field pick or dropped-in content;
+    // a slot with no saved entry renders blank
+    traverseSync(segment, {
+      "library-slot": (seg: any) => {
+        const fill = (slots || []).find((s: any) => s.name === seg.name);
+        Object.keys(seg).forEach((k) => delete seg[k]);
+        if (!fill) {
+          seg.type = "blank";
+          seg.contents = "";
+        } else if (fill.kind === "field") {
+          seg.type = "field";
+          seg.field_name = fill.field;
+          seg.fieldview = fill.fieldview;
+          seg.configuration = {};
+        } else {
+          Object.assign(
+            seg,
+            structuredClone(fill.contents || { type: "blank", contents: "" })
+          );
+        }
+      },
+    });
     const nextVisited = new Set(visitedIds).add(libId);
     await traverse(segment, {
       library: (seg: any) => Library.resolveSegment(seg, req, nextVisited),

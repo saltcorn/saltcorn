@@ -33,6 +33,7 @@ import { Container } from "./elements/Container";
 import { Prompt } from "./elements/Prompt";
 import { rand_ident } from "./elements/utils";
 import { LibraryInstance } from "./elements/LibraryInstance";
+import { LibrarySlotInstance } from "./elements/LibrarySlotInstance";
 
 /**
  * @param {object} segment
@@ -85,6 +86,28 @@ const allElements = [
   Prompt,
 ];
 
+/**
+ * Fills each slot in a shared component's layout with its saved field pick or dropped-in content.
+ * @param {object} segment
+ * @param {object[]} [slots]
+ * @returns {void}
+ */
+const applySlotFills = (segment, slots) => {
+  if (!segment) return;
+  if (Array.isArray(segment)) {
+    segment.forEach((s) => applySlotFills(s, slots));
+    return;
+  }
+  if (segment.type === "library-slot") {
+    const fill = (slots || []).find((s) => s.name === segment.name);
+    if (fill) Object.assign(segment, fill);
+    return;
+  }
+  if (segment.above) applySlotFills(segment.above, slots);
+  else if (segment.besides) applySlotFills(segment.besides, slots);
+  else if (segment.contents) applySlotFills(segment.contents, slots);
+};
+
 export /**
  * Fetches the latest content for every shared component in a layout,
  * including ones nested inside another shared component.
@@ -118,6 +141,7 @@ const resolveLibraryRefs = async (layout, options, visitedIds = new Set()) => {
       segment.contents = lib.layout?.layout
         ? lib.layout.layout
         : lib.layout || {};
+      applySlotFills(segment.contents, segment.slots);
       await resolveLibraryRefs(
         segment.contents,
         options,
@@ -133,6 +157,8 @@ const resolveLibraryRefs = async (layout, options, visitedIds = new Set()) => {
 };
 
 export /**
+ * Builds real placed nodes from a saved layout tree, the reverse of what
+ * craftToSaltcorn does.
  * @param {object} layout
  * @param {object} query
  * @param {object} actions
@@ -151,6 +177,7 @@ const layoutToNodes = (
   index = false
 ) => {
   /**
+   * Turns one saved layout segment into its matching Craft element.
    * @param {object} segment
    * @param {string} ix
    * @returns {Element|Text|View|Action|Tabs|Columns}
@@ -293,6 +320,21 @@ const layoutToNodes = (
           is={LibraryInstance}
           library_id={segment.library_id}
           library_name={segment.library_name}
+          custom={segment._custom || {}}
+        >
+          {toTag(segment.contents)}
+        </Element>
+      );
+    } else if (segment.type === "library-slot") {
+      return (
+        <Element
+          key={ix}
+          canvas
+          is={LibrarySlotInstance}
+          slot_name={segment.name}
+          kind={segment.kind || "field"}
+          field={segment.field}
+          fieldview={segment.fieldview}
           custom={segment._custom || {}}
         >
           {toTag(segment.contents)}
@@ -460,6 +502,7 @@ const layoutToNodes = (
  */
 
 export /**
+ * Turns the placed canvas into a saved layout.
  * @param {object[]} nodes
  * @param {string} [startFrom = "ROOT" ]
  * @returns {object}
@@ -494,6 +537,44 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
   };
 
   /**
+   * Pulls each slot's fill (a field pick, or dropped-in content) out of an
+   * already-built layout tree and reports it, so it can be saved on the
+   * placement's own reference segment - then blanks the fill out of that
+   * same tree in place, so it doesn't also get saved to the shared row.
+   * A nested LibraryInstance's own slots are untouched: it's a leaf here
+   * (get_nodes never expands its contents inline), so this never reaches in.
+   * @param {object} segment
+   * @param {object[]} [found]
+   * @returns {object[]}
+   */
+  const collectAndStripSlots = (segment, found = []) => {
+    if (!segment) return found;
+    if (Array.isArray(segment)) {
+      segment.forEach((s) => collectAndStripSlots(s, found));
+      return found;
+    }
+    if (segment.type === "library-slot") {
+      found.push({
+        name: segment.name,
+        kind: segment.kind,
+        field: segment.field,
+        fieldview: segment.fieldview,
+        contents: segment.contents,
+      });
+      delete segment.field;
+      delete segment.fieldview;
+      delete segment.contents;
+      return found;
+    }
+    if (segment.above) collectAndStripSlots(segment.above, found);
+    else if (segment.besides) collectAndStripSlots(segment.besides, found);
+    else if (segment.contents) collectAndStripSlots(segment.contents, found);
+    return found;
+  };
+
+  /**
+   * Turns one placed node (and everything under it) back into a plain
+   * layout segment, the reverse of what layoutToNodes does.
    * @param {object} node
    * @param {string} [id] - this node's own id, so a LibraryInstance save can
    *   be told apart from a sibling placement (see doSave)
@@ -561,11 +642,30 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       });
       return lc;
     }
+    if (node.displayName === LibrarySlotInstance.craft.displayName) {
+      // carries its actual fill (field pick, or dropped-in content) directly
+      // - if this slot sits inside a LibraryInstance, the LibraryInstance
+      // branch below strips that fill back out before it reaches the shared
+      // row, since collectAndStripSlots pulls it into the placement's own
+      // reference segment instead
+      const kind = node.props.kind;
+      return {
+        type: "library-slot",
+        kind,
+        name: node.props.slot_name,
+        ...(kind === "container"
+          ? { contents: get_nodes(node) }
+          : { field: node.props.field, fieldview: node.props.fieldview }),
+        ...customProps,
+      };
+    }
     if (node.displayName === LibraryInstance.craft.displayName) {
       // must come before the generic canvas case below, or a reload turns
       // this into a plain copy. skip if emptied out, so we don't blank the shared row
       const childContent = get_nodes(node);
+      let slots = [];
       if (childContent !== undefined) {
+        slots = collectAndStripSlots(childContent);
         libraryUpdates.push({
           library_id: node.props.library_id,
           layout: childContent,
@@ -575,6 +675,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       return {
         type: "library",
         library_id: node.props.library_id,
+        ...(slots.length ? { slots } : {}),
         ...customProps,
       };
     }

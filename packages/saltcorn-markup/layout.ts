@@ -303,6 +303,28 @@ const render = ({
     if (segment.type === "blank") {
       return wrap(segment, isTop, ix, segment.contents || "");
     }
+    if (segment.type === "library-slot") {
+      // normally Library.resolveSegment already substitutes this before the
+      // renderer sees it (a slot inside a shared component). A slot used
+      // directly - not wrapped in a shared component - carries its own fill
+      // right on the segment, so render that instead of blanking it
+      if (segment.kind === "field" && segment.field) {
+        return go(
+          {
+            type: "field",
+            field_name: segment.field,
+            fieldview: segment.fieldview,
+            configuration: {},
+          },
+          isTop,
+          ix
+        );
+      }
+      if (segment.kind === "container" && segment.contents) {
+        return go(segment.contents, isTop, ix);
+      }
+      return wrap(segment, isTop, ix, "");
+    }
     if (segment.type === "breadcrumbs") {
       return wrap(
         segment,
