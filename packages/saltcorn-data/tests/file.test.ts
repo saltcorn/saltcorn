@@ -99,6 +99,49 @@ describe("File class", () => {
     expect(labels).toContain(`${subfolder}/nested.txt`);
   });
 
+  it("findImagesForBuilder includes image paths from subfolders", async () => {
+    const subfolder = "builder_image_options";
+    if (
+      !existsSync(
+        join(db.connectObj.file_store, db.getTenantSchema(), subfolder)
+      )
+    )
+      await File.new_folder(subfolder);
+    const rootImage = await File.from_contents(
+      "builder-selector.png",
+      "image/png",
+      "root image",
+      1,
+      100
+    );
+    const nestedImage = await File.from_contents(
+      "builder-selector.png",
+      "image/png",
+      "nested image",
+      1,
+      100,
+      subfolder
+    );
+
+    try {
+      const images = await File.findImagesForBuilder();
+
+      expect(images).toContainEqual({
+        id: rootImage.field_value,
+        filename: "builder-selector.png",
+        location: "builder-selector.png",
+      });
+      expect(images).toContainEqual({
+        id: nestedImage.field_value,
+        filename: `${subfolder}/builder-selector.png`,
+        location: `${subfolder}/builder-selector.png`,
+      });
+    } finally {
+      await rootImage.delete();
+      await nestedImage.delete();
+    }
+  });
+
   it("should find in subfolders", async () => {
     const subfolder = "subfolder";
     const fileName = "fileName2.html";

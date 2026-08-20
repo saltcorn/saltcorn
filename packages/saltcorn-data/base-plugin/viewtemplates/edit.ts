@@ -119,7 +119,7 @@ const configuration_workflow = (req: Req) =>
             calcfldViewOptions(fields, "edit");
 
           const roles = await User.get_roles();
-          const images = await File.find({ mime_super: "image" });
+          const images = await File.findImagesForBuilder();
           const stateActions = (
             Object.entries(getState()!.actions) as [string, GenObj][]
           ).filter(([k, v]) => !v.disableInBuilder && !v.disableIf?.());

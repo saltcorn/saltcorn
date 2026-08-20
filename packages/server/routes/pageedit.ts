@@ -176,8 +176,7 @@ const pageBuilderData = async (req: Req, context: any) => {
   const views = (await View.find())!;
   const pages = (await Page.find())!;
   const page_groups = (await PageGroup.find()).map((g: any) => ({ name: g.name }));
-  const images = (await File.find({ mime_super: "image" }))!;
-  images.forEach((im: any) => (im.location = im.field_value));
+  const images = await File.findImagesForBuilder();
   const roles = await User.get_roles();
   const stateActions = getState()!.actions;
   const actions = [
