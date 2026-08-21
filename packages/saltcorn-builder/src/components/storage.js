@@ -537,15 +537,11 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
   };
 
   /**
-   * Pulls each slot's fill (a field pick, or dropped-in content) out of an
-   * already-built layout tree and reports it, so it can be saved on the
-   * placement's own reference segment - then blanks the fill out of that
-   * same tree in place, so it doesn't also get saved to the shared row.
-   * A nested LibraryInstance's own slots are untouched: it's a leaf here
-   * (get_nodes never expands its contents inline), so this never reaches in.
-   * @param {object} segment
-   * @param {object[]} [found]
-   * @returns {object[]}
+   * Finds each slot's fill in a layout tree, keeps it for this page/view,
+   * and clears it from the tree so it isn't saved to the shared row.
+   * @param {object} segment - layout tree (or subtree) to scan
+   * @param {object[]} [found] - accumulator, used internally for recursion
+   * @returns {object[]} the fills collected so far
    */
   const collectAndStripSlots = (segment, found = []) => {
     if (!segment) return found;
@@ -643,11 +639,8 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       return lc;
     }
     if (node.displayName === LibrarySlotInstance.craft.displayName) {
-      // carries its actual fill (field pick, or dropped-in content) directly
-      // - if this slot sits inside a LibraryInstance, the LibraryInstance
-      // branch below strips that fill back out before it reaches the shared
-      // row, since collectAndStripSlots pulls it into the placement's own
-      // reference segment instead
+      // keeps its picked field or dropped content right here - if it's
+      // part of a shared component, that gets separated out before saving
       const kind = node.props.kind;
       return {
         type: "library-slot",

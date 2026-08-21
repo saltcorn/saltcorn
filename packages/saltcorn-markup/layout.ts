@@ -304,10 +304,8 @@ const render = ({
       return wrap(segment, isTop, ix, segment.contents || "");
     }
     if (segment.type === "library-slot") {
-      // normally Library.resolveSegment already substitutes this before the
-      // renderer sees it (a slot inside a shared component). A slot used
-      // directly - not wrapped in a shared component - carries its own fill
-      // right on the segment, so render that instead of blanking it
+      // a slot that's part of a shared component already got its content
+      // filled in earlier - this one wasn't, so render its own content here
       if (segment.kind === "field" && segment.field) {
         return go(
           {
