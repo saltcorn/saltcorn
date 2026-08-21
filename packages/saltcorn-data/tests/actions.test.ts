@@ -1,3 +1,4 @@
+import http from "http";
 import Trigger from "../models/trigger.js";
 import Table from "../models/table.js";
 import Field from "../models/field.js";
@@ -36,6 +37,7 @@ const {
   emit_event,
   notify_user,
   run_js_code,
+  send_sms,
 } = baseactions;
 import * as utils from "../utils.js";
 import Notification from "../models/notification.js";
@@ -530,6 +532,201 @@ describe("base plugin actions", () => {
 
   //TODO recalculate_stored_fields, set_user_language
 });
+
+describe("send_sms action", () => {
+  let server: any;
+  let port: number;
+  let received: any;
+
+  beforeAll((done: any) => {
+    server = http.createServer((req: any, res: any) => {
+      let body = "";
+      req.on("data", (chunk: any) => (body += chunk));
+      req.on("end", () => {
+        received = JSON.parse(body);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      });
+    });
+    server.listen(0, () => {
+      port = server.address().port;
+      done();
+    });
+  });
+
+  afterAll((done: any) => {
+    server.close(done);
+  });
+
+  it("should have valid configFields in table mode", async () => {
+    const patients = Table.findOne({ name: "patients" })!;
+    assertIsSet(patients);
+    const fields = await send_sms.configFields({
+      table: patients,
+      mode: "table",
+    });
+    const names = fields.map((f: any) => f.name);
+    expect(names).toContain("to_phone");
+    expect(names).toContain("to_phone_field");
+    expect(names).toContain("to_phone_fixed");
+    expect(names).toContain("body");
+  });
+
+  it("should have valid configFields in workflow mode", async () => {
+    const fields = await send_sms.configFields({ mode: "workflow" });
+    const names = fields.map((f: any) => f.name);
+    expect(names).toStrictEqual(["to_phone", "body", "confirm_field"]);
+  });
+
+  it("should send via generic webhook with fixed number", async () => {
+    await getState()!.setConfig("sms_provider", "Generic webhook");
+    await getState()!.setConfig(
+      "sms_webhook_url",
+      `http://localhost:${port}`
+    );
+
+    const patients = Table.findOne({ name: "patients" })!;
+    assertIsSet(patients);
+    const row = await patients.getRow({ name: "Simon1" });
+    assertIsSet(row);
+
+    const result = await send_sms.run({
+      row,
+      table: patients,
+      configuration: {
+        to_phone: "Fixed",
+        to_phone_fixed: "+15551234567",
+        body: "Hello {{name}}",
+      },
+      user: { id: 1, role_id: 1 },
+    } as any);
+
+    expect(received).toStrictEqual({
+      to: "+15551234567",
+      body: "Hello Simon1",
+    });
+    expect(result).toStrictEqual({ notify: "SMS sent to +15551234567" });
+
+    await getState()!.setConfig("sms_provider", "Twilio");
+    await getState()!.setConfig("sms_webhook_url", "");
+  });
+
+  it("should send via generic webhook with number from field", async () => {
+    await getState()!.setConfig("sms_provider", "Generic webhook");
+    await getState()!.setConfig(
+      "sms_webhook_url",
+      `http://localhost:${port}`
+    );
+
+    const patients = Table.findOne({ name: "patients" })!;
+    assertIsSet(patients);
+    const row = await patients.getRow({ name: "Simon1" });
+    assertIsSet(row);
+
+    const result = await send_sms.run({
+      row,
+      table: patients,
+      configuration: {
+        to_phone: "Field",
+        to_phone_field: "name",
+        body: "Hi there",
+      },
+      user: { id: 1, role_id: 1 },
+    } as any);
+
+    expect(received).toStrictEqual({ to: "Simon1", body: "Hi there" });
+    expect(result).toStrictEqual({ notify: "SMS sent to Simon1" });
+
+    await getState()!.setConfig("sms_provider", "Twilio");
+    await getState()!.setConfig("sms_webhook_url", "");
+  });
+
+  it("should not send when only_if is false", async () => {
+    await getState()!.setConfig("sms_provider", "Generic webhook");
+    await getState()!.setConfig(
+      "sms_webhook_url",
+      `http://localhost:${port}`
+    );
+    received = undefined;
+
+    const patients = Table.findOne({ name: "patients" })!;
+    assertIsSet(patients);
+    const row = await patients.getRow({ name: "Simon1" });
+    assertIsSet(row);
+
+    const result = await send_sms.run({
+      row,
+      table: patients,
+      configuration: {
+        to_phone: "Fixed",
+        to_phone_fixed: "+15551234567",
+        body: "Hi",
+        only_if: "false",
+      },
+      user: { id: 1, role_id: 1 },
+    } as any);
+
+    expect(result).toBe(undefined);
+    expect(received).toBe(undefined);
+
+    await getState()!.setConfig("sms_provider", "Twilio");
+    await getState()!.setConfig("sms_webhook_url", "");
+  });
+
+  it("should throw if webhook URL is not configured", async () => {
+    await getState()!.setConfig("sms_provider", "Generic webhook");
+    await getState()!.setConfig("sms_webhook_url", "");
+
+    const patients = Table.findOne({ name: "patients" })!;
+    assertIsSet(patients);
+    const row = await patients.getRow({ name: "Simon1" });
+    assertIsSet(row);
+
+    await expect(
+      (async () =>
+        await send_sms.run({
+          row,
+          table: patients,
+          configuration: {
+            to_phone: "Fixed",
+            to_phone_fixed: "+15551234567",
+            body: "Hi",
+          },
+          user: { id: 1, role_id: 1 },
+        } as any))()
+    ).rejects.toThrow();
+
+    await getState()!.setConfig("sms_provider", "Twilio");
+  });
+
+  it("should send via generic webhook in workflow mode", async () => {
+    await getState()!.setConfig("sms_provider", "Generic webhook");
+    await getState()!.setConfig(
+      "sms_webhook_url",
+      `http://localhost:${port}`
+    );
+
+    const result = await send_sms.run({
+      row: { name: "Workflowy" },
+      configuration: {
+        to_phone: "+15559876543",
+        body: "Hello {{name}}",
+      },
+      user: { id: 1, role_id: 1 },
+      mode: "workflow",
+    } as any);
+
+    expect(received).toStrictEqual({
+      to: "+15559876543",
+      body: "Hello Workflowy",
+    });
+    expect(result).toBe(undefined);
+
+    await getState()!.setConfig("sms_provider", "Twilio");
+    await getState()!.setConfig("sms_webhook_url", "");
+  });
+});
+
 describe("run_js_code", () => {
   it("should return value", async () => {
     const rres = await run_js_code.run({

@@ -12,6 +12,7 @@ import {
   getFileAggregations,
   mjml2html,
 } from "../models/email.js";
+import { sendSMS } from "../models/sms.js";
 import {
   get_async_expression_function,
   recalculate_for_stored,
@@ -1302,6 +1303,251 @@ export default {
         }
         if (disable_notify) return;
         else return { notify: `E-mail sent to ${to_addr}` };
+      } catch (e) {
+        if (confirm_field) {
+          const confirm_fld = table.getField(confirm_field);
+          if (
+            confirm_fld &&
+            (typeof confirm_fld.type === "string"
+              ? confirm_fld.type === "Bool"
+              : confirm_fld.type?.name === "Bool")
+          )
+            await table.updateRow(
+              { [confirm_field]: false },
+              row[table.pk_name]
+            );
+          throw e;
+        }
+      }
+    },
+    namespace: "Communication",
+  },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
+  send_sms: {
+    /**
+     * @param {object} opts
+     * @param {object} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Send an SMS text message",
+    configFields: async ({
+      table,
+      mode,
+    }: {
+      table?: Table;
+      mode?: string;
+    }) => {
+      if (mode === "workflow") {
+        return [
+          {
+            name: "to_phone",
+            label: "To",
+            sublabel:
+              "Phone number(s) in E.164 format (for instance, +15551234567), comma separated, <code>{{ }}</code> interpolations usable",
+            type: "String",
+            required: true,
+          },
+          {
+            name: "body",
+            label: "Message",
+            type: "String",
+            fieldview: "textarea",
+            required: true,
+          },
+          {
+            name: "confirm_field",
+            label: "Send confirmation variable",
+            type: "String",
+            sublabel:
+              "Bool variable set in context indicate successful sending of SMS message",
+          },
+        ];
+      }
+      if (!table) return [];
+      const fields = table.getFields();
+      const field_opts = fields
+        .filter((f) => f.type_name === "String")
+        .map((f) => f.name);
+      const confirm_field_opts = fields
+        .filter((f) => f.type_name === "Bool" || f.type_name === "Date")
+        .map((f) => f.name);
+      return [
+        {
+          name: "to_phone",
+          label: "Recipient phone number",
+          sublabel:
+            "Select the source of the phone number to send the SMS to",
+          input_type: "select",
+          required: true,
+          options: ["Fixed", "Field"],
+        },
+        {
+          name: "to_phone_field",
+          label: "Field with phone number",
+          sublabel:
+            "String field holding a phone number in E.164 format (for instance, +15551234567)",
+          input_type: "select",
+          options: field_opts,
+          showIf: { to_phone: "Field" },
+        },
+        {
+          name: "to_phone_fixed",
+          label: "Fixed number",
+          sublabel:
+            "Phone number(s) in E.164 format, comma separated, <code>{{ }}</code> interpolations usable",
+          type: "String",
+          showIf: { to_phone: "Fixed" },
+        },
+        {
+          name: "body",
+          label: "Message",
+          sublabel: "Text of the SMS message, <code>{{ }}</code> interpolations usable",
+          type: "String",
+          fieldview: "textarea",
+          required: true,
+        },
+        {
+          name: "only_if",
+          label: "Only if",
+          sublabel:
+            "Only send SMS if this formula evaluates to true. Leave blank to always send",
+          type: "String",
+        },
+        { name: "disable_notify", label: "Disable notification", type: "Bool" },
+        {
+          name: "confirm_field",
+          label: "Send confirmation field",
+          type: "String",
+          sublabel:
+            "Bool or Date field to indicate successful sending of SMS message",
+          attributes: {
+            options: confirm_field_opts,
+          },
+        },
+      ];
+    },
+    requireRow: true,
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.table
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @returns {Promise<object>}
+     */
+    run: async ({
+      row,
+      table,
+      configuration: {
+        to_phone,
+        to_phone_field,
+        to_phone_fixed,
+        body,
+        only_if,
+        disable_notify,
+        confirm_field,
+      },
+      user,
+      mode,
+    }: {
+      row: Row;
+      table: Table;
+      configuration: {
+        to_phone: string;
+        to_phone_field?: string;
+        to_phone_fixed?: string;
+        body?: string;
+        only_if?: string;
+        disable_notify?: boolean;
+        confirm_field?: string;
+      };
+      user: User;
+      mode: string;
+    }) => {
+      if (mode === "workflow") {
+        const to_addr = interpolate(to_phone, row, user, "send_sms to number");
+        const the_body = interpolate(body, row, user, "send_sms body");
+        try {
+          await sendSMS(to_addr, the_body!);
+          if (confirm_field) return { [confirm_field]: true };
+          return;
+        } catch (e: any) {
+          if (confirm_field) return { [confirm_field]: false };
+          throw e;
+        }
+      }
+      let to_addr;
+      let useRow: Row | null = row;
+      const fvs = [
+        ...freeVariablesInInterpolation(to_phone_fixed),
+        ...freeVariablesInInterpolation(body),
+        ...freeVariables(only_if),
+      ];
+      if (fvs.length > 0) {
+        const joinFields = {};
+        const fields = table.getFields();
+        add_free_variables_to_joinfields(new Set(fvs), joinFields, fields);
+        useRow = await table.getJoinedRow({
+          where: { [table.pk_name]: row[table.pk_name] },
+          joinFields,
+          forUser: user,
+        });
+      }
+
+      if (only_if) {
+        const bres = eval_expression(
+          only_if,
+          useRow,
+          user,
+          "send_sms only if formula"
+        );
+        if (!bres) return;
+      }
+      switch (to_phone) {
+        case "Fixed":
+          to_addr = interpolate(
+            to_phone_fixed,
+            useRow,
+            user,
+            "send_sms to number"
+          );
+          break;
+        case "Field":
+          to_addr = row[to_phone_field as string];
+          break;
+      }
+      if (!to_addr) {
+        getState()!.log(
+          2,
+          `send_sms action: Not sending as phone number ${to_phone} is missing`
+        );
+        return;
+      }
+      const the_body = interpolate(body, useRow, user, "send_sms body");
+      getState()!.log(3, `Sending SMS to ${to_addr}`);
+      try {
+        const sendres = await sendSMS(to_addr, the_body!);
+        getState()!.log(5, `send_sms result: ${JSON.stringify(sendres)}`);
+        if (confirm_field) {
+          const confirm_fld = table.getField(confirm_field);
+          if (confirm_fld && confirm_fld.type_name === "Date")
+            await table.updateRow(
+              { [confirm_field]: new Date() },
+              row[table.pk_name]
+            );
+          else if (confirm_fld && confirm_fld.type_name === "Bool")
+            await table.updateRow(
+              { [confirm_field]: true },
+              row[table.pk_name]
+            );
+        }
+        if (disable_notify) return;
+        else return { notify: `SMS sent to ${to_addr}` };
       } catch (e) {
         if (confirm_field) {
           const confirm_fld = table.getField(confirm_field);

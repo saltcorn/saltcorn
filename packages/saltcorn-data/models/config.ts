@@ -625,6 +625,46 @@ const configTypes: ConfigTypes = {
     excludeFromMobile: true,
     ephemeral: true,
   },
+  sms_provider: {
+    type: "String",
+    label: "SMS provider",
+    default: "Twilio",
+    blurb: "The service used to send SMS text messages from the 'Send SMS' action.",
+    input_type: "select",
+    options: ["Twilio", "Generic webhook"],
+    excludeFromMobile: true,
+  },
+  twilio_account_sid: {
+    type: "String",
+    label: "Twilio Account SID",
+    default: "",
+    blurb: "Found on your Twilio Console dashboard.",
+    excludeFromMobile: true,
+  },
+  twilio_auth_token: {
+    type: "String",
+    label: "Twilio Auth token",
+    default: "",
+    input_type: "password",
+    blurb: "Found on your Twilio Console dashboard.",
+    excludeFromMobile: true,
+  },
+  twilio_from_number: {
+    type: "String",
+    label: "Twilio From number",
+    default: "",
+    blurb:
+      "The Twilio phone number messages are sent from, in E.164 format (for instance, +15551234567).",
+    excludeFromMobile: true,
+  },
+  sms_webhook_url: {
+    type: "String",
+    label: "SMS webhook URL",
+    default: "",
+    blurb:
+      "For a custom or unsupported SMS provider. Saltcorn will POST JSON <code>{ to, body }</code> to this URL to send a message.",
+    excludeFromMobile: true,
+  },
   custom_ssl_certificate: {
     type: "String",
     fieldview: "textarea",

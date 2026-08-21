@@ -103,6 +103,7 @@ const packagejson = require("../../package.json");
 import Form from "@saltcorn/data/models/form";
 import { get_latest_npm_version } from "@saltcorn/data/models/config";
 import { getMailTransport, getOauth2Client } from "@saltcorn/data/models/email";
+import { sendSMS } from "@saltcorn/data/models/sms";
 import {
   getBaseDomain,
   hostname_matches_baseurl,
@@ -351,6 +352,78 @@ router.get(
         : {}),
     });
     res.redirect(authorizeUrl);
+  })
+);
+
+admin_config_route({
+  router,
+  path: "/sms",
+  super_path: "/admin",
+  flash: "SMS settings updated",
+  field_names: [
+    "sms_provider",
+    {
+      name: "twilio_account_sid",
+      showIf: { sms_provider: "Twilio" },
+    },
+    { name: "twilio_auth_token", showIf: { sms_provider: "Twilio" } },
+    { name: "twilio_from_number", showIf: { sms_provider: "Twilio" } },
+    {
+      name: "sms_webhook_url",
+      showIf: { sms_provider: "Generic webhook" },
+    },
+  ],
+  response(form, req, res) {
+    send_admin_page({
+      res,
+      req,
+      active_sub: "SMS",
+      contents: {
+        type: "card",
+        title: req.__("SMS settings"),
+        titleAjaxIndicator: true,
+        contents: [
+          renderForm(form, req.csrfToken()),
+          a(
+            {
+              id: "testsms",
+              href: "/admin/send-test-sms",
+              class: "btn btn-primary",
+              onclick: "spin_action_link(this)",
+            },
+            req.__("Send test SMS")
+          ),
+        ],
+      },
+    });
+  },
+});
+
+/**
+ * @name get/send-test-sms
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/send-test-sms",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const to = req.query!.to as string;
+    if (!to) {
+      req.flash(
+        "error",
+        req.__("Add ?to=+15551234567 to the URL with your phone number")
+      );
+      return res.redirect("/admin/sms");
+    }
+    try {
+      await sendSMS(to, req.__("Hello from Saltcorn"));
+      req.flash("success", req.__("SMS sent to %s with no errors", to));
+    } catch (e: any) {
+      getState()!.log(2, `send-test-sms error: ${e.message}`);
+      req.flash("error", e.message);
+    }
+    res.redirect("/admin/sms");
   })
 );
 

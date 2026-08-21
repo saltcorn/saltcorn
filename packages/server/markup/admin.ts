@@ -479,6 +479,7 @@ const send_admin_page = (
       { text: "Site identity", href: "/admin" },
       { text: "Backup", href: "/admin/backup" },
       { text: "Email", href: "/admin/email" },
+      { text: "SMS", href: "/admin/sms" },
       { text: "System", href: "/admin/system" },
       { text: "Mobile app", href: "/admin/build-mobile-app" },
       { text: "Development", href: "/admin/dev" },
