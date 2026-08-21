@@ -120,6 +120,12 @@ describe("session-tenant isolation", () => {
     const ROOT_TABLE = "patients";
 
     const SECRET = "SECRET_TENANT_DATA_xyz";
+    // a stand-in for a plugin route callback that trusts req.user without
+    // doing its own tenant check - the pattern the dispatch-level guard
+    // below has to protect, since plugin authors have no reason to expect
+    // they need one
+    const PLUGIN_ROUTE_URL = "/test-plugin-secret";
+    const PLUGIN_SECRET = "PLUGIN_ROUTE_SECRET_abc";
     const TENANT_ADMIN_EMAIL = "admin@secauth.com";
     const TENANT_ADMIN_PW = "fidj38v8sdfaA1";
     // API tokens minted in each tenant for its own admin
@@ -148,6 +154,25 @@ describe("session-tenant isolation", () => {
         .send(`password=${ATTACKER_ADMIN_PW}`);
       return resToLoginCookie(res);
     };
+
+    // a stand-in plugin route trusting only req.user - re-call this before
+    // each request, since getApp() reloads plugin state and wipes it
+    const registerPluginRoute = () =>
+      db.runWithTenant(TENANT, async () => {
+        getState().plugin_routes["_test_plugin_routes"] = [
+          {
+            url: PLUGIN_ROUTE_URL,
+            method: "get",
+            callback: (req, res) => {
+              if (!req.user || req.user.role_id !== 1) {
+                res.status(403).json({ error: "not authorized" });
+                return;
+              }
+              res.json({ secret: PLUGIN_SECRET });
+            },
+          },
+        ];
+      });
 
     beforeAll(async () => {
       db.enable_multi_tenant();
@@ -458,6 +483,38 @@ describe("session-tenant isolation", () => {
         .set("Authorization", `Bearer ${attackerAdminToken}`);
       expect(res.status).not.toBe(200);
       expect(res.body.success).toBeUndefined();
+    });
+
+    // ---- plugin routes ----
+    // Regression test for the cross-tenant session replay reaching plugin
+    // routes: unlike /api and /scapi, the plugin route dispatcher had no
+    // drift guard of its own, so a session minted in the attacker tenant
+    // could reach the victim tenant's plugin callback still carrying the
+    // attacker's role.
+    it("rejects sub-tenant->sub-tenant session reuse on a plugin route", async () => {
+      const loginCookie = await getAttackerAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      await registerPluginRoute();
+      const res = await request(app)
+        .get(PLUGIN_ROUTE_URL)
+        .set("Cookie", loginCookie)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.status).toBe(403);
+      expect(JSON.stringify(res.body)).not.toContain(PLUGIN_SECRET);
+    });
+
+    // Positive control: the victim tenant's own admin, authenticated against
+    // the victim subdomain, must still be able to reach its own plugin route.
+    it("allows same-tenant session on a plugin route", async () => {
+      const loginCookie = await getTenantAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      await registerPluginRoute();
+      const res = await request(app)
+        .get(PLUGIN_ROUTE_URL)
+        .set("Cookie", loginCookie)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.status).toBe(200);
+      expect(res.body.secret).toBe(PLUGIN_SECRET);
     });
   } else {
     it("does not support tenants on SQLite", () => {

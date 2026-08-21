@@ -35,6 +35,7 @@ import {
   getSessionStore,
   setTenant,
   applyUserLocale,
+  rejectTenantDrift,
 } from "./routes/utils.js";
 import _am_tenant from "@saltcorn/admin-models/models/tenant";
 const { getAllTenants, eachTenant } = _am_tenant;
@@ -457,24 +458,30 @@ const getApp = async (opts = {}) => {
   app.get("/", error_catcher(homepage));
 
   app.use((req, res, next) => {
-    const tenant = db.getTenantSchema();
-    if (!pluginRoutesHandler.tenantRouters[tenant]) {
-      // if tenant router is not initialized, try to initialize it
-      pluginRoutesHandler.initTenantRouter(
-        tenant,
-        getState().plugin_routes || {}
-      );
-      getState().routesChangedCb = () => {
+    // req.user may have been restored from a session minted under a
+    // different tenant than the one this host resolved to - reject that
+    // drift before any plugin route callback can run with it, same guard
+    // already applied to /api and /scapi
+    rejectTenantDrift(req, res, () => {
+      const tenant = db.getTenantSchema();
+      if (!pluginRoutesHandler.tenantRouters[tenant]) {
+        // if tenant router is not initialized, try to initialize it
         pluginRoutesHandler.initTenantRouter(
           tenant,
           getState().plugin_routes || {}
         );
-        noCsrf = noCsrfLookup(getRootState(), pluginRoutesHandler);
-      };
-    }
-    if (pluginRoutesHandler.tenantRouters[tenant])
-      pluginRoutesHandler.tenantRouters[tenant](req, res, next);
-    else next();
+        getState().routesChangedCb = () => {
+          pluginRoutesHandler.initTenantRouter(
+            tenant,
+            getState().plugin_routes || {}
+          );
+          noCsrf = noCsrfLookup(getRootState(), pluginRoutesHandler);
+        };
+      }
+      if (pluginRoutesHandler.tenantRouters[tenant])
+        pluginRoutesHandler.tenantRouters[tenant](req, res, next);
+      else next();
+    });
   });
   // /robots.txt
   app.get(
