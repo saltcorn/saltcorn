@@ -43,51 +43,74 @@ describe("extractTarball size/entry guard", () => {
   });
 });
 
-// Builds a too-large tarball and runs it through the real extractTarball,
-// unlike the pure checks above. Fixture files live under a temp dir that's
-// always removed afterwards, pass or fail.
+// Runs real tarballs through extractTarball itself, with small test caps
+// so no giant fixtures are needed. Fixtures always get cleaned up.
 describe("extractTarball end-to-end", () => {
-  it("rejects a real tarball past the entry cap and extracts a normal one fine", async () => {
+  const TEST_MAX_ENTRIES = 5;
+  const TEST_MAX_BYTES = 20;
+
+  it("rejects a real tarball past the entry cap", async () => {
     const workDir = await mkdtemp(join(tmpdir(), "saltcorn-tarball-guard-"));
     try {
-      const srcDir = join(workDir, "package");
-      await mkdir(srcDir, { recursive: true });
-      const fileNames = Array.from({ length: MAX_TARBALL_ENTRIES + 1 }, (_, i) =>
-        join("package", `f${i}`)
+      const fileNames = Array.from(
+        { length: TEST_MAX_ENTRIES + 1 },
+        (_, i) => join("package", `f${i}`)
       );
-      const BATCH = 1000;
-      for (let i = 0; i < fileNames.length; i += BATCH) {
-        await Promise.all(
-          fileNames
-            .slice(i, i + BATCH)
-            .map((name) => writeFile(join(workDir, name), ""))
-        );
-      }
+      await mkdir(join(workDir, "package"), { recursive: true });
+      await Promise.all(
+        fileNames.map((name) => writeFile(join(workDir, name), ""))
+      );
       const bombFile = join(workDir, "bomb.tar");
-      // pass the explicit file list, not the "package" directory itself -
-      // create() emits a "package/" directory entry for the latter, which
-      // would throw off the exact entry count this test pins below
+      // explicit file list, not the "package" dir - avoids an extra dir entry
       await create({ file: bombFile, cwd: workDir }, fileNames);
 
-      const bombDest = join(workDir, "bomb-dest");
-      await mkdir(bombDest);
-      await expect(extractTarball(bombFile, bombDest)).rejects.toThrow(
-        "Refusing to extract"
+      const dest = join(workDir, "dest");
+      await mkdir(dest);
+      await expect(
+        extractTarball(bombFile, dest, TEST_MAX_ENTRIES, TEST_MAX_BYTES)
+      ).rejects.toThrow("Refusing to extract");
+      // bounded, not zero: entries up to the cap are written before it trips
+      expect((await readdir(dest)).length).toBe(TEST_MAX_ENTRIES);
+    } finally {
+      await rm(workDir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a real tarball past the byte cap", async () => {
+    const workDir = await mkdtemp(join(tmpdir(), "saltcorn-tarball-guard-"));
+    try {
+      await mkdir(join(workDir, "package"), { recursive: true });
+      // one file already bigger than TEST_MAX_BYTES, so it's rejected outright
+      await writeFile(
+        join(workDir, "package", "big.txt"),
+        "x".repeat(TEST_MAX_BYTES + 1)
       );
-      // bounded, not zero: the guard trips once the count crosses the cap,
-      // so exactly MAX_TARBALL_ENTRIES legit-looking entries land first
-      expect((await readdir(bombDest)).length).toBe(MAX_TARBALL_ENTRIES);
+      const bombFile = join(workDir, "bomb.tar");
+      await create({ file: bombFile, cwd: workDir }, ["package/big.txt"]);
 
-      const goodSrcDir = join(workDir, "good-package");
-      await mkdir(goodSrcDir, { recursive: true });
-      await writeFile(join(goodSrcDir, "index.js"), "module.exports = {};");
+      const dest = join(workDir, "dest");
+      await mkdir(dest);
+      await expect(
+        extractTarball(bombFile, dest, TEST_MAX_ENTRIES, TEST_MAX_BYTES)
+      ).rejects.toThrow("Refusing to extract");
+      expect(await readdir(dest)).toStrictEqual([]);
+    } finally {
+      await rm(workDir, { recursive: true, force: true });
+    }
+  });
+
+  it("extracts a normal tarball under both caps", async () => {
+    const workDir = await mkdtemp(join(tmpdir(), "saltcorn-tarball-guard-"));
+    try {
+      await mkdir(join(workDir, "package"), { recursive: true });
+      await writeFile(join(workDir, "package", "index.js"), "module.exports = {};");
       const goodFile = join(workDir, "good.tar");
-      await create({ file: goodFile, cwd: workDir }, ["good-package"]);
+      await create({ file: goodFile, cwd: workDir }, ["package"]);
 
-      const goodDest = join(workDir, "good-dest");
-      await mkdir(goodDest);
-      await extractTarball(goodFile, goodDest);
-      expect(await readdir(goodDest)).toStrictEqual(["index.js"]);
+      const dest = join(workDir, "dest");
+      await mkdir(dest);
+      await extractTarball(goodFile, dest, TEST_MAX_ENTRIES, TEST_MAX_BYTES);
+      expect(await readdir(dest)).toStrictEqual(["index.js"]);
     } finally {
       await rm(workDir, { recursive: true, force: true });
     }

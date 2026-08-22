@@ -168,26 +168,26 @@ export const gitPullOrClone = async (
 export const MAX_TARBALL_ENTRIES = 100_000;
 export const MAX_TARBALL_BYTES = 2 * 1024 * 1024 * 1024; // 2GB
 
-// true once the running totals cross either cap - a plain function so the
-// guard's threshold behaviour can be unit-tested without extracting any
-// actual (let alone 2GB of) tarball data
+// true once either running total crosses its cap. Pulled out as a plain
+// function so tests can call it directly, with smaller caps if needed.
 export const exceedsTarballLimits = (
   entryCount: number,
-  totalBytes: number
-): boolean =>
-  entryCount > MAX_TARBALL_ENTRIES || totalBytes > MAX_TARBALL_BYTES;
+  totalBytes: number,
+  maxEntries: number = MAX_TARBALL_ENTRIES,
+  maxBytes: number = MAX_TARBALL_BYTES
+): boolean => entryCount > maxEntries || totalBytes > maxBytes;
 
 export const extractTarball = async (
   tarFile: string,
-  destination: string
+  destination: string,
+  maxEntries: number = MAX_TARBALL_ENTRIES,
+  maxBytes: number = MAX_TARBALL_BYTES
 ): Promise<void> => {
   let entryCount = 0;
   let totalBytes = 0;
   let guardTripped = false;
-  // throwing from inside filter() does not reject this promise - it happens
-  // inside tar's internal stream 'data' handler, outside the awaited call
-  // stack, and crashes the process instead. So filter just stops writing
-  // (returns false) once a cap is hit, and we reject afterwards instead.
+  // throwing inside filter() crashes the process instead of rejecting this
+  // promise, so it just stops writing and we throw after extract() returns.
   await extract({
     file: tarFile,
     cwd: destination,
@@ -195,7 +195,7 @@ export const extractTarball = async (
     filter: (_path: string, entry: { size?: number }) => {
       entryCount++;
       totalBytes += entry.size || 0;
-      if (exceedsTarballLimits(entryCount, totalBytes)) {
+      if (exceedsTarballLimits(entryCount, totalBytes, maxEntries, maxBytes)) {
         guardTripped = true;
         return false;
       }
@@ -204,7 +204,7 @@ export const extractTarball = async (
   });
   if (guardTripped) {
     throw new Error(
-      `Refusing to extract ${tarFile}: exceeds ${MAX_TARBALL_ENTRIES} entries or ${MAX_TARBALL_BYTES} bytes`
+      `Refusing to extract ${tarFile}: exceeds ${maxEntries} entries or ${maxBytes} bytes`
     );
   }
 };
