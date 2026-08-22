@@ -1527,17 +1527,19 @@ ${value}`;
         if (singleline) {
           div.style.height = "30px";
         }
-        const editor = monaco.editor.create(div, {
+        let host = div;
+        if (singleline || compact) {
+          div.classList.add("form-control", "p-0", "pt-1");
+          host = document.createElement("div");
+          host.style.height = "100%";
+          div.appendChild(host);
+        }
+        const editor = monaco.editor.create(host, {
           value,
           language,
           theme: _sc_lightmode === "dark" ? "vs-dark" : "vs",
           minimap: { enabled: false },
-          ...(singleline || compact
-            ? {
-                extraEditorClassName: "form-control",
-                ...singleLineMonacoEditorOptions,
-              }
-            : {}),
+          ...(singleline || compact ? singleLineMonacoEditorOptions : {}),
         });
         $(div).data("monaco-editor", editor);
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
