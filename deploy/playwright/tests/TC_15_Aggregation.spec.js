@@ -125,7 +125,10 @@ test.describe('E2E Test Suite', () => {
         await functions.views();
         await page.click(pageobject.PeopleList);
         await customAssert('Sum Task field should be visible on people list', async () => {
-            await expect(page.locator(pageobject.SumTaskLocator)).toBeVisible();
+            // .first(): a CI retry re-runs this test on the same shared page
+            // without undoing the prior attempt's column, so more than one
+            // "Sum Task" column can legitimately be present
+            await expect(page.locator(pageobject.SumTaskLocator).first()).toBeVisible();
         });
     });
 
@@ -150,8 +153,12 @@ test.describe('E2E Test Suite', () => {
         await functions.views();
         await page.click(pageobject.PeopleList);
         await customAssert('Sum Task field should be visible on people list', async () => {
-            await expect(page.locator(pageobject.Array_AggLocator)).toBeVisible();
-            await expect(page.getByText('Buy Milk')).toBeVisible();
+            // .first(): a CI retry re-runs this test on the same shared page
+            // without undoing the prior attempt's column, so more than one
+            // "Array_Agg Task" column (and "Buy Milk" cell) can legitimately
+            // be present
+            await expect(page.locator(pageobject.Array_AggLocator).first()).toBeVisible();
+            await expect(page.getByText('Buy Milk').first()).toBeVisible();
         });
     });
 

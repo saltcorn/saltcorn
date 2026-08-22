@@ -163,15 +163,50 @@ export const gitPullOrClone = async (
   if (plugin.deploy_private_key && keyfnm) await fs.promises.unlink(keyfnm);
 };
 
+// version-independent decompression-bomb guard: caps total extracted
+// bytes and entry count, on top of the tar@7 fix for the known CVE
+export const MAX_TARBALL_ENTRIES = 100_000;
+export const MAX_TARBALL_BYTES = 2 * 1024 * 1024 * 1024; // 2GB
+
+// true once either running total crosses its cap. Pulled out as a plain
+// function so tests can call it directly, with smaller caps if needed.
+export const exceedsTarballLimits = (
+  entryCount: number,
+  totalBytes: number,
+  maxEntries: number = MAX_TARBALL_ENTRIES,
+  maxBytes: number = MAX_TARBALL_BYTES
+): boolean => entryCount > maxEntries || totalBytes > maxBytes;
+
 export const extractTarball = async (
   tarFile: string,
-  destination: string
+  destination: string,
+  maxEntries: number = MAX_TARBALL_ENTRIES,
+  maxBytes: number = MAX_TARBALL_BYTES
 ): Promise<void> => {
+  let entryCount = 0;
+  let totalBytes = 0;
+  let guardTripped = false;
+  // throwing inside filter() crashes the process instead of rejecting this
+  // promise, so it just stops writing and we throw after extract() returns.
   await extract({
     file: tarFile,
     cwd: destination,
     strip: 1,
+    filter: (_path: string, entry: { size?: number }) => {
+      entryCount++;
+      totalBytes += entry.size || 0;
+      if (exceedsTarballLimits(entryCount, totalBytes, maxEntries, maxBytes)) {
+        guardTripped = true;
+        return false;
+      }
+      return true;
+    },
   });
+  if (guardTripped) {
+    throw new Error(
+      `Refusing to extract ${tarFile}: exceeds ${maxEntries} entries or ${maxBytes} bytes`
+    );
+  }
 };
 
 export const tarballExists = async (
