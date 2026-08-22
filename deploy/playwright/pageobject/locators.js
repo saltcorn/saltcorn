@@ -622,7 +622,7 @@ class PageLocators {
     this.dragElement = 'div.d-inline-flex.wrap-builder-elem[draggable="true"]';
     this.cardBoxClick = 'div.card.shadow.builder >> div.card-header';
     this.Library = 'div.bg-secondary.ps-1.text-white.w-100.mt-1';
-    this.plusAddButton = 'button#library-add-btn';
+    this.plusAddButton = '#library-add-btn';
     this.nameField = 'input.form-control';
     this.selectIcon = '.rfipbtn__current .rfipbtn__icon--empty';
     this.selectIconFarFaAddress = 'span.rfipicons__icon[title="far fa-address-card"]';

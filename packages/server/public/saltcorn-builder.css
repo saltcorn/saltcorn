@@ -290,6 +290,21 @@ div.componets-and-library-accordion {
   overflow: visible;
 }
 
+.builder-library .dropdown-menu {
+  left: 10rem;
+  right: auto;
+  z-index: 1060;
+  margin-top: 11.5rem;
+}
+
+/* undo div.wrap-builder-elem label's absolute/bottom styling for the
+   form's own labels, which are also descendants of that div */
+.builder-library .dropdown-menu label {
+  position: static;
+  text-transform: none;
+  font-size: inherit;
+}
+
 /* 
 Contains code from https://github.com/tpaksu/boxmodel
 Copyright (c) 2017 Taha Paksu

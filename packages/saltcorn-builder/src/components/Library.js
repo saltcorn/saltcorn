@@ -489,59 +489,68 @@ const Library = ({ expanded }) => {
     [...(options.library || []), ...recent],
     expanded ? 3 : 2
   );
+  const canAdd = !!selected || selectedNodes.length > 0;
   return (
     <div className="builder-library">
-      <div className="dropdown">
-        <button
-          className="btn btn-sm btn-secondary dropdown-toggle mt-2"
-          type="button"
-          id="library-add-btn"
-          aria-haspopup="true"
-          aria-expanded="false"
-          disabled={!selected && selectedNodes.length === 0}
-          onClick={() => setAdding(!adding)}
-        >
-          <FontAwesomeIcon icon={faPlus} className="me-1" />
-          {t("Add")}
-        </button>
-        <div
-          className={`dropdown-menu py-3 px-4 ${adding ? "show" : ""}`}
-          aria-labelledby="library-add-btn"
-        >
-          <label>{t("Name")}</label>
-          <input
-            type="text"
-            className="form-control"
-            value={newName}
-            onChange={(e) => e?.target && setNewName(e.target.value)}
-          />
-          <br />
-          <label>{t("Icon")}</label>
-          {/* this picker has a stray internal callback that can throw
-              after it closes, unrelated to anything the user did - catch it
-              here so it doesn't take down the whole builder */}
-          <ErrorBoundary>
-            <FontIconPicker
-              className="w-100"
-              value={icon}
-              icons={options.icons}
-              onChange={setIcon}
-              isMulti={false}
-            />
-          </ErrorBoundary>
-          <button className={`btn btn-primary mt-3`} onClick={addSelected}>
-            <FontAwesomeIcon icon={faPlus} className="me-1" />
-            {t("Add")}
-          </button>
-          <button
-            className={`btn btn-outline-secondary ms-2 mt-3`}
-            onClick={() => setAdding(false)}
-          >
-            <FontAwesomeIcon icon={faTimes} />
-          </button>
-        </div>
-      </div>
       <div className="toolbar-row mt-2">
+        <div
+          className={`dropdown d-inline-flex wrap-builder-elem align-items-center justify-content-center ${
+            canAdd ? "" : "text-muted"
+          }`}
+        >
+          {/* the clickable square and the menu are siblings, not
+              parent/child - otherwise every click inside the menu bubbles
+              up and re-toggles this onClick, closing the menu */}
+          <div
+            className="d-inline-flex align-items-center justify-content-center w-100 h-100"
+            id="library-add-btn"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded={adding}
+            onClick={() => canAdd && setAdding(!adding)}
+          >
+            <div className="inner">
+              <FontAwesomeIcon icon={faPlus} className="fa-lg" />
+            </div>
+            <label>{t("Add")}</label>
+          </div>
+          <div
+            className={`dropdown-menu py-3 px-4 ${adding ? "show" : ""}`}
+            aria-labelledby="library-add-btn"
+          >
+            <label>{t("Name")}</label>
+            <input
+              type="text"
+              className="form-control"
+              value={newName}
+              onChange={(e) => e?.target && setNewName(e.target.value)}
+            />
+            <br />
+            <label>{t("Icon")}</label>
+            {/* this picker has a stray internal callback that can throw
+                after it closes, unrelated to anything the user did - catch it
+                here so it doesn't take down the whole builder */}
+            <ErrorBoundary>
+              <FontIconPicker
+                className="w-100"
+                value={icon}
+                icons={options.icons}
+                onChange={setIcon}
+                isMulti={false}
+              />
+            </ErrorBoundary>
+            <button className={`btn btn-primary mt-3`} onClick={addSelected}>
+              <FontAwesomeIcon icon={faPlus} className="me-1" />
+              {t("Add")}
+            </button>
+            <button
+              className={`btn btn-outline-secondary ms-2 mt-3`}
+              onClick={() => setAdding(false)}
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+          </div>
+        </div>
         <WrapElem
           connectors={connectors}
           icon="fas fa-square"
@@ -556,7 +565,10 @@ const Library = ({ expanded }) => {
           <LibrarySlotElem />
         </WrapElem>
       </div>
-      <div className="card mt-2">
+      <div className="text-muted small border-top mt-2 pt-1">
+        {t("Saved components")}
+      </div>
+      <div className="card">
         {elemRows.map((els, ix) => (
           <div className="toolbar-row" key={ix}>
             {els.map((l, ix) => (
