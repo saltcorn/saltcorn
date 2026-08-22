@@ -51,7 +51,7 @@
     "https-proxy-agent": "^7.0.6",
     "fs-extra": "11.3.5",
     "semver": "^7.6.3",
-    "tar": "^6.2.1",
+    "tar": "^7.5.22",
     "tmp-promise": "^3.0.3"
   },
   "devDependencies": {

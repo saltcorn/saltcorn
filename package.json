@@ -111,7 +111,8 @@
     "react-transition-group": "4.4.5",
     "tough-cookie": "4.1.4",
     "@types/tough-cookie": "4.0.5",
-    "ajv": "^8.18.0"
+    "ajv": "^8.18.0",
+    "tar": "^7.5.22"
   },
   "workspaces": [
     "./packages/*"
