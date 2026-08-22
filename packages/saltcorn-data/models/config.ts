@@ -748,6 +748,18 @@ const configTypes: ConfigTypes = {
     default: true,
     blurb: "Enable server side updates from within run_js_code actions",
   },
+  scheduler_tick_seconds: {
+    type: "Integer",
+    label: "Scheduler tick (seconds)",
+    default: 300,
+    attributes: { min: 10 },
+    blurb:
+      "How often the scheduler wakes up to look for work. This is the interval " +
+      "at which Often triggers run, and the finest resolution available to Cron " +
+      "triggers. Shorter ticks schedule more precisely at the cost of more " +
+      "frequent database activity in every tenant.",
+    excludeFromMobile: true,
+  },
   default_locale: {
     type: "String",
     label: "Default locale",

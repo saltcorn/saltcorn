@@ -669,6 +669,7 @@ class Trigger implements AbstractTrigger {
       "Daily",
       "Hourly",
       "Often",
+      "Cron",
       "API call",
       "PageLoad",
       "Login",

@@ -4,10 +4,17 @@ import Field from "../models/field.js";
 import User from "../models/user.js";
 import EventLog from "../models/eventlog.js";
 import * as scheduler from "../models/scheduler.js";
+import {
+  parseCron,
+  isValidCron,
+  cronMatches,
+  cronDueInWindow,
+} from "../models/internal/cron.js";
 import { getState } from "../db/state.js";
 import resetSchemaMod from "../db/reset_schema.js";
 import fixturesMod from "../db/fixtures.js";
-const { runScheduler } = scheduler;
+const { runScheduler, getCronTriggersDueNow, resolveTickSeconds } =
+  scheduler;
 import db from "../db/index.js";
 import * as mocks from "./mocks.js";
 const {
@@ -778,6 +785,145 @@ describe("Scheduler", () => {
     // await the loop rather than sleeping: it only checks stop_when at the top
     // of the next tick, which can be later than any fixed sleep
     await schedulerDone;
+  });
+});
+
+describe("Cron expressions", () => {
+  const matchesAt = (expr: string, iso: string) => {
+    const spec = parseCron(expr);
+    assertIsSet(spec);
+    return cronMatches(spec, new Date(iso));
+  };
+
+  it("accepts valid expressions", () => {
+    for (const expr of [
+      "* * * * *",
+      "0 9 * * 1-5",
+      "*/10 * * * *",
+      "0 0 1 1 *",
+      "15,45 * * * *",
+      "0 9-17/2 * * *",
+      "0 0 * jan mon",
+      "@daily",
+      "  0 9 * * *  ",
+    ])
+      expect(isValidCron(expr)).toBe(true);
+  });
+
+  it("rejects invalid expressions", () => {
+    for (const expr of [
+      "",
+      "* * * *",
+      "* * * * * *",
+      "60 * * * *",
+      "* 24 * * *",
+      "* * 0 * *",
+      "* * * 13 *",
+      "* * * * 8",
+      "*/0 * * * *",
+      "5-1 * * * *",
+      "banana",
+      "* * * * mondayish",
+    ])
+      expect(isValidCron(expr)).toBe(false);
+  });
+
+  it("matches minute, hour and month fields", () => {
+    // 2024-03-06 is a Wednesday
+    expect(matchesAt("30 14 * * *", "2024-03-06T14:30:00")).toBe(true);
+    expect(matchesAt("30 14 * * *", "2024-03-06T14:31:00")).toBe(false);
+    expect(matchesAt("*/15 * * * *", "2024-03-06T14:45:00")).toBe(true);
+    expect(matchesAt("*/15 * * * *", "2024-03-06T14:46:00")).toBe(false);
+    expect(matchesAt("0 0 * mar *", "2024-03-06T00:00:00")).toBe(true);
+    expect(matchesAt("0 0 * apr *", "2024-03-06T00:00:00")).toBe(false);
+  });
+
+  it("treats day-of-month and day-of-week as either/or when both are set", () => {
+    // 2024-03-06 Wednesday, 2024-03-10 Sunday
+    expect(matchesAt("0 0 10 * wed", "2024-03-06T00:00:00")).toBe(true);
+    expect(matchesAt("0 0 10 * wed", "2024-03-10T00:00:00")).toBe(true);
+    expect(matchesAt("0 0 10 * wed", "2024-03-07T00:00:00")).toBe(false);
+    // only one restricted: that one alone decides
+    expect(matchesAt("0 0 10 * *", "2024-03-06T00:00:00")).toBe(false);
+    expect(matchesAt("0 0 * * wed", "2024-03-06T00:00:00")).toBe(true);
+  });
+
+  it("accepts both 0 and 7 for Sunday", () => {
+    expect(matchesAt("0 0 * * 0", "2024-03-10T00:00:00")).toBe(true);
+    expect(matchesAt("0 0 * * 7", "2024-03-10T00:00:00")).toBe(true);
+  });
+
+  it("finds occurrences within a window but not outside it", () => {
+    const from = new Date("2024-03-06T14:02:30");
+    expect(cronDueInWindow("*/5 * * * *", from, 300)).toBe(true); // 14:05
+    expect(cronDueInWindow("0 15 * * *", from, 300)).toBe(false); // an hour off
+    expect(cronDueInWindow("0 15 * * *", from, 60 * 60)).toBe(true);
+    expect(cronDueInWindow("not a cron", from, 300)).toBe(false);
+  });
+
+  it("does not re-fire an occurrence earlier in the current minute", () => {
+    // 14:02:00 already fired in the window that ended at 14:02:30
+    const expr = "2 14 * * *";
+    expect(cronDueInWindow(expr, new Date("2024-03-06T14:02:30"), 300)).toBe(
+      false
+    );
+    expect(cronDueInWindow(expr, new Date("2024-03-06T14:02:00"), 300)).toBe(
+      true
+    );
+  });
+});
+
+describe("Scheduler tick", () => {
+  it("defaults to five minutes and follows the config", async () => {
+    expect(resolveTickSeconds()).toBe(300);
+
+    await getState()!.setConfig("scheduler_tick_seconds", 60);
+    expect(resolveTickSeconds()).toBe(60);
+
+    // a tick passed to runScheduler wins over the config
+    expect(resolveTickSeconds(1)).toBe(1);
+
+    // an implausibly short configured tick is floored
+    await getState()!.setConfig("scheduler_tick_seconds", 2);
+    expect(resolveTickSeconds()).toBe(10);
+
+    await getState()!.setConfig("scheduler_tick_seconds", 300);
+  });
+});
+
+describe("Cron triggers", () => {
+  it("are picked up by the scheduler only when due", async () => {
+    const due = await Trigger.create({
+      name: "CronDue",
+      action: "run_js_code",
+      when_trigger: "Cron",
+      channel: "* * * * *",
+      configuration: { code: "" },
+    });
+    // half an hour away, so outside the next tick either way
+    const notDueMinute = (new Date().getMinutes() + 30) % 60;
+    const notDue = await Trigger.create({
+      name: "CronNotDue",
+      action: "run_js_code",
+      when_trigger: "Cron",
+      channel: `${notDueMinute} * * * *`,
+      configuration: { code: "" },
+    });
+    const noExpression = await Trigger.create({
+      name: "CronNoExpression",
+      action: "run_js_code",
+      when_trigger: "Cron",
+      configuration: { code: "" },
+    });
+
+    const names = getCronTriggersDueNow(300).map((t) => t.name);
+    expect(names.includes("CronDue")).toBe(true);
+    expect(names.includes("CronNotDue")).toBe(false);
+    expect(names.includes("CronNoExpression")).toBe(false);
+
+    await due.delete();
+    await notDue.delete();
+    await noExpression.delete();
   });
 });
 

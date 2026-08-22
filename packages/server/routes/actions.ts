@@ -23,6 +23,7 @@ import { getState } from "@saltcorn/data/db/state";
 import Trigger from "@saltcorn/data/models/trigger";
 import FieldRepeat from "@saltcorn/data/models/fieldrepeat";
 import { getTriggerList } from "./common_lists.js";
+import { isValidCron } from "@saltcorn/data/models/internal/cron";
 import TagEntry from "@saltcorn/data/models/tag_entry";
 import WorkflowStep from "@saltcorn/data/models/workflow_step";
 import WorkflowRun from "@saltcorn/data/models/workflow_run";
@@ -254,6 +255,24 @@ router.get(
   })
 );
 /**
+ * How often the scheduler wakes up, in words, for the trigger form sublabels
+ * @param req
+ * @returns {string}
+ */
+const tickInterval = (req: Req) => {
+  const secs = +getState()!.getConfig("scheduler_tick_seconds", 300);
+  if (secs % 3600 === 0) {
+    const hours = secs / 3600;
+    return hours === 1 ? req.__("hour") : `${hours} ${req.__("hours")}`;
+  }
+  if (secs % 60 === 0) {
+    const mins = secs / 60;
+    return mins === 1 ? req.__("minute") : `${mins} ${req.__("minutes")}`;
+  }
+  return `${secs} ${req.__("seconds")}`;
+};
+
+/**
  * Trigger Edit Form
  * @param req
  * @param trigger
@@ -319,7 +338,8 @@ const triggerForm = async (req: Req, trigger?: any) => {
         help: { topic: "Event types" },
         attributes: {
           explainers: {
-            Often: req.__("Every 5 minutes"),
+            Often: req.__("Every %s", tickInterval(req)),
+            Cron: req.__("On a custom schedule given by a cron expression"),
             Never: req.__(
               "Not scheduled but can be run as an action from a button click"
             ),
@@ -360,6 +380,31 @@ const triggerForm = async (req: Req, trigger?: any) => {
         input_type: "time_of_week",
         showIf: { when_trigger: "Weekly" },
         sublabel: req.__("UTC timezone"),
+      },
+      {
+        name: "channel",
+        label: req.__("Cron expression"),
+        type: "String",
+        required: true,
+        showIf: { when_trigger: "Cron" },
+        attributes: { spellcheck: false },
+        sublabel:
+          req.__(
+            "Five fields: minute hour day-of-month month day-of-week, in the server timezone."
+          ) +
+          " " +
+          req.__("For example") +
+          ": <code>0 9 * * 1-5</code> (" +
+          req.__("09:00 on weekdays") +
+          "), <code>*/10 * * * *</code> (" +
+          req.__("every 10 minutes") +
+          "). " +
+          req.__(
+            "The scheduler looks for due triggers every %s, so a cron cannot fire more often than that.",
+            tickInterval(req)
+          ),
+        validator: (s: string) =>
+          isValidCron(s) ? undefined : req.__("Not a valid cron expression"),
       },
       {
         name: "channel",
