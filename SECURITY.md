@@ -48,7 +48,7 @@ Modules are not sandboxed. A module can run any code and cause a full system tak
 
 ## Known issues
 
-The implmentation of ownership formulas in Filter aggregations (which are used to show counts, averages etc) is incomplete. For complex ownership formulas, in particular those that include join fields, aggregations may include rows that the user does not have access to.
+The implementation of ownership formulas in Filter aggregations (which are used to show counts, averages etc) is incomplete. For complex ownership formulas, in particular those that include join fields, aggregations may include rows that the user does not have access to.
 
 In List, Show and Edit views, rows in different tables accessed as join fields and aggregations may not check for ownership.
 
