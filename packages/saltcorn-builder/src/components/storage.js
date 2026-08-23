@@ -32,6 +32,8 @@ import { DropMenu } from "./elements/DropMenu";
 import { Container } from "./elements/Container";
 import { Prompt } from "./elements/Prompt";
 import { rand_ident } from "./elements/utils";
+import { LibraryInstance } from "./elements/LibraryInstance";
+import { LibrarySlotInstance } from "./elements/LibrarySlotInstance";
 
 /**
  * @param {object} segment
@@ -84,7 +86,79 @@ const allElements = [
   Prompt,
 ];
 
+/**
+ * Fills each slot in a shared component's layout with its saved field pick or dropped-in content.
+ * @param {object} segment
+ * @param {object[]} [slots]
+ * @returns {void}
+ */
+const applySlotFills = (segment, slots) => {
+  if (!segment) return;
+  if (Array.isArray(segment)) {
+    segment.forEach((s) => applySlotFills(s, slots));
+    return;
+  }
+  if (segment.type === "library-slot") {
+    const fill = (slots || []).find((s) => s.name === segment.name);
+    if (fill) Object.assign(segment, fill);
+    return;
+  }
+  if (segment.above) applySlotFills(segment.above, slots);
+  else if (segment.besides) applySlotFills(segment.besides, slots);
+  else if (segment.contents) applySlotFills(segment.contents, slots);
+};
+
 export /**
+ * Fetches the latest content for every shared component in a layout,
+ * including ones nested inside another shared component.
+ * @param {object} layout
+ * @param {object} options
+ * @param {Set<number>} [visitedIds] - library ids seen on this branch, so a
+ *   library that contains itself resolves to nothing instead of looping forever
+ * @returns {Promise<void>}
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const resolveLibraryRefs = async (layout, options, visitedIds = new Set()) => {
+  const go = async (segment) => {
+    if (!segment) return;
+    if (Array.isArray(segment)) {
+      await Promise.all(segment.map(go));
+      return;
+    }
+    if (segment.type === "library" && segment.library_id) {
+      if (visitedIds.has(segment.library_id)) {
+        segment.contents = {};
+        return;
+      }
+      const r = await fetch(`/library/content/${segment.library_id}`, {
+        headers: { "CSRF-Token": options.csrfToken },
+      });
+      const lib = await r.json();
+      if (lib.error) return;
+      segment.library_name = lib.name;
+      segment.contents = lib.layout?.layout
+        ? lib.layout.layout
+        : lib.layout || {};
+      applySlotFills(segment.contents, segment.slots);
+      await resolveLibraryRefs(
+        segment.contents,
+        options,
+        new Set(visitedIds).add(segment.library_id)
+      );
+      return;
+    }
+    if (segment.above) await go(segment.above);
+    else if (segment.besides) await go(segment.besides);
+    else if (segment.contents) await go(segment.contents);
+  };
+  await go(layout);
+};
+
+export /**
+ * Builds real placed nodes from a saved layout tree, the reverse of what
+ * craftToSaltcorn does.
  * @param {object} layout
  * @param {object} query
  * @param {object} actions
@@ -103,6 +177,7 @@ const layoutToNodes = (
   index = false
 ) => {
   /**
+   * Turns one saved layout segment into its matching Craft element.
    * @param {object} segment
    * @param {string} ix
    * @returns {Element|Text|View|Action|Tabs|Columns}
@@ -234,6 +309,36 @@ const layoutToNodes = (
           minRole={segment.minRole || 10}
           isFormula={segment.isFormula || {}}
         />
+      );
+    } else if (segment.type === "library") {
+      // segment.contents/library_name must already be filled in by
+      // resolveLibraryRefs before this runs - toTag itself can't be async
+      return (
+        <Element
+          key={ix}
+          canvas
+          is={LibraryInstance}
+          library_id={segment.library_id}
+          library_name={segment.library_name}
+          custom={segment._custom || {}}
+        >
+          {toTag(segment.contents)}
+        </Element>
+      );
+    } else if (segment.type === "library-slot") {
+      return (
+        <Element
+          key={ix}
+          canvas
+          is={LibrarySlotInstance}
+          slot_name={segment.name}
+          kind={segment.kind || "field"}
+          field={segment.field}
+          fieldview={segment.fieldview}
+          custom={segment._custom || {}}
+        >
+          {toTag(segment.contents)}
+        </Element>
       );
     } else if (segment.type === "tabs") {
       let contentsArray = segment.contents.map(toTag);
@@ -397,6 +502,7 @@ const layoutToNodes = (
  */
 
 export /**
+ * Turns the placed canvas into a saved layout.
  * @param {object[]} nodes
  * @param {string} [startFrom = "ROOT" ]
  * @returns {object}
@@ -406,6 +512,9 @@ export /**
  */
 const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
   var columns = [];
+  // edits to shared components save to their own _sc_library row, not
+  // this page/view's layout - collected as go() walks the tree
+  var libraryUpdates = [];
   /**
    * @param {object} node
    * @returns {void|object}
@@ -419,15 +528,55 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
 
   const get_nodes = (node) => {
     if (!node.nodes || node.nodes.length == 0) return;
-    else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
-    else return removeEmpty({ above: node.nodes.map((nm) => go(nodes[nm])) });
+    else if (node.nodes.length == 1)
+      return go(nodes[node.nodes[0]], node.nodes[0]);
+    else
+      return removeEmpty({
+        above: node.nodes.map((nm) => go(nodes[nm], nm)),
+      });
   };
 
   /**
+   * Finds each slot's fill in a layout tree, keeps it for this page/view,
+   * and clears it from the tree so it isn't saved to the shared row.
+   * @param {object} segment - layout tree (or subtree) to scan
+   * @param {object[]} [found] - accumulator, used internally for recursion
+   * @returns {object[]} the fills collected so far
+   */
+  const collectAndStripSlots = (segment, found = []) => {
+    if (!segment) return found;
+    if (Array.isArray(segment)) {
+      segment.forEach((s) => collectAndStripSlots(s, found));
+      return found;
+    }
+    if (segment.type === "library-slot") {
+      found.push({
+        name: segment.name,
+        kind: segment.kind,
+        field: segment.field,
+        fieldview: segment.fieldview,
+        contents: segment.contents,
+      });
+      delete segment.field;
+      delete segment.fieldview;
+      delete segment.contents;
+      return found;
+    }
+    if (segment.above) collectAndStripSlots(segment.above, found);
+    else if (segment.besides) collectAndStripSlots(segment.besides, found);
+    else if (segment.contents) collectAndStripSlots(segment.contents, found);
+    return found;
+  };
+
+  /**
+   * Turns one placed node (and everything under it) back into a plain
+   * layout segment, the reverse of what layoutToNodes does.
    * @param {object} node
+   * @param {string} [id] - this node's own id, so a LibraryInstance save can
+   *   be told apart from a sibling placement (see doSave)
    * @returns {object}
    */
-  const go = (node) => {
+  const go = (node, id) => {
     if (!node) return;
     let customProps = {};
     const mergedCustom = { ...(node?.props?.custom || {}), ...(node?.custom || {}) };
@@ -488,6 +637,40 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         lc[f.name] = node.props[f.name];
       });
       return lc;
+    }
+    if (node.displayName === LibrarySlotInstance.craft.displayName) {
+      // keeps its picked field or dropped content right here - if it's
+      // part of a shared component, that gets separated out before saving
+      const kind = node.props.kind;
+      return {
+        type: "library-slot",
+        kind,
+        name: node.props.slot_name,
+        ...(kind === "container"
+          ? { contents: get_nodes(node) }
+          : { field: node.props.field, fieldview: node.props.fieldview }),
+        ...customProps,
+      };
+    }
+    if (node.displayName === LibraryInstance.craft.displayName) {
+      // must come before the generic canvas case below, or a reload turns
+      // this into a plain copy. skip if emptied out, so we don't blank the shared row
+      const childContent = get_nodes(node);
+      let slots = [];
+      if (childContent !== undefined) {
+        slots = collectAndStripSlots(childContent);
+        libraryUpdates.push({
+          library_id: node.props.library_id,
+          layout: childContent,
+          node_id: id,
+        });
+      }
+      return {
+        type: "library",
+        library_id: node.props.library_id,
+        ...(slots.length ? { slots } : {}),
+        ...customProps,
+      };
     }
     if (node.isCanvas) {
       return get_nodes(node);
@@ -671,9 +854,9 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       };
     }
   };
-  const layout = go(nodes[startFrom]) || {};
+  const layout = go(nodes[startFrom], startFrom) || {};
   /*console.log("nodes", JSON.stringify(nodes));
     console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));*/
-  return { columns, layout };
+  return { columns, layout, libraryUpdates };
 };

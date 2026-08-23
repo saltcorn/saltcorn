@@ -171,6 +171,15 @@ div.wrap-builder-elem label {
   display: block;
 }
 
+/* fallback selection border for elements with no box of their own (eg a
+   display:contents LibraryInstance wrapper) - the ::after above can't draw
+   on those, so this is a separate, absolutely-positioned rectangle instead */
+.selected-indicator-border {
+  position: fixed;
+  border: 1px dashed #2680eb;
+  pointer-events: none;
+}
+
 .canvas {
   outline: 1px dashed #808080;
 }
@@ -279,6 +288,21 @@ div.componets-and-library-accordion {
 
 .builder-library .dropdown {
   overflow: visible;
+}
+
+.builder-library .dropdown-menu {
+  left: 10rem;
+  right: auto;
+  z-index: 1060;
+  margin-top: 11.5rem;
+}
+
+/* undo div.wrap-builder-elem label's absolute/bottom styling for the
+   form's own labels, which are also descendants of that div */
+.builder-library .dropdown-menu label {
+  position: static;
+  text-transform: none;
+  font-size: inherit;
 }
 
 /* 

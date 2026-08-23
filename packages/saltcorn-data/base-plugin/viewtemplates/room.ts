@@ -12,6 +12,7 @@ import markupPkg from "@saltcorn/markup";
 import db from "../../db/index.js";
 import Table from "../../models/table.js";
 import View from "../../models/view.js";
+import Library from "../../models/library.js";
 import Form from "../../models/form.js";
 import Field from "../../models/field.js";
 import Workflow from "../../models/workflow.js";
@@ -337,6 +338,7 @@ const run = async (
 const transformForm = async ({ form, table, req, res, viewname }: { form: GenObj; table: any; req: Req; res: Res; viewname: string }) => {
   const row: GenObj = {};
   await traverse(form.layout, {
+    library: (segment: any) => Library.resolveSegment(segment, req),
     async action(segment: GenObj) {
       if (segment.action_style === "on_page_load") {
         segment.type = "blank";

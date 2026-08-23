@@ -726,6 +726,11 @@ const render = async ({
   enable_realtime?: boolean;
   update_events?: any;
 }) => {
+  // library refs (plain or slotted) aren't resolved anywhere else on the
+  // Edit view render path, unlike Show/List/Filter
+  await traverse(layout, {
+    library: (segment: any) => Library.resolveSegment(segment, req),
+  });
   const form = await getForm(
     table,
     viewname,

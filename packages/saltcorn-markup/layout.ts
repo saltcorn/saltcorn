@@ -303,6 +303,26 @@ const render = ({
     if (segment.type === "blank") {
       return wrap(segment, isTop, ix, segment.contents || "");
     }
+    if (segment.type === "library-slot") {
+      // a slot that's part of a shared component already got its content
+      // filled in earlier - this one wasn't, so render its own content here
+      if (segment.kind === "field" && segment.field) {
+        return go(
+          {
+            type: "field",
+            field_name: segment.field,
+            fieldview: segment.fieldview,
+            configuration: {},
+          },
+          isTop,
+          ix
+        );
+      }
+      if (segment.kind === "container" && segment.contents) {
+        return go(segment.contents, isTop, ix);
+      }
+      return wrap(segment, isTop, ix, "");
+    }
     if (segment.type === "breadcrumbs") {
       return wrap(
         segment,

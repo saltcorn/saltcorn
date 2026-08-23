@@ -269,9 +269,13 @@ class PageFunctions {
     await this.page.click(this.locators.clearAllButton);
     await this.page.click('#inputusers');
     await this.page.waitForSelector(this.locators.submitButton);
-    await this.page.click(this.locators.submitButton);
-    await this.page.waitForTimeout(1000);
-
+    // the server only redirects to /admin once every delete has finished,
+    // so waiting for that redirect (rather than a fixed timeout) is a real
+    // completion signal instead of a guess
+    await Promise.all([
+      this.page.waitForURL('**/admin', { timeout: 30000 }),
+      this.page.click(this.locators.submitButton),
+    ]);
   }
 
   async wait_For_Toaster_Message() {

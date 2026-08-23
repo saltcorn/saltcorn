@@ -521,6 +521,9 @@ const renderRows = async (
         }
       },
     });
+    await traverse(myLayout, {
+      library: (segment: any) => Library.resolveSegment(segment, extra.req),
+    });
     await eachView(
       myLayout,
       async (segment: GenObj, inLazy: boolean) => {

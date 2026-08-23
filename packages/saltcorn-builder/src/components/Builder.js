@@ -43,12 +43,14 @@ import {
   ToolboxFilter,
   ToolboxList,
 } from "./Toolbox";
-import { craftToSaltcorn, layoutToNodes } from "./storage";
+import { craftToSaltcorn, layoutToNodes, resolveLibraryRefs } from "./storage";
 import { Card } from "./elements/Card";
 import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Container } from "./elements/Container";
 import { Column } from "./elements/Column";
+import { LibraryInstance } from "./elements/LibraryInstance";
+import { LibrarySlotInstance } from "./elements/LibrarySlotInstance";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCopy,
@@ -65,7 +67,7 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import { Accordion, ErrorBoundary } from "./elements/utils";
 import { Display, Tablet, Phone } from "react-bootstrap-icons";
-import { InitNewElement, Library, LibraryElem } from "./Library";
+import { InitNewElement, Library, LibraryElem, LibrarySlotElem, hydratingRef } from "./Library";
 import { RenderNode } from "./RenderNode";
 import { ListColumn } from "./elements/ListColumn";
 import { ListColumns } from "./elements/ListColumns";
@@ -786,18 +788,43 @@ const NextButton = ({ layout }) => {
   const options = useContext(optionsCtx);
 
   useEffect(() => {
-    layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
+    (async () => {
+      hydratingRef.current = true;
+      try {
+        await resolveLibraryRefs(layout, options);
+        layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
+      } finally {
+        hydratingRef.current = false;
+      }
+    })();
   }, []);
 
   /**
    * @returns {void}
    */
   const onClick = () => {
-    const { columns, layout } = craftToSaltcorn(
+    const { columns, layout, libraryUpdates } = craftToSaltcorn(
       JSON.parse(query.serialize()),
       "ROOT",
       options
     );
+    if (libraryUpdates?.length) {
+      // fire-and-forget with keepalive - the form submits right after
+      fetch(`/library/save-updates`, {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": options.csrfToken,
+        },
+        body: JSON.stringify({ libraryUpdates }),
+      }).catch(() => {
+        window.notifyAlert({
+          type: "danger",
+          text: "Unable to save shared component changes",
+        });
+      });
+    }
     document
       .querySelector("form#scbuildform input[name=columns]")
       .setAttribute("value", encodeURIComponent(JSON.stringify(columns)));
@@ -949,6 +976,9 @@ const Builder = ({ options, layout, mode }) => {
           ListColumn,
           ListColumns,
           LibraryElem,
+          LibraryInstance,
+          LibrarySlotElem,
+          LibrarySlotInstance,
           Prompt,
           Page
         }}

@@ -32,8 +32,54 @@ router.post(
   "/savefrombuilder",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    await Library.create(req.body || {});
+    const id = await Library.create(req.body || {});
+    res.json({ success: "ok", id });
+  })
+);
+
+/**
+ * Saves edits made inside shared components, independent of which page or
+ * view they were edited from. Used by the builder's "Next" button, which
+ * otherwise only submits the page/view's own layout.
+ * @name post/save-updates
+ * @function
+ * @memberof module:routes/library~libraryRouter
+ */
+router.post(
+  "/save-updates",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { libraryUpdates } = req.body || {};
+    if (libraryUpdates?.length)
+      await Library.saveLibraryUpdates(libraryUpdates);
     res.json({ success: "ok" });
+  })
+);
+
+/**
+ * @name get/content/:id
+ * @function
+ * @memberof module:routes/library~libraryRouter
+ * Current content of a library item, fetched fresh (not from whatever the
+ * builder's own page load happened to have) - a placed instance always
+ * starts from the latest saved content of the shared component.
+ */
+router.get(
+  "/content/:id",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+    const lib = await Library.findOne({ id });
+    if (!lib) {
+      res.status(404).json({ error: "Library item not found" });
+      return;
+    }
+    res.json({
+      id: lib.id,
+      name: lib.name,
+      icon: lib.icon,
+      layout: lib.layout,
+    });
   })
 );
 
