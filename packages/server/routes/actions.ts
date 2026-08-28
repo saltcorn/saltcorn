@@ -498,6 +498,21 @@ const triggerForm = async (req: Req, trigger?: any) => {
         showIf: { when_trigger: ["API call"], _raw_output: true },
       },
       {
+        name: "_after_commit",
+        label: req.__("Run in background"),
+        type: "Bool",
+        parent_field: "configuration",
+        sublabel: req.__(
+          "Run once the row is saved and the database transaction has " +
+            "committed, without delaying the request or the scheduler. Use " +
+            "for slow work such as sending email. Such an action cannot show " +
+            "notifications, change the saved row or prevent the save; its " +
+            "errors are only recorded in the crash log, and the work is lost " +
+            "if the server restarts before it finishes."
+        ),
+        showIf: { when_trigger: ["Insert", "Update", "Delete"] },
+      },
+      {
         name: "_only_if",
         label: req.__("Only if"),
         type: "String",

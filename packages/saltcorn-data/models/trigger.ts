@@ -388,6 +388,30 @@ class Trigger implements AbstractTrigger {
         }
         if (extraArgs) extraArgs.user = extraArgs.user || user;
         else if (user) extraArgs = { user };
+        if (trigger.configuration?._after_commit) {
+          // Defer past COMMIT, and detached: resultCollector is consumed by
+          // then, so nothing can use what it returns and waiting would only
+          // delay the caller. Errors reach the crash log and nowhere else.
+          const args = extraArgs;
+          await db.afterCommit(async () => {
+            void (async () => {
+              try {
+                await trigger.run!(row, args);
+              } catch (e: any) {
+                Crash.create(e, {
+                  url: "/",
+                  headers: {
+                    when_trigger,
+                    table: table?.name,
+                    trigger: trigger.name,
+                    after_commit: true,
+                  },
+                });
+              }
+            })();
+          });
+          continue;
+        }
         const res = await trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
         if (res && resultCollector) mergeActionResults(resultCollector, res);
       } catch (e: any) {

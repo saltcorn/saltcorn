@@ -927,6 +927,127 @@ describe("Cron triggers", () => {
   });
 });
 
+describe("After-commit table triggers", () => {
+  it("runs outside the transaction, unlike an ordinary trigger", async () => {
+    const table = await Table.create("AfterCommitTable");
+    await Field.create({ table, name: "name", type: "String" });
+
+    const seen: Record<string, boolean | undefined> = {};
+    let deferredRan: () => void;
+    const deferredDone = new Promise<void>((resolve) => {
+      deferredRan = resolve;
+    });
+    getState()!.registerPlugin("mock_after_commit", {
+      sc_plugin_api_version: 1,
+      actions: {
+        recordInTransaction: {
+          run: async ({ configuration: { key } }: any) => {
+            seen[key] = !!db.getRequestContext()?.inTransaction;
+            if (key === "deferred") deferredRan();
+          },
+        },
+      },
+    });
+
+    await Trigger.create({
+      name: "InlineTrigger",
+      action: "recordInTransaction",
+      table_id: table.id,
+      when_trigger: "Insert",
+      configuration: { key: "inline" },
+    });
+    await Trigger.create({
+      name: "AfterCommitTrigger",
+      action: "recordInTransaction",
+      table_id: table.id,
+      when_trigger: "Insert",
+      configuration: { key: "deferred", _after_commit: true },
+    });
+
+    await db.runWithTenant(db.getTenantSchema(), async () => {
+      await db.withTransaction(async () => {
+        await table.insertRow({ name: "Sam" });
+      });
+    });
+
+    expect(seen.inline).toBe(true);
+    await deferredDone;
+    expect(seen.deferred).toBe(false);
+  });
+
+  it("does not delay its caller", async () => {
+    const table = await Table.create("BackgroundTable");
+    await Field.create({ table, name: "name", type: "String" });
+    const sleepMs = 3000;
+    let finished = false;
+    getState()!.registerPlugin("mock_background", {
+      sc_plugin_api_version: 1,
+      actions: {
+        slowAction: {
+          run: async () => {
+            await sleep(sleepMs);
+            finished = true;
+          },
+        },
+      },
+    });
+    await Trigger.create({
+      name: "SlowBackgroundTrigger",
+      action: "slowAction",
+      table_id: table.id,
+      when_trigger: "Insert",
+      configuration: { _after_commit: true },
+    });
+
+    const start = Date.now();
+    await db.runWithTenant(db.getTenantSchema(), async () => {
+      await db.withTransaction(async () => {
+        await table.insertRow({ name: "Sam" });
+      });
+    });
+    const elapsed = Date.now() - start;
+
+    expect(elapsed < sleepMs).toBe(true);
+    expect(finished).toBe(false);
+  });
+
+  it("does not run when the transaction rolls back", async () => {
+    const table = Table.findOne({ name: "AfterCommitTable" })!;
+    const seen: string[] = [];
+    getState()!.registerPlugin("mock_after_commit_rollback", {
+      sc_plugin_api_version: 1,
+      actions: {
+        recordRan: {
+          run: async () => {
+            seen.push("ran");
+          },
+        },
+      },
+    });
+    const tr = await Trigger.create({
+      name: "RolledBackTrigger",
+      action: "recordRan",
+      table_id: table.id,
+      when_trigger: "Insert",
+      configuration: { _after_commit: true },
+    });
+
+    await db.runWithTenant(db.getTenantSchema(), async () => {
+      await db.withTransaction(
+        async () => {
+          await table.insertRow({ name: "Rolled back" });
+          throw new Error("abandon this insert");
+        },
+        async () => {}
+      );
+    });
+
+    await sleep(200);
+    expect(seen).toEqual([]);
+    await tr.delete();
+  });
+});
+
 describe("Validate action", () => {
   it("it should setup", async () => {
     const persons = await Table.create("ValidatedTable");
