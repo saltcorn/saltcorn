@@ -602,6 +602,18 @@ const configTypes: ConfigTypes = {
       "Always use TLS when connecting to server? If unchecked, TLS is used if server supports the STARTTLS extension. In most cases check this box if you are connecting to port 465. For port 587 or 25 keep it unchecked",
     excludeFromMobile: true,
   },
+  smtp_timeout_seconds: {
+    type: "Integer",
+    label: "Timeout (seconds)",
+    default: 120,
+    attributes: { min: 1 },
+    sublabel:
+      "How long to wait for the mail server to accept the connection, and how " +
+      "long to allow it to go silent mid-send, before giving up. A send that " +
+      "exceeds this fails and is not retried, so raise this rather than lower " +
+      "it if your mail server is slow.",
+    excludeFromMobile: true,
+  },
   smtp_allow_self_signed: {
     type: "Bool",
     label: "Allow self-signed",
