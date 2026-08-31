@@ -138,42 +138,49 @@ export const SingleLineEditor = React.forwardRef(
       : value;
 
     return (
-      <div ref={ref} className="form-control p-0 pt-1" style={{ position: "relative" }}>
+      <div ref={ref} className="form-control monaco-input monaco-input-singleline">
         {isEmpty && !activePrefix && placeholder && (
           <div style={{
             position: "absolute",
-            top: "3px",
-            left: "14px",
+            top: "0.375rem",
+            left: "10px",
+            right: "10px",
+            bottom: "0.375rem",
+            display: "flex",
+            alignItems: "center",
             color: "#999",
             pointerEvents: "none",
             zIndex: 1,
             fontSize: "14px",
             whiteSpace: "nowrap",
+            overflow: "hidden",
           }}>
             {placeholder}
           </div>
         )}
-        <Editor
-          className={className || ""}
-          height="22px"
-          value={editorValue}
-          onChange={(fullValue) => {
-            const userValue = activePrefix
-              ? (fullValue || "").substring((fullValue || "").indexOf("\n") + 1)
-              : fullValue;
-            onChange && onChange(userValue);
-            setProp &&
-              propKey &&
-              setProp((prop) => (prop[propKey] = userValue));
-          }}
-          defaultLanguage="typescript"
-          //onMount={handleEditorDidMount}
-          //beforeMount={handleEditorWillMount}
-          options={singleLineEditorOptions}
-          //theme="myCoolTheme"
-          beforeMount={handleEditorWillMount}
-          onMount={handleEditorDidMount}
-        />
+        <div className="monaco-input-editor">
+          <Editor
+            className={className || ""}
+            height="100%"
+            value={editorValue}
+            onChange={(fullValue) => {
+              const userValue = activePrefix
+                ? (fullValue || "").substring((fullValue || "").indexOf("\n") + 1)
+                : fullValue;
+              onChange && onChange(userValue);
+              setProp &&
+                propKey &&
+                setProp((prop) => (prop[propKey] = userValue));
+            }}
+            defaultLanguage="typescript"
+            //onMount={handleEditorDidMount}
+            //beforeMount={handleEditorWillMount}
+            options={singleLineEditorOptions}
+            //theme="myCoolTheme"
+            beforeMount={handleEditorWillMount}
+            onMount={handleEditorDidMount}
+          />
+        </div>
       </div>
     );
   }
@@ -203,16 +210,21 @@ export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = 
   const resolvedPlaceholder = placeholder || "// enter code here";
 
   return (
-    <div className="form-control p-0 pt-2" style={{ position: "relative" }}>
+    <div className="form-control monaco-input">
       {isEmpty && !isModalEditor && (
         <div style={{
           position: "absolute",
-          top: "10px",
-          left: "14px",
+          top: "0.375rem",
+          left: "10px",
+          right: "10px",
+          height: "21px",
+          display: "flex",
+          alignItems: "center",
           color: "#999",
           pointerEvents: "none",
           zIndex: 1,
           fontSize: "14px",
+          overflow: "hidden",
         }}>
           {resolvedPlaceholder}
         </div>
