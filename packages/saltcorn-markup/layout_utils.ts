@@ -65,6 +65,7 @@ type SectionOpts = {
   type?: string;
   icon?: string;
   label: string;
+  drawer_label?: string;
   target_blank?: boolean;
   style?: string;
   class?: string;
@@ -227,7 +228,10 @@ const rightNavBar = (currentUrl: string, sections: SectionOpts[]): string =>
                       ...(s.tooltip ? makeTooltip(s.tooltip) : {}),
                     },
                     show_icon(s.icon, "mr-05"),
-                    text(s.label)
+                    text(s.label),
+                    s.drawer_label
+                      ? span({ class: "d-md-none" }, s.drawer_label)
+                      : ""
                   )
                 )
               : s.type === "Separator"

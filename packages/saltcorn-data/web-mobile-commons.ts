@@ -165,6 +165,7 @@ const get_extra_menu = (
 
         return {
           label: translated_label,
+          drawer_label: item.drawer_text,
           icon: item.icon,
           isUser: item.user_menu_header,
           location: item.location,

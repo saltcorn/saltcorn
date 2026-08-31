@@ -307,7 +307,7 @@ const menuForm = async (req: Req) => {
       {
         name: "drawer_text",
         label: req.__("Drawer label"),
-        sublabel: "Used in the drawer (mobile) menu by some themes",
+        sublabel: req.__("Used in the drawer (mobile) menu by some themes"),
         class: "item-menu",
         input_type: "text",
         required: true,
