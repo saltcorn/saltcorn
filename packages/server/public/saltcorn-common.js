@@ -1491,12 +1491,18 @@ ${value}`;
         }
         const enlarge = $(el).hasClass("enlarge-in-card");
         const compact = $(el).attr("compact");
+        const singleline = $(el).attr("singleline");
+        const asInput = singleline || compact;
         const div = document.createElement("div");
         el.after(div);
-        if (enlarge) {
+        if (asInput) {
+          div.classList.add("form-control", "monaco-input");
+          div.classList.add(
+            singleline ? "monaco-input-singleline" : "monaco-input-compact"
+          );
+        } else if (enlarge) {
           enlarge_in_code(div);
-        } else if (compact) div.style.height = "90px";
-        else div.classList.add("h-350");
+        } else div.classList.add("h-350");
         let language = "typescript";
         switch ($(el).attr("mode")) {
           case "text/css":
@@ -1523,21 +1529,22 @@ ${value}`;
             break;
         }
         const codepages = $(el).attr("codepage");
-        const singleline = $(el).attr("singleline");
-        if (singleline) {
-          div.style.height = "30px";
+        let host = div;
+        let lineHeight = 0;
+        if (asInput) {
+          host = document.createElement("div");
+          host.className = "monaco-input-editor";
+          div.appendChild(host);
+          if (singleline)
+            lineHeight = parseFloat(getComputedStyle(div).lineHeight) || 0;
         }
-        const editor = monaco.editor.create(div, {
+        const editor = monaco.editor.create(host, {
           value,
           language,
           theme: _sc_lightmode === "dark" ? "vs-dark" : "vs",
           minimap: { enabled: false },
-          ...(singleline || compact
-            ? {
-                extraEditorClassName: "form-control",
-                ...singleLineMonacoEditorOptions,
-              }
-            : {}),
+          ...(asInput ? singleLineMonacoEditorOptions : {}),
+          ...(lineHeight ? { lineHeight } : {}),
         });
         $(div).data("monaco-editor", editor);
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
