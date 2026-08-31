@@ -241,7 +241,7 @@ const BlockSetting = ({ block, setProp }) => {
 export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) => {
   const { t } = useTranslation();
   return !textStyle ||
-  !textStyleToArray(textStyle).some((ts) => ts && ts.startsWith("h")) ? (
+    !textStyleToArray(textStyle).some((ts) => ts && ts.startsWith("h")) ? (
     <BlockSetting block={block} setProp={setProp} />
   ) : (
     <div className="form-check">
@@ -937,11 +937,216 @@ const ColorInput = ({ value, onChange }) =>
     </button>
   );
 
-const CodeFieldWithModal = ({ value, onChange, setProp, mode, label, hideLabel, placeholder, nojoins }) => {
+// the copilot generates statements, so only offer it for multi-line JavaScript
+const jsCopilotModes = [
+  "",
+  "text/javascript",
+  "application/javascript",
+  "application/x-javascript",
+  "text/typescript",
+  "application/typescript",
+];
+
+/**
+ * "Edit with AI" button and modal for a multi-line code editor
+ * @param {object} props
+ * @param {string} props.mode
+ * @param {boolean} props.isExpression
+ * @param {string} props.value
+ * @param {function} props.onChange
+ * @param {string} [props.className] extra classes for the button
+ * @category saltcorn-builder
+ * @subcategory components / elements / utils
+ * @namespace
+ * @returns {Fragment|null}
+ */
+const EditCodeWithAI = ({ mode, isExpression, value, onChange, className }) => {
+  const options = React.useContext(optionsCtx);
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [prompt, setPrompt] = useState("");
+  const [error, setError] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [generated, setGenerated] = useState(null);
+
+  if (!options.has_js_copilot) return null;
+  if (isExpression) return null;
+  if (!jsCopilotModes.includes(mode || "")) return null;
+
+  const close = () => {
+    setOpen(false);
+    setPrompt("");
+    setError(null);
+    setGenerated(null);
+  };
+
+  const generate = async () => {
+    setGenerating(true);
+    setError(null);
+    try {
+      const res = await fetch("/admin/gen-js-copilot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": options.csrfToken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify({
+          description: prompt,
+          code: value || "",
+          table: options.tableName,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) setError(data.error);
+      else setGenerated(data.code);
+    } catch (err) {
+      setError(err.message || "Request failed");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <Fragment>
+      <button
+        type="button"
+        className={`btn btn-sm btn-link p-0 text-decoration-none edit-code-with-ai ${className || ""}`}
+        onClick={() => setOpen(true)}
+      >
+        {t("Edit with AI")}
+      </button>
+      {open && (
+        <div
+          className="modal d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1065 }}
+        >
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">{t("Edit with AI")}</h5>
+                <button type="button" className="btn-close" onClick={close} />
+              </div>
+              <div className="modal-body">
+                {generated === null ? (
+                  <Fragment>
+                    <p className="text-muted small">
+                      {t(
+                        "Describe what the code should do. The existing code will be used as context."
+                      )}
+                    </p>
+                    <textarea
+                      className="form-control"
+                      rows={3}
+                      value={prompt}
+                      autoFocus
+                      onChange={(e) => setPrompt(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter" || e.shiftKey) return;
+                        e.preventDefault();
+                        if (!generating && prompt.trim()) generate();
+                      }}
+                      placeholder={t("Enter your prompt...")}
+                    />
+                    {error && (
+                      <div className="alert alert-danger mt-2 mb-0">
+                        {error}
+                      </div>
+                    )}
+                  </Fragment>
+                ) : (
+                  <Fragment>
+                    <p className="text-muted small mb-1">
+                      {t("Review the generated code:")}
+                    </p>
+                    <pre
+                      style={{
+                        maxHeight: "400px",
+                        overflow: "auto",
+                        background: "#1e1e1e",
+                        color: "#d4d4d4",
+                        borderRadius: "4px",
+                        padding: "12px",
+                        fontSize: "13px",
+                      }}
+                    >
+                      <code>{generated}</code>
+                    </pre>
+                  </Fragment>
+                )}
+              </div>
+              <div className="modal-footer">
+                {generated === null ? (
+                  <Fragment>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={close}
+                    >
+                      {t("Cancel")}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={generate}
+                      disabled={generating || !prompt.trim()}
+                    >
+                      {generating ? t("Generating...") : t("Generate")}
+                    </button>
+                  </Fragment>
+                ) : (
+                  <Fragment>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setGenerated(null)}
+                    >
+                      {t("Back")}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => {
+                        onChange(generated);
+                        close();
+                      }}
+                    >
+                      {t("OK")}
+                    </button>
+                  </Fragment>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </Fragment>
+  );
+};
+
+const CodeFieldWithModal = ({
+  value,
+  onChange,
+  setProp,
+  mode,
+  label,
+  hideLabel,
+  placeholder,
+  nojoins,
+  isExpression,
+}) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { t } = useTranslation();
   return (
     <Fragment>
+      <EditCodeWithAI
+        mode={mode}
+        isExpression={isExpression}
+        value={value}
+        onChange={onChange}
+        className="float-end"
+      />
       {!hideLabel && (
         <label>
           {t(label)}{" "}
@@ -1012,6 +1217,14 @@ const CodeFieldWithModal = ({ value, onChange, setProp, mode, label, hideLabel, 
                 />
               </div>
               <div className="modal-footer">
+                <span className="me-auto">
+                  <EditCodeWithAI
+                    mode={mode}
+                    isExpression={isExpression}
+                    value={value}
+                    onChange={onChange}
+                  />
+                </span>
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -1065,7 +1278,8 @@ const ConfigForm = ({
       }
       return (
         <div key={ix} className="builder-config-field" data-field-name={f.name}>
-          {!isCheckbox(f) && (f.input_type !== "code" || f.attributes?.singleline) ? (
+          {!isCheckbox(f) &&
+          (f.input_type !== "code" || f.attributes?.singleline) ? (
             <label>
               {f.label || f.name}
               {f.help ? (
@@ -1074,8 +1288,7 @@ const ConfigForm = ({
                   field_name={fieldName}
                   table_name={tableName}
                 />
-              ) : null}
-              {" "}
+              ) : null}{" "}
             </label>
           ) : null}
           <ConfigField
@@ -1332,12 +1545,7 @@ const ConfigField = ({
     ),
     code: () => {
       if (field?.attributes?.singleline) {
-        return (
-          <SingleLineEditor
-            value={value || ""}
-            onChange={myOnChange}
-          />
-        );
+        return <SingleLineEditor value={value || ""} onChange={myOnChange} />;
       }
       return (
         <CodeFieldWithModal
@@ -1348,6 +1556,10 @@ const ConfigField = ({
           label={field?.label || field?.name || "Code"}
           placeholder={field?.attributes?.placeholder}
           nojoins={field?.attributes?.nojoins}
+          isExpression={
+            !!field?.attributes?.expression_type ||
+            !!field?.class?.includes?.("validate-expression")
+          }
         />
       );
     },
@@ -1610,7 +1822,9 @@ const SettingsRow = ({
   valuePostfix,
 }) => {
   const { t } = useTranslation();
-  const fullWidth = ["String", "Bool", "textarea"].includes(field.type) || field.input_type === "code";
+  const fullWidth =
+    ["String", "Bool", "textarea"].includes(field.type) ||
+    field.input_type === "code";
   const needLabel = field.type !== "Bool";
   const inner = field.canBeFormula ? (
     <OrFormula
@@ -1640,7 +1854,10 @@ const SettingsRow = ({
     <tr>
       {fullWidth ? (
         <td colSpan="2">
-          {needLabel && (field.input_type !== "code" || field.attributes?.singleline) && <label>{field.label}</label>}
+          {needLabel &&
+            (field.input_type !== "code" || field.attributes?.singleline) && (
+              <label>{field.label}</label>
+            )}
           {inner}
           {field.sublabel ? (
             <i
@@ -1769,11 +1986,21 @@ const ButtonOrLinkSettingsRows = ({
               {t("Link")}
             </option>
           ) : null}
-          <option value={addBtnClass("btn-primary")}>{t("Primary button")}</option>
-          <option value={addBtnClass("btn-secondary")}>{t("Secondary button")}</option>
-          <option value={addBtnClass("btn-success")}>{t("Success button")}</option>
-          <option value={addBtnClass("btn-danger")}>{t("Danger button")}</option>
-          <option value={addBtnClass("btn-warning")}>{t("Warning button")}</option>
+          <option value={addBtnClass("btn-primary")}>
+            {t("Primary button")}
+          </option>
+          <option value={addBtnClass("btn-secondary")}>
+            {t("Secondary button")}
+          </option>
+          <option value={addBtnClass("btn-success")}>
+            {t("Success button")}
+          </option>
+          <option value={addBtnClass("btn-danger")}>
+            {t("Danger button")}
+          </option>
+          <option value={addBtnClass("btn-warning")}>
+            {t("Warning button")}
+          </option>
           <option value={addBtnClass("btn-info")}>{t("Info button")}</option>
           <option value={addBtnClass("btn-outline-primary")}>
             {t("Primary outline button")}
