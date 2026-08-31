@@ -199,11 +199,40 @@ const navSubitems = ({
 };
 
 /**
+ * Bootstrap class controlling the width at which the navbar shows its menu
+ * items instead of collapsing them into a hamburger menu. The breakpoint is
+ * one of sm, md, lg, xl, xxl, or "always" (never collapse) or "never"
+ * (always show the hamburger menu).
+ * @param {string} [expand = "md"]
+ * @returns {string}
+ */
+const navbarExpandClass = (expand: string = "md"): string =>
+  expand === "never"
+    ? ""
+    : expand === "always"
+      ? "navbar-expand"
+      : `navbar-expand-${expand}`;
+
+/**
+ * Bootstrap class hiding an element unless the navbar is collapsed into the
+ * hamburger menu, for the same set of breakpoints as navbarExpandClass
+ * @param {string} [expand = "md"]
+ * @returns {string}
+ */
+const collapsedOnlyClass = (expand: string = "md"): string =>
+  expand === "never" ? "" : expand === "always" ? "d-none" : `d-${expand}-none`;
+
+/**
  * @param {string} currentUrl
  * @param {object[]} sections
+ * @param {string} [expand = "md"] breakpoint at which the menu items are shown
  * @returns {div}
  */
-const rightNavBar = (currentUrl: string, sections: SectionOpts[]): string =>
+const rightNavBar = (
+  currentUrl: string,
+  sections: SectionOpts[],
+  expand: string = "md"
+): string =>
   div(
     { class: "collapse navbar-collapse", id: "navbarResponsive" },
     ul(
@@ -230,7 +259,7 @@ const rightNavBar = (currentUrl: string, sections: SectionOpts[]): string =>
                     show_icon(s.icon, "mr-05"),
                     text(s.label),
                     s.drawer_label
-                      ? span({ class: "d-md-none" }, s.drawer_label)
+                      ? span({ class: collapsedOnlyClass(expand) }, s.drawer_label)
                       : ""
                   )
                 )
@@ -383,6 +412,7 @@ const leftNavBar = (namelogo?: LeftNavBarOpts): string[] => {
  * @param {string} currentUrl
  * @param {object} opts
  * @param {boolean} [opts.fixedTop = true]
+ * @param {string} [opts.navbar_expand = "md"]
  * @returns {string}
  */
 const navbar = (
@@ -394,11 +424,14 @@ const navbar = (
     class?: string;
     colorscheme?: string;
     fluid?: boolean;
+    navbar_expand?: string;
   } = { fixedTop: true }
 ): string =>
   nav(
     {
-      class: `navbar d-print-none navbar-expand-md ${opts.class || ""} ${
+      class: `navbar d-print-none ${navbarExpandClass(opts.navbar_expand)} ${
+        opts.class || ""
+      } ${
         opts.colorscheme ? opts.colorscheme.toLowerCase() : "navbar-light"
       } ${opts.fixedTop ? "fixed-top" : ""}`,
       id: "mainNav",
@@ -406,7 +439,7 @@ const navbar = (
     div(
       { class: opts.fluid ? "container-fluid" : "container" },
       leftNavBar(brand),
-      rightNavBar(currentUrl, sections)
+      rightNavBar(currentUrl, sections, opts.navbar_expand)
     )
   );
 
