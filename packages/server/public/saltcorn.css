@@ -1237,3 +1237,25 @@ span.copy-to-clipboard.copied::after {
   right: unset;
   left: 0;
 }
+
+/* a fixed-top navbar does not scroll with the page, so its collapsed (mobile)
+   menu is unreachable below the fold when there are many menu items. Cap it to
+   the viewport and scroll it while it is open. The width matches the
+   navbar-expand-md breakpoint used by the navbar in saltcorn-markup */
+@media (max-width: 767.98px) {
+  .navbar.fixed-top:has(.navbar-collapse.show),
+  .navbar.fixed-top:has(.navbar-collapse.collapsing) {
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  @supports not selector(:has(*)) {
+    .navbar.fixed-top .navbar-collapse.show,
+    .navbar.fixed-top .navbar-collapse.collapsing {
+      max-height: calc(100vh - 3.5rem);
+      max-height: calc(100dvh - 3.5rem);
+      overflow-y: auto;
+    }
+  }
+}
