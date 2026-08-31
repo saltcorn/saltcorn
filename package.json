@@ -62,6 +62,7 @@
       "*.test.js",
       "packages/filemanager/public/build/bundle.js",
       "packages/saltcorn-markup/bundle/**",
+      "packages/saltcorn-data/bundle/**",
       "packages/saltcorn-sbadmin2/public/**",
       "docs/**",
       "packages/server/docs/**",
