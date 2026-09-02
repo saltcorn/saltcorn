@@ -194,14 +194,22 @@ test.describe('E2E Test Suite', () => {
     await page.keyboard.press('Backspace');
     await page.keyboard.type(randomYear.toString());
 
-    // Submit
+    // Submit - the edit view redirects to showView, so wait for that
+    // navigation instead of racing the assertion against it
     await page.waitForSelector(pageobject.submitButton);
-    await page.click(pageobject.submitButton);
-    // await page.waitForTimeout(1000);
+    await Promise.all([
+      page.waitForURL('**/view/showView**', { timeout: 15000 }),
+      page.click(pageobject.submitButton),
+    ]);
 
-    // Assert that the displayed age matches calculation.
-    // The age is shown on the resulting show view page; wait for any age display.
+    // Assert that the displayed age matches calculation. Scope to the Age
+    // row: a substring search over the whole page also matches the year of
+    // birth, which contains the age for years like 1932 ("93").
     const ageText = expectedAge.toString();
-    await expect(page.getByText(ageText, { exact: false })).toBeVisible();
+    const ageValue = page
+      .locator('div.row')
+      .filter({ has: page.locator('div.col-md-2', { hasText: /^Age$/ }) })
+      .locator('div.col-md-10');
+    await expect(ageValue).toHaveText(ageText);
 });
 });
