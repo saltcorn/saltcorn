@@ -163,7 +163,7 @@ class ReleaseCommand extends Command {
         await sleep(5000);
       }
     }
-    await sleep(15000);
+    await sleep(60000);
 
     runCmd("npm", ["cache", "clear", "--force"], {
       stdio: "inherit",
