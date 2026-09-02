@@ -112,7 +112,16 @@ router.get(
       name: `library.${l.name}`,
       type: "Bool",
     }));
-    const trigs = (await Trigger.find({}))!;
+    // Sorted here rather than in `Trigger.find`, which every other caller shares.
+    //
+    // The other groups on this screen come back ordered because they are DB queries;
+    // `Trigger.find` filters an in-memory array held on state, so triggers arrived in
+    // whatever order they were loaded and were the one unsorted group on the Create Pack
+    // screen. Changing the shared finder's order to fix one screen would be a wider
+    // behaviour change than this asks for.
+    const trigs = (await Trigger.find({}))!.sort((a: any, b: any) =>
+      String(a.name ?? "").localeCompare(String(b.name ?? ""))
+    );
     const trigFields = trigs.map((l: any) => ({
       label: `${l.name} trigger`,
       name: `trigger.${l.name}`,
