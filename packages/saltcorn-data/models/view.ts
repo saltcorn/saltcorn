@@ -905,6 +905,7 @@ class View implements AbstractView {
     Object.entries(defstate || {}).forEach(([k, v]) => {
       if (
         typeof state[k] === "undefined" &&
+        v !== "" &&
         !(typeof v === "object" && v && !Object.keys(v).length)
       ) {
         state[k] = v;

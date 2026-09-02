@@ -20,6 +20,7 @@ export interface AbstractField {
   id?: PrimaryKeyValue;
   options?: string[];
   showIf?: Record<string, any>;
+  copilot_description?: string;
 }
 
 export type FieldCfg = {
@@ -40,6 +41,7 @@ export type FieldCfg = {
   sublabel?: string;
   help?: { topic: string; context?: Row; dynContext?: string[] };
   description?: string;
+  copilot_description?: string;
   type?: string | Type;
   options?: Array<string | { label: string; value: string }>;
   required?: boolean;

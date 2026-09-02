@@ -570,17 +570,39 @@ const configuration_workflow = (req: Req) =>
           )!;
           const table_fields = table
             .getFields()
-            .filter((f: GenObj) => !f.calculated || f.stored);
+            // Excluded here, not marked - Form/Field strips unknown properties on any field.
+            .filter((f: GenObj) => (!f.calculated || f.stored) && f.name !== "id");
+          // Offering blank as a real enum option beats telling an AI to omit the property.
+          const withBlankOption = (options: any) => {
+            if (!options) return options;
+            if (typeof options === "string")
+              return options.trim().startsWith(",") ? options : `,${options}`;
+            if (Array.isArray(options))
+              return options.some((o: any) =>
+                (typeof o === "string" ? o : o?.value) === ""
+              )
+                ? options
+                : ["", ...options];
+            return options;
+          };
           const formfields = table_fields.map((f: GenObj) => {
+            const attributes =
+              context.copilot_call && f.attributes?.options
+                ? { ...f.attributes, options: withBlankOption(f.attributes.options) }
+                : f.attributes;
             return {
               name: f.name,
               label: f.label,
               type: f.type,
               reftable_name: f.reftable_name,
-              attributes: f.attributes,
+              attributes,
               fieldview:
                 f.type && f.type.name === "Bool" ? "tristate" : undefined,
               required: false,
+              copilot_description:
+                `Omit this property entirely by default - a default state is not needed ` +
+                `for ${f.name}. Only include it if the task explicitly requires the list ` +
+                `to default to a fixed ${f.name} value on load.`,
             };
           });
           const form = new Form({
@@ -1857,6 +1879,45 @@ export default {
   name: "List",
   description:
     "Display multiple rows from a table in a grid with columns you specify",
+  copilot_planning_rule:
+    "A List view should always have a viewlink column to a Show (detail) view, named by " +
+    "its exact snake_case task name - never a vague reference like \"a detail view\". Add " +
+    "a viewlink column to an Edit view too, but only when this List's own role (min_role) " +
+    "is numerically <= the table's min_role_write shown above - a role above that number " +
+    "cannot write to the table regardless of any view's own min_role. This List's task " +
+    "depends on every view it links to - you MUST include their exact names in this task's " +
+    "depends_on. Example: a min_role 1 tasks_admin_list depends_on [\"tasks_show\", " +
+    "\"tasks_edit\"]; a min_role 80 tasks_user_list (table min_role_write 40) depends_on " +
+    "only [\"tasks_show\"]. " +
+    "include_fml (set in this viewtemplate's Options step) permanently scopes which " +
+    "rows a List shows, e.g. an owner/assignee FK check like \"<fk_field> === user.id\" - a " +
+    "List scoped to a different include_fml value is a different view and needs its own " +
+    "task; never reuse one List's task for two scoping needs.",
+  copilot_layout_rule:
+    "If required, the viewlink and delete action segments must actually be present in this " +
+    "layout - they are derived into columns from it, not from the task description alone. " +
+    "Never include the `id` field - it's an internal implementation detail, not for display. " +
+    "There is no built-in CSV export - never add an export button or column here; put " +
+    "import/export on a dedicated admin page using an installed import/export viewtemplate " +
+    "instead. A Link column that navigates to a page (not a view - use ViewLink for that) " +
+    "with the current row id needs a JS template-literal URL formula (isFormula.url = true), " +
+    "e.g. `/page/order_detail?id=${id}` - static strings are not interpolated and `{{id}}` " +
+    "does not work here. Both the columns array entry and the matching layout.besides " +
+    "segment need url, text, and isFormula set consistently, e.g.: " +
+    '{"type":"Link","url":"`/page/order_detail?id=${id}`","text":"Detail",' +
+    '"link_src":"URL","link_style":"btn btn-sm btn-outline-secondary","isFormula":{"url":true}}.',
+  copilot_generate_view_prompt:
+    "If this List must show only rows matching a condition (e.g. the logged-in user's own " +
+    "rows), set include_fml in the Options step to the matching JS boolean expression (e.g. " +
+    "\"assignee === user.id\") now - do not leave it for a later step, and never use " +
+    "extra_state_fml instead, which is an unrelated embed-segment property. In " +
+    "create_view_showif (and any other showif/formula field evaluated against the URL " +
+    "state), the variable `state` does not exist - the state object is passed as `row`, and " +
+    "each key is also available as a bare variable; use `row.project_id` or `project_id`, " +
+    "never `state.project_id`. The Default state step is one optional pre-filter field per " +
+    "table column, applied before any user search when the list first loads - omit every " +
+    "column by default (do not pick an enum value just because one is available), and only " +
+    "include one if the task explicitly requires that exact value on load.",
   configuration_workflow,
   run,
   view_quantity: "Many",

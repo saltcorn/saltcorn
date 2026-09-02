@@ -840,6 +840,18 @@ const createBasicView = async ({
 export default {
   name: "Show",
   description: "Show a single row, with flexible layout",
+  copilot_planning_rule:
+    "When a Show view needs to display related rows (e.g. an invoice's line items), that's a " +
+    "separate List view task for the related table, planned and created before this Show " +
+    "view's task, named in its depends_on.",
+  copilot_layout_rule:
+    "Every field is its own segment with \"type\": \"field\" (singular) - there is no " +
+    "\"type\": \"fields\" (plural) segment, and using it crashes with \"unknown layout " +
+    "segment\". Never bundle multiple fields into one segment. Never include the `id` field " +
+    "in the layout - it's an internal implementation detail, not for display. To show " +
+    "related rows, embed a List view for them, not an Edit view - an Edit view embedded here " +
+    "renders a form with inputs and save buttons inline in a read display, which is wrong " +
+    "except for a deliberate inline-edit pattern the task explicitly asks for.",
   get_state_fields,
   configuration_workflow,
   run,
