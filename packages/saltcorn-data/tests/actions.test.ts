@@ -928,7 +928,25 @@ describe("Cron triggers", () => {
 });
 
 describe("After-commit table triggers", () => {
+  // Deferring past COMMIT needs a backend that both holds a real transaction
+  // and implements afterCommit: today only postgres. sqlite's withTransaction
+  // is a pass-through, and a third-party db_driver falls back to running
+  // inline, so the deferred/inline distinction does not exist there.
+  let defersAfterCommit = false;
+  beforeAll(async () => {
+    await db.runWithTenant(db.getTenantSchema(), async () => {
+      await db.withTransaction(async () => {
+        let stillInside = true;
+        await db.afterCommit(async () => {
+          defersAfterCommit = !stillInside;
+        });
+        stillInside = false;
+      });
+    });
+  });
+
   it("runs outside the transaction, unlike an ordinary trigger", async () => {
+    if (!defersAfterCommit) return;
     const table = await Table.create("AfterCommitTable");
     await Field.create({ table, name: "name", type: "String" });
 
@@ -1012,6 +1030,7 @@ describe("After-commit table triggers", () => {
   });
 
   it("does not run when the transaction rolls back", async () => {
+    if (!defersAfterCommit) return;
     const table = Table.findOne({ name: "AfterCommitTable" })!;
     const seen: string[] = [];
     getState()!.registerPlugin("mock_after_commit_rollback", {
