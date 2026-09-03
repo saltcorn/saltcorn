@@ -303,7 +303,7 @@ const menuForm = async (req: Req) => {
             "User Page",
           ],
         },
-      },
+      },      
       {
         name: "icon_btn",
         label: req.__("Icon"),

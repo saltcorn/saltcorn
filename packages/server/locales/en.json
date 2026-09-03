@@ -2126,5 +2126,7 @@
 	"Keep %s": "Keep %s",
 	"Keep the newest backup of each of the last N %s periods": "Keep the newest backup of each of the last N %s periods",
 	"Minimum backups to keep": "Minimum backups to keep",
-	"Never delete backups below this total count, regardless of age": "Never delete backups below this total count, regardless of age"
+	"Never delete backups below this total count, regardless of age": "Never delete backups below this total count, regardless of age",
+	"Drawer label": "Drawer label",
+	"Used in the drawer (mobile) menu by some themes": "Used in the drawer (mobile) menu by some themes"
 }

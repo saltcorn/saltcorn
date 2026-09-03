@@ -2078,6 +2078,7 @@ const features = Object.freeze({
   getrows_tree_field: true,
   view_route_modal: true,
   authorize_access_hooks: true,
+  navbar_set_expand: true,
 });
 
 export {
