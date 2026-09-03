@@ -65,7 +65,6 @@ type SectionOpts = {
   type?: string;
   icon?: string;
   label: string;
-  drawer_label?: string;
   target_blank?: boolean;
   style?: string;
   class?: string;
@@ -258,8 +257,8 @@ const rightNavBar = (
                     },
                     show_icon(s.icon, "mr-05"),
                     text(s.label),
-                    s.drawer_label
-                      ? span({ class: collapsedOnlyClass(expand) }, s.drawer_label)
+                    (s.label === "" || s.label === " ") && s.tooltip
+                      ? span({ class: collapsedOnlyClass(expand) }, s.tooltip)
                       : ""
                   )
                 )
