@@ -1,7 +1,13 @@
+/**
+ * @category saltcorn-types
+ * @module model-abstracts/abstract_table
+ * @subcategory model-abstracts
+ */
 import type { AbstractField, FieldCfg } from "./abstract_field.js";
 import type { TriggerCfg } from "./abstract_trigger.js";
 import type { AbstractTag } from "./abstract_tag.js";
 
+/** A database table, with its fields and role-based read/write access. */
 export interface AbstractTable {
   name: string;
   id?: number;
@@ -16,10 +22,7 @@ export interface AbstractTable {
   min_role_write: number;
 }
 
-/**
- * Fields required to construct a table
- *
- */
+/** Fields required to construct a table. */
 export type TableCfg = {
   name: string;
   id?: number;
@@ -39,12 +42,18 @@ export type TableCfg = {
   updated_at?: Date;
 };
 
+/** A portable (import/export) representation of a {@link TableCfg}. */
 export type TablePack = {
   triggers?: TriggerCfg[];
   constraints?: Array<any>;
   ownership_field_name?: string | null;
 } & TableCfg;
 
+/**
+ * Type guard for {@link AbstractTable}.
+ * @param object - the value to test
+ * @returns true if object is an {@link AbstractTable}
+ */
 export const instanceOfTable = (object: any): object is AbstractTable => {
   return (
     object &&

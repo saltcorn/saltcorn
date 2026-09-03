@@ -1,6 +1,12 @@
+/**
+ * @category saltcorn-types
+ * @module model-abstracts/abstract_form
+ * @subcategory model-abstracts
+ */
 import type { Layout, Req } from "../base_types.js";
 import type { AbstractField, AbstractFieldRepeat } from "./abstract_field.js";
 
+/** An extra button rendered alongside a form's submit button. */
 export type AdditionalButton = {
   label: string;
   id?: string;
@@ -10,6 +16,7 @@ export type AdditionalButton = {
   disabled?: boolean
 };
 
+/** A form: a set of fields plus rendering/submission options. */
 export interface AbstractForm {
   fields: Array<AbstractField | AbstractFieldRepeat>;
   errors: any;

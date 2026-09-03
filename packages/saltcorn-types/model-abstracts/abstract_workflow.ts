@@ -1,6 +1,12 @@
+/**
+ * @category saltcorn-types
+ * @module model-abstracts/abstract_workflow
+ * @subcategory model-abstracts
+ */
 import type { GenObj } from "../common_types.js";
 import { AbstractForm } from "./abstract_form.js";
 
+/** The outcome of running one step of an {@link AbstractWorkflow}. */
 export type RunResult = {
   renderForm?: any;
   context: GenObj;
@@ -16,6 +22,7 @@ export type RunResult = {
   redirect?: string;
 };
 
+/** Options passed to the AppConstructor builder for one workflow step. */
 type BuilderConfig = {
   mode: "edit" | "show" | "filter" | "list" | "page";
   icons: string[];
@@ -30,12 +37,14 @@ type ConfigWorkflowFormStep = {
 type ConfigWorkflowBuilderStep = {
   builder: (context: GenObj) => Promise<BuilderConfig>;
 };
+/** One step of a plugin's configuration workflow: either a form or a builder step. */
 export type ConfigWorkflowStep = {
   name: string;
   contextField?: string;
   onlyWhen?: (context: GenObj) => Promise<boolean>;
 } & (ConfigWorkflowFormStep | ConfigWorkflowBuilderStep);
 
+/** A multi-step wizard, e.g. a view or plugin's configuration_workflow. */
 export interface AbstractWorkflow {
   onDone: (arg0: any) => any;
   action?: string | undefined;

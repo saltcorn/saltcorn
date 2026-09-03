@@ -1,3 +1,10 @@
+/**
+ * @category saltcorn-types
+ * @module model-abstracts/abstract_tag_entry
+ * @subcategory model-abstracts
+ */
+
+/** One tagged object (table, view, page, or trigger) within an AbstractTag (model-abstracts/abstract_tag). */
 export interface AbstractTagEntry {
   id?: number;
   tag_id?: number;
@@ -7,6 +14,7 @@ export interface AbstractTagEntry {
   trigger_id?: number;
 }
 
+/** A portable (import/export) representation of an {@link AbstractTagEntry}. */
 export type TagEntryPack = {
   table_name?: string;
   view_name?: string;

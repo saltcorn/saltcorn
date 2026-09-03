@@ -1,6 +1,23 @@
+/**
+ * Random test-data generators, used by field types' `presets`/fuzz tests.
+ * @category saltcorn-types
+ * @module generators
+ */
+
+/**
+ * A random number between lo and hi.
+ * @param lo - lower bound (inclusive)
+ * @param hi - upper bound (exclusive)
+ * @returns a random number in [lo, hi)
+ */
 export const num_between = (lo: number, hi: number) =>
   lo + Math.random() * (hi - lo);
 
+/**
+ * A random element of an array-like value.
+ * @param vs - the array-like value to pick from
+ * @returns a randomly chosen element of vs
+ */
 export const oneOf = (vs: NonNullable<any>) =>
   vs[Math.floor(Math.random() * vs.length)];
 
@@ -18,6 +35,12 @@ const ntimes = (n: number, f: Function) => {
   return res;
 };
 
+/**
+ * A random alphanumeric string, at least minLength characters, never one of excludes.
+ * @param minLength - shortest string to allow (default 0)
+ * @param excludes - values that must not be returned; a match is retried
+ * @returns the generated string
+ */
 export const generateString = (
   minLength: number = 0,
   excludes?: string[]
@@ -29,6 +52,10 @@ export const generateString = (
   return result;
 };
 
+/**
+ * A random boolean.
+ * @returns true or false with equal probability
+ */
 export const generateBool = () => Math.random() > 0.5;
 
 // default export keeps the existing `import generators from

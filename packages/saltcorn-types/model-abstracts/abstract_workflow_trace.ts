@@ -1,3 +1,10 @@
+/**
+ * @category saltcorn-types
+ * @module model-abstracts/abstract_workflow_trace
+ * @subcategory model-abstracts
+ */
+
+/** A recorded execution of one step within a WorkflowRunCfg (model-abstracts/abstract_workflow_run). */
 export type WorkflowTraceCfg = {
   id?: number;
   run_id: number;
