@@ -1,6 +1,8 @@
 /**
- * Those are the base types
- * @module
+ * Base types shared across Saltcorn packages: plugin, view, layout, and
+ * request/response shapes.
+ * @category saltcorn-types
+ * @module base_types
  */
 import type { AbstractForm } from "./model-abstracts/abstract_form.js";
 import {
@@ -64,11 +66,13 @@ type FieldLikeWithInputType = {
 type FieldLikeWithType = {
   type: string | Type;
 } & FieldLikeBasics;
+/** A field definition as accepted by form-building APIs (Form fields, action configFields, etc). */
 export type FieldLike =
   | FieldLikeWithSelectInputType
   | FieldLikeWithInputType
   | FieldLikeWithType;
 
+/** Extra `<head>` content (script/css) a plugin or view can register. */
 export type Header = {
   script?: string;
   css?: string;
@@ -80,6 +84,7 @@ export type Header = {
   defer?: boolean;
 };
 
+/** One entry in the top navigation menu. */
 export type MenuItem = {
   href: string;
   icon: string;
@@ -155,6 +160,7 @@ type LayoutWithBesides = {
   above?: never;
 };
 
+/** A view/page layout tree, as built by the AppConstructor page builder. */
 export type Layout =
   | LayoutWithAbove
   | LayoutWithBesides
@@ -162,12 +168,18 @@ export type Layout =
   | LayoutWithHtmlFile
   | LayoutWithHtmlString;
 
+/**
+ * Type guard for a layout node using html_file.
+ * @param object - the value to test
+ * @returns true if object is a layout node with an html_file property
+ */
 export function instanceOWithHtmlFile(
   object: any
 ): object is LayoutWithHtmlFile {
   return object && typeof object !== "string" && "html_file" in object;
 }
 
+/** Result of loading one plugin module. */
 export type PluginLoaderResult = {
   version?: string;
   location: string;
@@ -177,6 +189,7 @@ export type PluginLoaderResult = {
   plugin_module: Plugin;
 };
 
+/** Arguments passed to a theme's page-wrap function. */
 export type PluginWrapArg = {
   title: string;
   body: string | Layout;
@@ -216,8 +229,10 @@ type PluginAuthwrapArg = {
   };
 };
 
+/** A theme's function that wraps page body content in the site chrome. */
 export type PluginWrap = (arg0: PluginWrapArg) => string;
 
+/** A theme plugin's layout facility: wrap/authWrap/renderBody. */
 export type PluginLayout = {
   wrap: PluginWrap;
   authWrap?: (arg0: PluginAuthwrapArg) => string;
@@ -236,6 +251,7 @@ type ReadFromFormRecord = {
   (arg0: any, arg1: any): any;
 };
 
+/** A custom field type registered by a plugin. */
 export type PluginType = {
   name: string;
   sqlName: string;
@@ -250,6 +266,7 @@ export type PluginType = {
   contract?: any;
 };
 
+/** Query options (joins, aggregations, filtering, paging) for reading table rows. */
 export type TableQuery = {
   joinFields?: { ref: string; target: string };
   aggregations?: {
@@ -265,6 +282,7 @@ export type TableQuery = {
   orderDesc?: boolean;
 };
 
+/** Extra options passed into a ViewTemplate's run/runMany/renderRows. */
 export type RunExtra = {
   redirect?: string;
   onRowSelect?: Function;
@@ -272,6 +290,7 @@ export type RunExtra = {
 } & ReqRes &
   SelectOptions;
 
+/** Views, pages, and tables referenced by a view/page's configuration. */
 export type ConnectedObjects = {
   linkedViews?: Array<AbstractView>;
   embeddedViews?: Array<AbstractView>;
@@ -282,6 +301,7 @@ export type ConnectedObjects = {
 
 type ActionMode = "edit" | "show" | "filter" | "list" | "workflow" | "page";
 
+/** A plugin action, runnable from triggers, list actions, or workflow steps. */
 export type Action = {
   namespace?: string;
   description?: string;
@@ -311,6 +331,7 @@ export type Action = {
   configFormOptions?: GenObj;
 };
 
+/** A view type (List, Show, Edit, etc): defines how a view's configuration is built and rendered. */
 export type ViewTemplate = {
   name: string;
   description?: string;
@@ -406,6 +427,7 @@ export type ViewTemplate = {
   createBasicView?: Function;
 };
 
+/** A handler for one of a ViewTemplate's custom routes. */
 export type RouteAction = (
   table_id: number | undefined | null,
   viewname: string,
@@ -415,6 +437,7 @@ export type RouteAction = (
   queries: any
 ) => Promise<any>;
 
+/** A custom formula/expression function registered by a plugin. */
 export type PluginFunction = {
   run: (...arg0: any[]) => any;
   returns?: string;
@@ -423,11 +446,13 @@ export type PluginFunction = {
   hidden?: boolean;
 };
 
+/** A read-only fieldview: renders a field's value as HTML. */
 export type FieldViewShow = {
   isEdit?: false;
   isFilter?: false;
   run: (value: any, req: Req, attrs: GenObj) => string;
 };
+/** An editable fieldview: renders a field's value as a form input. */
 export type FieldViewEdit = {
   isEdit: true;
   isFilter?: false;
@@ -441,6 +466,7 @@ export type FieldViewEdit = {
   ) => string;
 };
 
+/** A filter fieldview: renders a field's value as a search/filter input. */
 export type FieldViewFilter = {
   isEdit?: boolean;
   isFilter: true;
@@ -455,6 +481,7 @@ export type FieldViewFilter = {
   ) => string;
 };
 
+/** A fieldview: one way of displaying or editing a field's value. */
 export type FieldView = {
   readFromFormRecord?: Function;
   read?: Function;
@@ -478,10 +505,20 @@ export type FieldView = {
     | ((...args: any[]) => Promise<Array<FieldLike>> | Array<FieldLike>);
 } & (FieldViewShow | FieldViewEdit | FieldViewFilter);
 
+/**
+ * Type guard for {@link FieldViewEdit}.
+ * @param object - the value to test
+ * @returns true if object is a {@link FieldViewEdit}
+ */
 export function instanceOfFieldViewEdit(object: any): object is FieldViewEdit {
   return object && typeof object !== "string" && object.isEdit === true;
 }
 
+/**
+ * Type guard for {@link FieldViewShow}.
+ * @param object - the value to test
+ * @returns true if object is a {@link FieldViewShow}
+ */
 export function instanceOfFieldViewShow(object: any): object is FieldViewShow {
   return object && typeof object !== "string" && object.isEdit === false;
 }
@@ -496,6 +533,7 @@ declare function flash(
   flash_type: "warning" | "success" | "error" | "danger"
 ): string;
 
+/** An Express request, extended with Saltcorn's user/locale/flash helpers. */
 export type Req = {
   query: GenObj;
   flash: typeof flash;
@@ -513,6 +551,7 @@ export type Req = {
   hostname?: string;
   [k: string]: any;
 };
+/** An Express response, extended with Saltcorn's sendWrap helper. */
 export type Res = {
   redirect: (url: string) => void;
   send: (contents: string | Buffer) => void;
@@ -522,6 +561,7 @@ export type Res = {
   [k: string]: any;
 };
 
+/** A machine-learning model pattern (algorithm), e.g. linear regression. */
 export type ModelPattern = {
   configuration_workflow: (req: Req) => AbstractWorkflow;
   prediction_outputs: ({
@@ -562,18 +602,21 @@ export type ModelPattern = {
   }) => Promise<Array<GenObj>>;
 };
 
+/** A login strategy (e.g. Google, GitHub) registered by an auth plugin. */
 export type AuthenticationMethod = {
   icon?: string;
   label: string;
   parameters?: GenObj;
   strategy: any;
 };
+/** An external data source pluggable in as a virtual table. */
 export type TableProvider = {
   configuration_workflow: (req?: Req) => AbstractWorkflow;
   fields: (cfg: GenObj) => Promise<Array<FieldLike>>;
   get_table: (cfg: GenObj) => Partial<AbstractTable>;
 };
 
+/** A tool the AI app-building assistant (copilot) can call. */
 export type CopilotSkill = {
   title: string;
   function_name: string;
@@ -584,6 +627,7 @@ export type CopilotSkill = {
   execute: (config: GenObj) => Promise<{ postExec?: string } | void>;
 };
 
+/** A native Capacitor plugin bundled into the mobile app build. */
 export type CapacitorPlugin = {
   name: string;
   version: string;
@@ -591,8 +635,10 @@ export type CapacitorPlugin = {
   androidFeatures?: string[];
 };
 
+/** The kind of entity an authorize_* hook is evaluating access to. */
 export type AuthorizeAccessKind = "view" | "page" | "trigger" | "api";
 
+/** Common fields of an access-authorization request. */
 export type AuthorizeAccessRequestBase = {
   action: "get" | "post";
   route?: string; // specific route/action invoked, e.g. a ViewTemplate.routes key
@@ -601,16 +647,19 @@ export type AuthorizeAccessRequestBase = {
   req: Req;
 };
 
+/** An access-authorization request for a view. */
 export type AuthorizeAccessViewRequest = AuthorizeAccessRequestBase & {
   view: AbstractView; // carries name and table_id
 };
+/** An access-authorization request for a page. */
 export type AuthorizeAccessPageRequest = AuthorizeAccessRequestBase & {
   page: AbstractPage; // carries name
 };
+/** An access-authorization request for a trigger. */
 export type AuthorizeAccessTriggerRequest = AuthorizeAccessRequestBase & {
   trigger: AbstractTrigger; // carries name and table_id
 };
-// no entity to name it, so route is the identifier and is required
+/** An access-authorization request for a plugin API route (no entity to name it, so route is required). */
 export type AuthorizeAccessApiRequest = Omit<
   AuthorizeAccessRequestBase,
   "route"
@@ -618,6 +667,7 @@ export type AuthorizeAccessApiRequest = Omit<
   route: string;
 };
 
+/** The outcome of an authorize_* hook: allow, or deny with an optional reason. */
 export type AuthorizeAccessResult =
   | { decision: "allow" }
   | { decision: "deny"; reason?: string };
@@ -630,18 +680,22 @@ type AuthorizeAccessHookReturn =
   | null
   | undefined;
 
+/** A plugin hook that can allow/deny access to a view. */
 export type AuthorizeAccessViewHook = (
   request: AuthorizeAccessViewRequest,
   user: any
 ) => AuthorizeAccessHookReturn;
+/** A plugin hook that can allow/deny access to a page. */
 export type AuthorizeAccessPageHook = (
   request: AuthorizeAccessPageRequest,
   user: any
 ) => AuthorizeAccessHookReturn;
+/** A plugin hook that can allow/deny access to a trigger. */
 export type AuthorizeAccessTriggerHook = (
   request: AuthorizeAccessTriggerRequest,
   user: any
 ) => AuthorizeAccessHookReturn;
+/** A plugin hook that can allow/deny access to a plugin API route. */
 export type AuthorizeAccessApiHook = (
   request: AuthorizeAccessApiRequest,
   user: any
@@ -692,6 +746,7 @@ type PluginBase = {
   [key: string]: any;
 };
 
+/** A Saltcorn plugin module: the facilities (types, actions, viewtemplates, ...) it registers. */
 export type Plugin = PluginBase &
   PluginFacilities & {
     configuration_workflow?: (req?: Req) => AbstractWorkflow;
@@ -705,12 +760,14 @@ export type Plugin = PluginBase &
 //   [key: string]: any;
 // } & (PluginWithConfig | PluginWithoutConfig);
 
+/** A portable (import/export) representation of a code page. */
 export type CodePagePack = {
   name: string;
   code: string;
   tags?: Array<string>;
 };
 
+/** A full export bundle: every entity type a Saltcorn app/pack can contain. */
 export type Pack = {
   tables: Array<TablePack>;
   views: Array<ViewPack>;
@@ -728,6 +785,11 @@ export type Pack = {
   config?: Record<string, any>;
 };
 
+/**
+ * Type guard for {@link Pack}.
+ * @param object - the value to test
+ * @returns true if object is a {@link Pack}
+ */
 export const instanceOfPack = (object: any): object is Pack => {
   return (
     object &&
@@ -743,8 +805,10 @@ export const instanceOfPack = (object: any): object is Pack => {
   );
 };
 
+/** Where a plugin's code is installed from. */
 export type PluginSourceType = "npm" | "github" | "local" | "git";
 
+/** One column of a List/Show view, or a page's table view. */
 export type Column = {
   type:
     | "Action"
@@ -777,8 +841,10 @@ export type Column = {
   [key: string]: any;
 };
 
+/** An AbstractTable, or a marker for a table living outside this Saltcorn instance. */
 export type Tablely = AbstractTable | { external: true };
 
+/** Runtime configuration for a built mobile app. */
 export type MobileConfig = {
   version_tag: string;
   entry_point: string;
@@ -825,6 +891,7 @@ export type MobileConfig = {
   };
 };
 
+/** A join-field selectable in the view/page builder's field picker. */
 export type JoinFieldOption = {
   name: string;
   table: string;
@@ -832,11 +899,13 @@ export type JoinFieldOption = {
   subFields?: Array<JoinFieldOption>;
 };
 
+/** A one-to-many/many-to-many relation path selectable in the builder. */
 export type RelationOption = {
   relationPath: string;
   relationFields: string[];
 };
 
+/** A custom HTTP route registered by a plugin. */
 export type PluginRoute = {
   url: string;
   method?: string;
@@ -844,6 +913,7 @@ export type PluginRoute = {
   callback: ({ req, res }: { req: Req; res: Res }) => void;
 };
 
+/** The result of running a trigger/workflow action. */
 export type ResultType = {
   set_fields?: GenObj;
   halt_steps?: boolean;
@@ -854,17 +924,20 @@ export type ResultType = {
   [key: string]: any;
 };
 
+/** The result of running one step of a multi-step workflow. */
 export type StepResType = ResultType & {
   goto_step?: number;
   clear_return_values?: boolean;
 };
 
+/** Configuration for generating a URL slug field. */
 export type SlugStepType = {
   field: string;
   unique: boolean;
   transform: string | null;
 };
 
+/** Database/server connection configuration (as in .env / config table). */
 export type ConnectObjType = {
   connectionString?: string;
   sqlite_path?: string;
@@ -889,6 +962,7 @@ export type ConnectObjType = {
   version_tag?: string;
 };
 
+/** A calculated join-field's target path, for stored calculated fields. */
 export type CalcJoinfield = {
   targetTable: string;
   field: string;
@@ -897,6 +971,7 @@ export type CalcJoinfield = {
   throughTable?: any[];
 };
 
+/** A serialized JavaScript Error. */
 export type ErrorObj = {
   name: string;
   message: string;
@@ -905,6 +980,7 @@ export type ErrorObj = {
   [key: string]: any;
 };
 
+/** A nested field within a JSON/composite field's schema. */
 export type SubField = {
   name: string;
   table?: string;

@@ -9,7 +9,12 @@ import * as triggerImport from "./abstract_trigger.js";
 import * as viewImport from "./abstract_view.js";
 import * as workflowImport from "./abstract_workflow.js";
 /**
- * Those are model-abstracts
+ * Interfaces shared between a Saltcorn model class (e.g. saltcorn-data's Table)
+ * and its typed representation here, so packages that don't depend on
+ * saltcorn-data can still refer to a model's shape.
+ * @category saltcorn-types
+ * @module model-abstracts/index
+ * @subcategory model-abstracts
  */
 export namespace ModelAbstracts {
   export import abstract_field = fieldImport;

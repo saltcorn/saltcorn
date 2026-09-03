@@ -1,8 +1,14 @@
+/**
+ * @category saltcorn-types
+ * @module model-abstracts/abstract_trigger
+ * @subcategory model-abstracts
+ */
 import { Row } from "@saltcorn/db-common/internal";
 import type { AbstractTable } from "./abstract_table.js";
 import type { AbstractTag } from "./abstract_tag.js";
 import type { WorkflowStepCfg } from "./abstract_workflow_step.js";
 
+/** An action (or multi-step workflow) run when an event fires. */
 export interface AbstractTrigger {
   name?: string;
   action: string;
@@ -28,6 +34,7 @@ export interface AbstractTrigger {
   ): Promise<boolean>;
 }
 
+/** Configuration for creating/updating an {@link AbstractTrigger}. */
 export type TriggerCfg = {
   name?: string;
   action: string;
@@ -44,4 +51,5 @@ export type TriggerCfg = {
   updated_at?: Date;
 };
 
+/** A portable (import/export) representation of a {@link TriggerCfg}. */
 export type TriggerPack = {} & TriggerCfg;

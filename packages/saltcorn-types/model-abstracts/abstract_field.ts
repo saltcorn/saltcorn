@@ -1,7 +1,13 @@
+/**
+ * @category saltcorn-types
+ * @module model-abstracts/abstract_field
+ * @subcategory model-abstracts
+ */
 import { PrimaryKeyValue, Row, Value } from "@saltcorn/db-common/internal";
 import type { GenObj, Type } from "../common_types.js";
 import type { AbstractTable } from "./abstract_table.js";
 
+/** A table field/column, with its type, display, and input settings. */
 export interface AbstractField {
   label: string;
   name: string;
@@ -22,6 +28,7 @@ export interface AbstractField {
   showIf?: Record<string, any>;
 }
 
+/** Configuration for creating/updating an {@link AbstractField}. */
 export type FieldCfg = {
   label?: string;
   name?: string;
@@ -64,16 +71,23 @@ export type FieldCfg = {
   exclude_from_mobile?: boolean;
 };
 
+/** A repeating group of fields, e.g. for a Multiple Values field. */
 export interface AbstractFieldRepeat {
   name: string;
   isRepeat: true;
   fields: FieldCfg[];
 }
 
+/**
+ * Type guard for {@link AbstractField}.
+ * @param object - the value to test
+ * @returns true if object is an {@link AbstractField}
+ */
 export const instanceOfField = (object: any): object is AbstractField => {
   return object && "name" in object && "input_type" in object;
 };
 
+/** How a field's value is entered in a form. */
 export type InputType =
   | "hidden"
   | "file"

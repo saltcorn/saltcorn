@@ -1,3 +1,10 @@
+/**
+ * @category saltcorn-types
+ * @module model-abstracts/abstract_workflow_run
+ * @subcategory model-abstracts
+ */
+
+/** A single in-progress or completed execution of a workflow trigger. */
 export type WorkflowRunCfg = {
   id?: number;
   trigger_id: number;

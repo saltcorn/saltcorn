@@ -1,7 +1,13 @@
+/**
+ * @category saltcorn-types
+ * @module model-abstracts/abstract_view
+ * @subcategory model-abstracts
+ */
 import type { AbstractTable } from "./abstract_table.js";
 import type { ConnectedObjects } from "../base_types.js";
 import type { AbstractTag } from "./abstract_tag.js";
 
+/** A configured view: a viewtemplate bound to a table and a configuration. */
 export interface AbstractView {
   id?: number;
   name: string;
@@ -15,6 +21,7 @@ export interface AbstractView {
   getTags(): Promise<Array<AbstractTag>>;
 }
 
+/** Configuration for creating/updating an {@link AbstractView}. */
 export type ViewCfg = {
   name: string;
   id?: number;
@@ -33,6 +40,7 @@ export type ViewCfg = {
   updated_at?: Date;
 };
 
+/** A portable (import/export) representation of a {@link ViewCfg}. */
 export type ViewPack = {
   table?: string | null;
   on_menu?: boolean;
@@ -40,6 +48,11 @@ export type ViewPack = {
   on_root_page?: boolean;
 } & Omit<ViewCfg, "table">;
 
+/**
+ * Type guard for {@link AbstractView}.
+ * @param object - the value to test
+ * @returns true if object is an {@link AbstractView}
+ */
 export const instanceOfView = (object: any): object is AbstractView => {
   return object && "name" in object && "viewtemplate" in object;
 };

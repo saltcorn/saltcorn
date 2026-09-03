@@ -1,3 +1,10 @@
+/**
+ * @category saltcorn-types
+ * @module model-abstracts/abstract_workflow_step
+ * @subcategory model-abstracts
+ */
+
+/** Configuration for one step of a workflow trigger. */
 export type WorkflowStepCfg = {
   id?: number;
   name: string;
@@ -9,4 +16,5 @@ export type WorkflowStepCfg = {
   configuration: any;
 };
 
+/** A portable (import/export) representation of a {@link WorkflowStepCfg}. */
 export type WorkflowStepPack = {} & WorkflowStepCfg;
