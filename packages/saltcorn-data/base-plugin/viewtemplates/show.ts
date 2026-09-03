@@ -851,7 +851,15 @@ export default {
     "in the layout - it's an internal implementation detail, not for display. To show " +
     "related rows, embed a List view for them, not an Edit view - an Edit view embedded here " +
     "renders a form with inputs and save buttons inline in a read display, which is wrong " +
-    "except for a deliberate inline-edit pattern the task explicitly asks for.",
+    "except for a deliberate inline-edit pattern the task explicitly asks for. A literal " +
+    "label or other static text is a blank segment (e.g. {\"type\":\"blank\",\"contents\":" +
+    "\"Category\"}) - there is no \"text\" segment type, never emit {\"type\":\"text\"}. A " +
+    "field reached through a foreign key is a join_field segment (e.g. {\"type\":" +
+    "\"join_field\",\"join_field\":\"category_id.description\"}) paired with a matching " +
+    "JoinField entry (same join_field path) in configuration.columns - use this native pair " +
+    "instead of writing {{category_id.description}} in a blank segment. Keep every existing " +
+    "configuration.columns entry unless the task explicitly removes it, and add a Field or " +
+    "JoinField entry for every field/join_field segment you add to the layout.",
   get_state_fields,
   configuration_workflow,
   run,
