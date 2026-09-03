@@ -235,6 +235,7 @@ admin_config_route({
     "smtp_port",
     "smtp_secure",
     "smtp_allow_self_signed",
+    "smtp_timeout_seconds",
     "email_from",
   ],
   response(form, req, res) {

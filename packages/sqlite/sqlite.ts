@@ -37,6 +37,7 @@ import {
   do_drop_index,
   slugify,
   withTransaction,
+  afterCommit,
   tryCatchInTransaction,
   openOrUseTransaction,
   whenTransactionisFree,
@@ -45,6 +46,7 @@ import {
 export {
   slugify,
   withTransaction,
+  afterCommit,
   tryCatchInTransaction,
   openOrUseTransaction,
   whenTransactionisFree,

@@ -65,10 +65,15 @@ const getMailTransport = async (): Promise<
     const username = getState()!.getConfig("smtp_username");
     const isOauth = getState()!.getConfig("smtp_auth_method") === "oauth2";
 
+    const timeoutMs =
+      +getState()!.getConfig("smtp_timeout_seconds", 120) * 1000;
+
     const transportOptions: any = {
       host: getState()!.getConfig("smtp_host"),
       port,
       secure,
+      connectionTimeout: timeoutMs,
+      socketTimeout: timeoutMs,
       auth: username
         ? {
             user: username,

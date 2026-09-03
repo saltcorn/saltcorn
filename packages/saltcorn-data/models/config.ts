@@ -602,6 +602,18 @@ const configTypes: ConfigTypes = {
       "Always use TLS when connecting to server? If unchecked, TLS is used if server supports the STARTTLS extension. In most cases check this box if you are connecting to port 465. For port 587 or 25 keep it unchecked",
     excludeFromMobile: true,
   },
+  smtp_timeout_seconds: {
+    type: "Integer",
+    label: "Timeout (seconds)",
+    default: 120,
+    attributes: { min: 1 },
+    sublabel:
+      "How long to wait for the mail server to accept the connection, and how " +
+      "long to allow it to go silent mid-send, before giving up. A send that " +
+      "exceeds this fails and is not retried, so raise this rather than lower " +
+      "it if your mail server is slow.",
+    excludeFromMobile: true,
+  },
   smtp_allow_self_signed: {
     type: "Bool",
     label: "Allow self-signed",
@@ -747,6 +759,18 @@ const configTypes: ConfigTypes = {
     label: "Enable dynamic updates",
     default: true,
     blurb: "Enable server side updates from within run_js_code actions",
+  },
+  scheduler_tick_seconds: {
+    type: "Integer",
+    label: "Scheduler tick (seconds)",
+    default: 300,
+    attributes: { min: 10 },
+    blurb:
+      "How often the scheduler wakes up to look for work. This is the interval " +
+      "at which Often triggers run, and the finest resolution available to Cron " +
+      "triggers. Shorter ticks schedule more precisely at the cost of more " +
+      "frequent database activity in every tenant.",
+    excludeFromMobile: true,
   },
   default_locale: {
     type: "String",
