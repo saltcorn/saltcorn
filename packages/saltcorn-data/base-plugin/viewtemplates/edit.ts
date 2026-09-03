@@ -2057,6 +2057,14 @@ export default {
   name: "Edit",
   /** @type {string} */
   description: "Form for creating a new row or editing existing rows",
+  copilot_layout_rule:
+    "Never use the GoBack action for a cancel button - it always calls history.back(), which " +
+    "breaks when the view is opened inside a popup modal. Instead add a link segment whose " +
+    "url is this JavaScript (closes the Saltcorn modal #scmodal if open, else history.back()): " +
+    "javascript:var m=document.getElementById('scmodal');var mi=m&&bootstrap.Modal.getInstance(m);" +
+    "if(mi)mi.hide();else history.back() - style it as btn btn-outline-secondary. This is a " +
+    "single-record create/edit form, never a bulk CSV import tool - CSV import belongs on a " +
+    "dedicated admin page using an installed import/export viewtemplate.",
   configuration_workflow,
   run,
   runMany,

@@ -843,6 +843,26 @@ const createBasicView = async ({
 export default {
   name: "Show",
   description: "Show a single row, with flexible layout",
+  copilot_planning_rule:
+    "When a Show view needs to display related rows (e.g. an invoice's line items), that's a " +
+    "separate List view task for the related table, planned and created before this Show " +
+    "view's task, named in its depends_on.",
+  copilot_layout_rule:
+    "Every field is its own segment with \"type\": \"field\" (singular) - there is no " +
+    "\"type\": \"fields\" (plural) segment, and using it crashes with \"unknown layout " +
+    "segment\". Never bundle multiple fields into one segment. Never include the `id` field " +
+    "in the layout - it's an internal implementation detail, not for display. To show " +
+    "related rows, embed a List view for them, not an Edit view - an Edit view embedded here " +
+    "renders a form with inputs and save buttons inline in a read display, which is wrong " +
+    "except for a deliberate inline-edit pattern the task explicitly asks for. A literal " +
+    "label or other static text is a blank segment (e.g. {\"type\":\"blank\",\"contents\":" +
+    "\"Category\"}) - there is no \"text\" segment type, never emit {\"type\":\"text\"}. A " +
+    "field reached through a foreign key is a join_field segment (e.g. {\"type\":" +
+    "\"join_field\",\"join_field\":\"category_id.description\"}) paired with a matching " +
+    "JoinField entry (same join_field path) in configuration.columns - use this native pair " +
+    "instead of writing {{category_id.description}} in a blank segment. Keep every existing " +
+    "configuration.columns entry unless the task explicitly removes it, and add a Field or " +
+    "JoinField entry for every field/join_field segment you add to the layout.",
   get_state_fields,
   configuration_workflow,
   run,

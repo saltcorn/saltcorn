@@ -87,6 +87,7 @@ class Field implements AbstractField {
   default?: any;
   sublabel?: string;
   description?: string;
+  copilot_description?: string;
   type?: string | Type;
   typename?: string;
   help?: { topic: string; context?: Row; dynContext?: string[] };
@@ -138,6 +139,7 @@ class Field implements AbstractField {
     this.default = o.default;
     this.sublabel = o.sublabel;
     this.description = o.description;
+    this.copilot_description = o.copilot_description;
 
     this.type = typeof o.type === "string" ? getState()!.types[o.type] : o.type;
     if (!this.type)

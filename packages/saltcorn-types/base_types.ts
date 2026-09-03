@@ -314,6 +314,14 @@ export type Action = {
 export type ViewTemplate = {
   name: string;
   description?: string;
+  // Used when the app constructor generates a task
+  copilot_planning_rule?: string | ((input: any) => Promise<string> | string);
+  // Used when the app constructor executes a task where a view gets generated
+  copilot_layout_rule?: string | ((input: any) => Promise<string> | string);
+  // Used when the app constructor fills out the fields of a view config form
+  copilot_generate_view_prompt?:
+    | string
+    | ((input: any) => Promise<string> | string);
   tableless?: boolean;
   table_optional?: boolean;
   singleton?: boolean;
