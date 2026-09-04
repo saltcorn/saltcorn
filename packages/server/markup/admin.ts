@@ -608,6 +608,9 @@ const config_fields_form = async ({
     const isPage = configTypes[name].type === "Page";
     const label = configTypes[name].label || name;
     const sublabel = configTypes[name].sublabel || configTypes[name].blurb;
+    // Set by admin_config_route (routes/utils.ts) on save.
+    const isUnsafe =
+      name === "page_custom_html" && !state.getConfig(`${name}_valid`, true);
 
     if (configTypes[name].type === "Repeat") {
       const repFields = configTypes[name].fields;
@@ -645,6 +648,13 @@ const config_fields_form = async ({
                   target: "_blank",
                 },
                 req.__("Configure")
+              )
+            : "") +
+          (isUnsafe
+            ? " " +
+              span(
+                { class: "text-muted small" },
+                req.__("Not applied - contains invalid markup.")
               )
             : ""),
         type:

@@ -96,6 +96,7 @@
     "node-watch": "^0.7.4",
     "notp": "2.0.3",
     "npm-registry-fetch": "17.1.0",
+    "parse5": "7.2.1",
     "passport": "^0.7.0",
     "passport-custom": "1.1.1",
     "passport-http-bearer": "^1.0.1",
