@@ -607,6 +607,47 @@ describe("Field Endpoints", () => {
   });
 });
 
+describe("Field default expression", () => {
+  it("should keep default_expression when editing a nonrequired key field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = await Table.create("FieldDefaultExprTable");
+    const field = await Field.create({
+      table,
+      name: "created_by",
+      label: "Created by",
+      type: "Key",
+      reftable_name: "users",
+      required: false,
+      attributes: { default_expression: "user?.id", summary_field: "email" },
+    });
+    //this is the context the edit wizard holds after the Basic properties step
+    const ctx = encodeURIComponent(
+      JSON.stringify({
+        ...field.toJson,
+        ...field.attributes,
+        type: "Key to users",
+      })
+    );
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/")
+      .send("stepName=Summary")
+      .send("contextEnc=" + ctx)
+      .send("summary_field=id")
+      .send("on_delete=Fail")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect(`/table/${table.id}`));
+    const updated = await Field.findOne({ id: field.id });
+    expect(updated.attributes.summary_field).toBe("id");
+    expect(updated.attributes.default_expression).toBe("user?.id");
+    const tbl = Table.findOne({ name: "FieldDefaultExprTable" });
+    const id = await tbl.insertRow({}, { id: 1, role_id: 1 });
+    const rows = await tbl.getRows({ id });
+    expect(rows[0].created_by).toBe(1);
+  });
+});
+
+
 describe("show-calculated ownership checks", () => {
   const SECRET = "the eagle has landed";
   const mkOwnedTable = async () => {

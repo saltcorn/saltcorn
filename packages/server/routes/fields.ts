@@ -254,6 +254,8 @@ const fieldFlow = (req: Req) =>
       const attributes = context.attributes || {};
       // attributes.default = context.default;
 
+      //the Default step only runs for required fields, so when it is skipped
+      //default_type is unset and any existing default must be left alone
       if (typeof context.default_type !== "undefined") {
         const setDefault =
           context.set_default === undefined || context.set_default === true;
