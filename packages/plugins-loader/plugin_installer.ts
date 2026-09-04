@@ -247,19 +247,25 @@ class PluginInstaller {
           // but without a valid node modules folder
           getState()!.log(
             2,
-            `Error loading plugin ${this.plugin.name}. Removing and trying again.`
+            `Removing and retrying plugin ${this.plugin.name} after error: ${e.message}`
           );
           await this.remove();
           pckJSON = await this._installHelper(msgs);
         } else {
           getState()!.log(
             2,
-            `Error loading plugin ${this.plugin.name}. Trying again with reload flag. ` +
-              "A server restart may be required."
+            `Retrying plugin ${this.plugin.name} with reload flag ` +
+              `(a server restart may be required) after error: ${e.message}`
           );
         }
 
-        loadedModule = await this._loadMainFile(pckJSON, true);
+        try {
+          loadedModule = await this._loadMainFile(pckJSON, true);
+        } catch (e1: any) {
+          // the second attempt rarely says anything new, and can fail in a
+          // more confusing way than the first. Report the original error.
+          throw this._retryFailedError(e, e1);
+        }
         loadedWithReload = true;
       }
     }
@@ -274,11 +280,35 @@ class PluginInstaller {
   }
 
   /**
+   * Build the error to throw when loading the plugin failed twice. The first
+   * error is the informative one, the second is usually a consequence of the
+   * clean-up done in between, so it is only appended if it says something else.
+   */
+  _retryFailedError(first: any, second: any): Error {
+    const firstMsg = first?.message || `${first}`;
+    const secondMsg = second?.message || `${second}`;
+    const err: any = new Error(
+      firstMsg === secondMsg
+        ? firstMsg
+        : `${firstMsg} (retrying the load then failed with: ${secondMsg})`
+    );
+    err.cause = first;
+    err.pluginStack = first?.pluginStack || first?.stack;
+    if (first?.code) err.code = first.code;
+    return err;
+  }
+
+  /**
    * remove plugin directory
    */
   async remove(): Promise<void> {
     if (await pathExists(this.pluginDir))
       await rm(this.pluginDir, { recursive: true });
+    // the directory is gone, so a later install in this process must not skip
+    // the download/copy step because it thinks the plugin is already there
+    installedLocalPlugins.delete(this.pluginDir);
+    installedGitPlugins.delete(this.pluginDir);
+    installedGithubPlugins.delete(this.pluginDir);
   }
 
   // -- private methods --
@@ -440,16 +470,52 @@ class PluginInstaller {
 
   async _loadMainFile(pckJSON: any, reload?: boolean): Promise<any> {
     const isWindows = process.platform === "win32";
-    if (process.env.NODE_ENV === "test") {
-      // in jest, downgrad to require
-      return require(normalize(join(this.pluginDir, pckJSON.main)));
-    } else {
-      const url = `${isWindows ? `file://` : ""}${normalize(
-        join(this.pluginDir, pckJSON.main)
-      )}${reload ? `?reload=${Date.now()}` : ""}`;
-      const res = await import(url);
-      return res.default;
+    if (!pckJSON)
+      throw new Error(
+        `Unable to load plugin ${this.plugin.name}: no package.json found in ` +
+          `${this.pluginDir}. The plugin was not installed correctly.`
+      );
+    const mainFile = pckJSON.main || "index.js";
+    const mainPath = normalize(join(this.pluginDir, mainFile));
+    if (!(await pathExists(mainPath)))
+      throw new Error(
+        `Unable to load plugin ${this.plugin.name}: the main file ` +
+          `"${mainFile}" given in package.json does not exist (${mainPath})`
+      );
+    try {
+      if (process.env.NODE_ENV === "test") {
+        // in jest, downgrad to require
+        return require(mainPath);
+      } else {
+        const url = `${isWindows ? `file://` : ""}${mainPath}${
+          reload ? `?reload=${Date.now()}` : ""
+        }`;
+        const res = await import(url);
+        return res.default;
+      }
+    } catch (e: any) {
+      throw this._mainFileError(e, mainPath);
     }
+  }
+
+  /**
+   * Wrap an error thrown while executing the plugin's main file in a message
+   * that says which plugin and file failed, and what went wrong inside it.
+   */
+  _mainFileError(e: any, mainPath: string): Error {
+    const missing =
+      e?.code === "MODULE_NOT_FOUND" || e?.code === "ERR_MODULE_NOT_FOUND";
+    const detail = missing
+      ? `a module it requires could not be found. ${e.message}`
+      : `${e?.name || "Error"}: ${e?.message || e}`;
+    const err: any = new Error(
+      `Error in plugin ${this.plugin.name} while loading ${mainPath}: ${detail}`
+    );
+    err.cause = e;
+    // keep the original stack, it points into the plugin code
+    if (e?.stack) err.pluginStack = e.stack;
+    if (e?.code) err.code = e.code;
+    return err;
   }
 
   async _removeDependencies(
@@ -543,6 +609,10 @@ class PluginInstaller {
 
   async _dumpNodeMoules(): Promise<void> {
     getState()!.log(5, `corrupt plugin dir: ${this.pluginDir}`);
+    if (!(await pathExists(this.pluginDir))) {
+      getState()!.log(5, `plugin dir does not exist: ${this.pluginDir}`);
+      return;
+    }
     const files = await readdir(this.pluginDir);
     getState()!.log(5, `files in plugin dir: ${JSON.stringify(files)}`);
     if (files.includes("node_modules")) {

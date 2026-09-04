@@ -655,6 +655,11 @@ class Plugin implements AbstractPlugin {
     const { version, plugin_module, location, loadedWithReload, msgs } =
       await loader.install();
     if (msgs) loadMsgs.push(...msgs);
+    if (!plugin_module)
+      throw new Error(
+        `Plugin ${plugin.name} (${plugin.location}) did not export anything. ` +
+          "The main file of a plugin must export the plugin object."
+      );
 
     for (const loc of plugin_module.dependencies || []) {
       const overwrite = (overwriteDependencies || {})[loc];

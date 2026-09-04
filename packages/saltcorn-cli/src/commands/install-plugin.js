@@ -45,47 +45,72 @@ class InstallPluginCommand extends Command {
         }
         delete plugin.id;
 
-        await Plugin.loadAndSaveNewPlugin(
-          plugin,
+        await this.installOrFail(plugin, Plugin, [
           undefined,
           undefined,
           (s) => s,
-          !!flags.unsafe
-        );
+          !!flags.unsafe,
+        ]);
       } else if (flags.npm) {
         const plugin = new Plugin({
           name: flags.npm,
           source: "npm",
           location: flags.npm,
         });
-        await Plugin.loadAndSaveNewPlugin(
-          plugin,
+        await this.installOrFail(plugin, Plugin, [
           undefined,
           undefined,
           (s) => s,
-          !!flags.unsafe
-        );
+          !!flags.unsafe,
+        ]);
       } else if (flags.directory) {
         const pkgpath = path.join(flags.directory, "package.json");
         if (!fs.existsSync(pkgpath)) {
           console.error(`${pkgpath} not found`);
           this.exit(1);
         }
+        let pkg;
         try {
-          const pkg = require(pkgpath);
-          const plugin = new Plugin({
-            name: pkg.name,
-            source: "local",
-            location: path.resolve(flags.directory),
-          });
-          await Plugin.loadAndSaveNewPlugin(plugin, true);
+          pkg = require(pkgpath);
         } catch (e) {
-          console.error(e);
+          console.error(`Unable to read ${pkgpath}: ${e.message}`);
           this.exit(1);
         }
+        if (!pkg.name) {
+          console.error(`${pkgpath} has no name field`);
+          this.exit(1);
+        }
+        const plugin = new Plugin({
+          name: pkg.name,
+          source: "local",
+          location: path.resolve(flags.directory),
+        });
+        await this.installOrFail(plugin, Plugin, [true]);
       }
     });
     this.exit(0);
+  }
+
+  /**
+   * Install a plugin and report why it failed, instead of dumping a stack
+   * trace that only shows saltcorn internals.
+   * @param {object} plugin
+   * @param {object} Plugin the Plugin model
+   * @param {Array} rest further arguments to loadAndSaveNewPlugin
+   * @returns {Promise<void>}
+   */
+  async installOrFail(plugin, Plugin, rest) {
+    try {
+      await Plugin.loadAndSaveNewPlugin(plugin, ...rest);
+    } catch (e) {
+      console.error(`Error installing plugin ${plugin.name}:`);
+      console.error(e.message || e);
+      // stack of the error inside the plugin, if we have one
+      if (e.pluginStack) console.error(e.pluginStack);
+      else if (process.env.NODE_ENV === "development" && e.stack)
+        console.error(e.stack);
+      this.exit(1);
+    }
   }
 }
 
