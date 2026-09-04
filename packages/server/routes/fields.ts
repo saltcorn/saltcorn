@@ -254,17 +254,19 @@ const fieldFlow = (req: Req) =>
       const attributes = context.attributes || {};
       // attributes.default = context.default;
 
-      const setDefault =
-        context.set_default === undefined || context.set_default === true;
-      if (setDefault && context.default_type === "expression") {
-        attributes.default_expression = context.default_expression;
-        attributes.default = undefined;
-      } else if (setDefault) {
-        attributes.default = context.default;
-        attributes.default_expression = undefined;
-      } else {
-        attributes.default = undefined;
-        attributes.default_expression = undefined;
+      if (typeof context.default_type !== "undefined") {
+        const setDefault =
+          context.set_default === undefined || context.set_default === true;
+        if (setDefault && context.default_type === "expression") {
+          attributes.default_expression = context.default_expression;
+          attributes.default = undefined;
+        } else if (setDefault) {
+          attributes.default = context.default;
+          attributes.default_expression = undefined;
+        } else {
+          attributes.default = undefined;
+          attributes.default_expression = undefined;
+        }
       }
       attributes.summary_field = context.summary_field;
       attributes.include_fts = context.include_fts;
