@@ -122,9 +122,11 @@ test.describe('E2E Test Suite', () => {
         // the formula atomically, rather than typing keystroke by keystroke
         // into an editor that may not be fully ready yet
         await functions.fill_Monaco_Text('div.monaco-editor', "2025-year_of_birth");
-        await page.waitForTimeout(500);
         // click on finish button
         await functions.submit();
+        await customAssert('Age calculated field should have been created', async () => {
+          await expect(page.getByRole('cell', { name: 'Age', exact: true })).toBeVisible();
+        });
     });
 
     // create view with show view pattern
