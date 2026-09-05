@@ -177,7 +177,11 @@ describe("custom html safety", () => {
       .get("/admin")
       .set("Cookie", loginCookie)
       .expect(toInclude("Site identity settings"))
-      .expect(toInclude("Not applied - contains invalid markup."));
+      .expect(
+        toInclude(
+          'id="unsafe-marker-page_custom_html" class="text-danger small"'
+        )
+      );
     // a page that doesn't echo the draft itself, to check what's actually
     // injected into <head>
     await request(app)
@@ -199,6 +203,40 @@ describe("custom html safety", () => {
       .get("/useradmin")
       .set("Cookie", loginCookie)
       .expect(toInclude(marker));
+    await request(app)
+      .get("/admin")
+      .set("Cookie", loginCookie)
+      .expect(
+        toInclude(
+          'id="unsafe-marker-page_custom_html" class="text-danger small d-none"'
+        )
+      );
+    await getState().setConfig("page_custom_html", "");
+  });
+  it("toggles the marker live via eval_js on an XHR autosave", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    const toggleJs = (visible) =>
+      `document.getElementById("unsafe-marker-page_custom_html")?.classList.toggle("d-none", ${visible});`;
+    await request(app)
+      .post("/admin")
+      .set("Cookie", loginCookie)
+      .set("X-Requested-With", "XMLHttpRequest")
+      .send("page_custom_html=<!-- oops forgot to close")
+      .expect(
+        respondJsonWith(
+          200,
+          (body) => body.eval_js === toggleJs(false)
+        )
+      );
+    await request(app)
+      .post("/admin")
+      .set("Cookie", loginCookie)
+      .set("X-Requested-With", "XMLHttpRequest")
+      .send("page_custom_html=<meta name=x>")
+      .expect(
+        respondJsonWith(200, (body) => body.eval_js === toggleJs(true))
+      );
     await getState().setConfig("page_custom_html", "");
   });
 });
