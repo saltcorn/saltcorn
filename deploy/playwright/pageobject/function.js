@@ -60,14 +60,20 @@ class PageFunctions {
     await this.page.keyboard.press('Control+A');
     await this.page.keyboard.press('Backspace');
     await this.page.keyboard.insertText(value);
-    await this.page.waitForFunction(
-      (v) =>
-        Array.from(document.querySelectorAll('textarea.to-code')).some((t) =>
-          (t.value || '').includes(v)
-        ),
-      value,
-      { timeout: 10000 }
-    );
+    const textarea = await editor.evaluateHandle((el) => {
+      for (let node = el; node; node = node.parentElement) {
+        const prev = node.previousElementSibling;
+        if (prev && prev.tagName === 'TEXTAREA' && prev.classList.contains('to-code'))
+          return prev;
+      }
+      return null;
+    });
+    if (textarea.asElement())
+      await this.page.waitForFunction(
+        ([t, v]) => (t.value || '').includes(v),
+        [textarea, value],
+        { timeout: 10000 }
+      );
   }
 
   async navigate_To_Settings() {
