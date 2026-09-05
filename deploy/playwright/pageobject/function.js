@@ -60,6 +60,14 @@ class PageFunctions {
     await this.page.keyboard.press('Control+A');
     await this.page.keyboard.press('Backspace');
     await this.page.keyboard.insertText(value);
+    await this.page.waitForFunction(
+      (v) =>
+        Array.from(document.querySelectorAll('textarea.to-code')).some((t) =>
+          (t.value || '').includes(v)
+        ),
+      value,
+      { timeout: 10000 }
+    );
   }
 
   async navigate_To_Settings() {
