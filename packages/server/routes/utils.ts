@@ -6,6 +6,7 @@
 
 import db from "@saltcorn/data/db";
 const { sqlsanitize } = db;
+import { parseFragment, ErrorCodes, type ParserError } from "parse5";
 import {
   getState,
   getTenant,
@@ -584,6 +585,27 @@ const greenlock_notify = (ev: string, args: any): void => {
   getState()?.log(ev === "error" ? 3 : 6, `greenlock ${ev}: ${detail}`);
 };
 
+// The parse5 error codes for "unclosed, swallowed the rest of the page".
+const BRICKING_ERRORS: Set<string> = new Set([
+  ErrorCodes.eofInComment,
+  ErrorCodes.eofInElementThatCanContainOnlyText,
+]);
+/**
+ * Rejects an unclosed comment/script/style/textarea/title, which would
+ * swallow the rest of the page once injected into `<head>`.
+ * @param html
+ */
+const isSafeCustomHtml = (html: string): boolean => {
+  if (!html) return true;
+  let safe = true;
+  parseFragment(html, {
+    onParseError: (err: ParserError) => {
+      if (BRICKING_ERRORS.has(err.code)) safe = false;
+    },
+  });
+  return safe;
+};
+
 const admin_config_route = ({
   router,
   path,
@@ -631,6 +653,13 @@ const admin_config_route = ({
         const restart_required = check_if_restart_required(form);
 
         await save_config_from_form(form);
+        // eval_js toggles the marker live, since autosave has no page reload.
+        let htmlMarkerJs = "";
+        if (typeof form.values.page_custom_html !== "undefined") {
+          const safe = isSafeCustomHtml(form.values.page_custom_html);
+          await getState()!.setConfig("page_custom_html_valid", safe);
+          htmlMarkerJs = `document.getElementById("unsafe-marker-page_custom_html")?.classList.toggle("d-none", ${safe});`;
+        }
         Trigger.emitEvent("AppChange", `Config`, req.user, {
           config_keys: Object.keys(form.values),
         });
@@ -643,12 +672,13 @@ const admin_config_route = ({
           if (restart_required)
             res.json({
               success: "ok",
+              eval_js: htmlMarkerJs,
               notify:
                 req.__("Restart required for changes to take effect.") +
                 " " +
                 a({ href: "/admin/system" }, req.__("Restart here")),
             });
-          else res.json({ success: "ok" });
+          else res.json({ success: "ok", eval_js: htmlMarkerJs });
         }
       }
     })
@@ -907,4 +937,5 @@ export {
   acme_directory_url,
   greenlock_notify,
   checkEditPermission,
+  isSafeCustomHtml,
 };

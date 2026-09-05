@@ -710,6 +710,11 @@ const configTypes: ConfigTypes = {
     hide_value: true,
     attributes: { mode: "text/html" },
   },
+  page_custom_html_valid: {
+    type: "hidden",
+    label: "Custom HTML is valid",
+    default: true,
+  },
   suppress_toasts: {
     type: "Bool",
     label: "Suppress toasts",

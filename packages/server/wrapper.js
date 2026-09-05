@@ -123,8 +123,10 @@ const get_headers = (req, version_tag, description, extras = []) => {
   let from_cfg = [];
   if (state.getConfig("page_custom_css", ""))
     from_cfg.push({ style: state.getConfig("page_custom_css", "") });
-  if (state.getConfig("page_custom_html", ""))
-    from_cfg.push({ headerTag: state.getConfig("page_custom_html", "") });
+  const customHtml = state.getConfig("page_custom_html", "");
+  // Validity is checked on save (routes/utils.ts), not on every render.
+  if (customHtml && state.getConfig("page_custom_html_valid", true))
+    from_cfg.push({ headerTag: customHtml });
   if (state.getConfig("log_client_errors", false))
     from_cfg.push({ scriptBody: `enable_error_catcher()` });
   if (state.getConfig("suppress_toasts", false))

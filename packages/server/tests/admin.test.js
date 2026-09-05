@@ -7,10 +7,12 @@ import {
   itShouldIncludeTextForAdmin,
   itShouldNotIncludeTextForAdmin,
   toInclude,
+  toNotInclude,
   toSucceed,
   resetToFixtures,
   respondJsonWith,
 } from "../auth/testhelp.js";
+import { isSafeCustomHtml } from "../routes/utils.js";
 import db from "@saltcorn/data/db";
 import { getState } from "@saltcorn/data/db/state";
 import { sleep } from "@saltcorn/data/tests/mocks";
@@ -148,6 +150,94 @@ describe("admin page", () => {
     expect(getState().getConfig("auto_backup_keep_min")).toBe(4);
     await getState().setConfig("auto_backup_frequency", "Never");
     await getState().setConfig("auto_backup_retention_mode", "Expiration");
+  });
+});
+describe("custom html safety", () => {
+  it("rejects unclosed comment/script/style/textarea", () => {
+    expect(isSafeCustomHtml("<meta><!-- unclosed")).toBe(false);
+    expect(isSafeCustomHtml("<script>oops();")).toBe(false);
+    expect(isSafeCustomHtml("<style>body{color:red}")).toBe(false);
+    expect(isSafeCustomHtml("<textarea>oops")).toBe(false);
+  });
+  it("accepts balanced or empty html", () => {
+    expect(isSafeCustomHtml("")).toBe(true);
+    expect(isSafeCustomHtml("<meta name=x>")).toBe(true);
+    expect(isSafeCustomHtml("<!-- fine --><script>1</script>")).toBe(true);
+  });
+  it("does not render a broken draft, but keeps it and flags it", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    const broken = "<!-- oops forgot to close";
+    await request(app)
+      .post("/admin")
+      .set("Cookie", loginCookie)
+      .send(`page_custom_html=${encodeURIComponent(broken)}`)
+      .expect(toRedirect("/admin/"));
+    await request(app)
+      .get("/admin")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Site identity settings"))
+      .expect(
+        toInclude(
+          'id="unsafe-marker-page_custom_html" class="text-danger small"'
+        )
+      );
+    // a page that doesn't echo the draft itself, to check what's actually
+    // injected into <head>
+    await request(app)
+      .get("/useradmin")
+      .set("Cookie", loginCookie)
+      .expect(toNotInclude(broken));
+    await getState().setConfig("page_custom_html", "");
+  });
+  it("renders a valid draft", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    const marker = '<meta name="sc-test-marker" content="1">';
+    await request(app)
+      .post("/admin")
+      .set("Cookie", loginCookie)
+      .send(`page_custom_html=${encodeURIComponent(marker)}`)
+      .expect(toRedirect("/admin/"));
+    await request(app)
+      .get("/useradmin")
+      .set("Cookie", loginCookie)
+      .expect(toInclude(marker));
+    await request(app)
+      .get("/admin")
+      .set("Cookie", loginCookie)
+      .expect(
+        toInclude(
+          'id="unsafe-marker-page_custom_html" class="text-danger small d-none"'
+        )
+      );
+    await getState().setConfig("page_custom_html", "");
+  });
+  it("toggles the marker live via eval_js on an XHR autosave", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    const toggleJs = (visible) =>
+      `document.getElementById("unsafe-marker-page_custom_html")?.classList.toggle("d-none", ${visible});`;
+    await request(app)
+      .post("/admin")
+      .set("Cookie", loginCookie)
+      .set("X-Requested-With", "XMLHttpRequest")
+      .send("page_custom_html=<!-- oops forgot to close")
+      .expect(
+        respondJsonWith(
+          200,
+          (body) => body.eval_js === toggleJs(false)
+        )
+      );
+    await request(app)
+      .post("/admin")
+      .set("Cookie", loginCookie)
+      .set("X-Requested-With", "XMLHttpRequest")
+      .send("page_custom_html=<meta name=x>")
+      .expect(
+        respondJsonWith(200, (body) => body.eval_js === toggleJs(true))
+      );
+    await getState().setConfig("page_custom_html", "");
   });
 });
 /**
