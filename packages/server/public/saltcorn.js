@@ -1387,6 +1387,156 @@ function toggle_android_platform() {
   }
 }
 
+function apply_entry_point_ui() {
+  const entryByRole = document.getElementById("entryPointByRoleBoxId").checked;
+  const entryRow = document.getElementById("entryPointRowId");
+  const selector = document.getElementById("entrySelectorsId");
+  if (entryByRole) {
+    entryRow.classList.remove("border", "border-2", "p-3", "rounded");
+    selector.classList.add("d-none");
+  } else {
+    entryRow.classList.add("border", "border-2", "p-3", "rounded");
+    selector.classList.remove("d-none");
+  }
+}
+
+function toggle_build_mode() {
+  const remote = $("#buildModeRemoteId")[0].checked;
+  const row = $("#remoteSchemaRowId");
+  const urlInput = $("#remoteSchemaUrlInputId");
+  const keyInput = $("#remoteApiKeyInputId");
+  if (remote) {
+    row.removeClass("d-none");
+    urlInput.attr("name", "remoteSchemaUrl");
+    keyInput.attr("name", "remoteApiKey");
+    if (urlInput.val()) fetch_remote_schema_info();
+  } else {
+    row.addClass("d-none");
+    urlInput.removeAttr("name");
+    keyInput.removeAttr("name");
+  }
+}
+
+function populate_remote_entry_points(views, pages, pageGroups) {
+  const buildOptions = (names) =>
+    (names || [])
+      .map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`)
+      .join("");
+  $("#viewInputID").html(buildOptions(views));
+  $("#pageInputID").html(buildOptions(pages));
+  $("#pagegroupInputID").html(buildOptions(pageGroups));
+}
+
+function populate_remote_plugins(plugins, pluginsReadyForMobile) {
+  $("#excluded-plugins-select-id").empty();
+  const included = $("#included-plugins-select-id");
+  included.empty();
+  (plugins || []).forEach((name) => {
+    included.append(
+      $("<option>", { value: name, text: name, id: name + "_included_opt" })
+    );
+  });
+  // keep the pre-submit readiness check in sync with the freshly fetched plugin list
+  window.pluginsReadyForMobile = pluginsReadyForMobile || [];
+}
+
+function replace_toast_with_result(toastId, type, text) {
+  const $toast = $("#" + toastId);
+  if (!$toast.length) {
+    notifyAlert({ type, text });
+    return;
+  }
+  const icon =
+    type === "success"
+      ? "fa-check-circle"
+      : type === "danger"
+        ? "fa-times-circle"
+        : "";
+  $toast
+    .find(".toast-header")
+    .removeClass("bg-info bg-success bg-danger bg-warning")
+    .addClass("bg-" + type)
+    .find("i")
+    .attr("class", "fas " + icon + " me-2");
+  if (!$toast.find(".btn-close").length)
+    $toast.find(".toast-header").append(
+      '<button type="button" class="btn-close btn-close-white" ' +
+        'data-bs-dismiss="toast" aria-label="Close" style="font-size: 12px;"></button>'
+    );
+  $toast.find(".toast-body .spinner-border").remove();
+  $toast.find(".toast-body strong").text(text);
+  setTimeout(() => {
+    $toast.removeClass("show");
+  }, 5000);
+}
+
+async function fetch_remote_schema_info() {
+  const remoteSchemaUrl = $("#remoteSchemaUrlInputId").val();
+  const remoteApiKey = $("#remoteApiKeyInputId").val();
+  if (!remoteSchemaUrl) return;
+  const toastId = "remoteSchemaInfoToastId";
+  $("#" + toastId).remove();
+  const { html } = buildToast(
+    "Loading remote schema…",
+    "info",
+    true,
+    "Remote schema",
+    toastId
+  );
+  $("#toasts-area").append(html);
+  let res;
+  try {
+    const response = await fetch("/admin/mobile-app/fetch-remote-schema-info", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": _sc_globalCsrf,
+      },
+      body: JSON.stringify({ remoteSchemaUrl, remoteApiKey }),
+    });
+    res = await response.json();
+  } catch (e) {
+    replace_toast_with_result(
+      toastId,
+      "danger",
+      "Unable to load the remote schema."
+    );
+    return;
+  }
+  if (!res || typeof res !== "object") {
+    replace_toast_with_result(
+      toastId,
+      "danger",
+      "Unexpected response from the server."
+    );
+    return;
+  }
+  if (res.error) {
+    replace_toast_with_result(toastId, "danger", res.error);
+    return;
+  }
+  if (
+    !Array.isArray(res.views) ||
+    !Array.isArray(res.pages) ||
+    !Array.isArray(res.pageGroups) ||
+    !Array.isArray(res.plugins)
+  ) {
+    replace_toast_with_result(
+      toastId,
+      "danger",
+      "The server did not return a valid remote schema."
+    );
+    return;
+  }
+  populate_remote_entry_points(res.views, res.pages, res.pageGroups);
+  populate_remote_plugins(res.plugins, res.pluginsReadyForMobile);
+  replace_toast_with_result(
+    toastId,
+    "success",
+    "Remote schema loaded - you can now finish the configuration."
+  );
+}
+
 function cancelMemberEdit(groupName) {
   const url = new URL(location.href);
   location.href = `${url.origin}/page_groupedit/${groupName}`;

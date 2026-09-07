@@ -12,6 +12,7 @@
     "build": "webpack --mode development"
   },
   "dependencies": {
+    "@saltcorn/admin-models": "1.7.0-alpha.1",
     "@saltcorn/markup": "1.7.0-alpha.1",
     "@saltcorn/data": "1.7.0-alpha.1",
     "@saltcorn/db-common": "1.7.0-alpha.1",

@@ -277,12 +277,12 @@ test.describe('E2E Test Suite', () => {
             await expect(page.locator(pageobject.offlineModeBox)).not.toBeChecked();
         });
         // Assert the debug redio button in Mobile app tab
-        await customAssert('Assert the debug redio button in Mobile app tab is not checked', async () => {
-            await expect(page.locator(pageobject.debugBuildType)).not.toBeChecked();
+        await customAssert('Assert the debug redio button in Mobile app tab is checked', async () => {
+            await expect(page.locator(pageobject.debugBuildType)).toBeChecked();
         });
         // Assert the release build redio button in Mobile app tab
-        await customAssert('Assert the release build redio button in Mobile app tab is checked', async () => {
-            await expect(page.locator(pageobject.releaseBuildType)).toBeChecked();
+        await customAssert('Assert the release build redio button in Mobile app tab is not checked', async () => {
+            await expect(page.locator(pageobject.releaseBuildType)).not.toBeChecked();
         });
         // check the keystore text box
         await customAssert('Assert the keystore text box', async () => {

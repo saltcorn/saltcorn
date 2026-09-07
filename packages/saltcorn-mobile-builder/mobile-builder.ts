@@ -1,10 +1,11 @@
 const { PluginManager } = require("live-plugin-manager");
 import { join, basename } from "path";
-import { copySync } from "fs-extra";
+import { copySync, rmSync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
 import File from "@saltcorn/data/models/file";
 import {
   buildTablesFile,
+  fetchRemoteAppBundle,
   copySiteLogo,
   copyServerFiles,
   copyTranslationFiles,
@@ -12,6 +13,7 @@ import {
   writeCfgFile,
   prepareSplashPage,
   prepareBuildDir,
+  zipDirectory,
   prepareExportOptionsPlist,
   copyShareExtFiles,
   modifyShareViewController,
@@ -98,6 +100,9 @@ type MobileBuilderConfig = {
   keyStorePassword?: string;
   googleServicesFile?: string;
   buildType: "debug" | "release";
+  remoteSchemaUrl?: string;
+  remoteApiKey?: string;
+  remotePushNotificationsEnabled?: boolean;
 };
 
 /**
@@ -142,6 +147,8 @@ export class MobileBuilder {
   isUnsecureKeyStore: boolean;
   googleServicesFile?: string;
   buildType: "debug" | "release";
+  remoteSchemaUrl?: string;
+  remoteApiKey?: string;
   iosParams?: IosCfg;
   apnsKeyId?: string;
   pushNotificationsEnabled: boolean;
@@ -206,12 +213,19 @@ export class MobileBuilder {
     }
     this.googleServicesFile = cfg.googleServicesFile;
     this.buildType = cfg.buildType;
+    this.remoteSchemaUrl = cfg.remoteSchemaUrl;
+    this.remoteApiKey = cfg.remoteApiKey;
     this.iosParams = cfg.iosParams;
     this.capacitorHelper = new CapacitorHelper({
       ...this,
       appVersion: this.appVersion,
     });
-    this.apnsKeyId = getState().getConfig("apn_signing_key_id");
+    // remote: "remote" is just a truthy placeholder, never read as a value
+    this.apnsKeyId = this.remoteSchemaUrl
+      ? cfg.remotePushNotificationsEnabled
+        ? "remote"
+        : undefined
+      : getState().getConfig("apn_signing_key_id");
     this.pushNotificationsEnabled =
       !!this.googleServicesFile || !!this.apnsKeyId;
   }
@@ -227,9 +241,7 @@ export class MobileBuilder {
         this.buildDir,
         this.templateDir,
         this.pushNotificationsEnabled,
-        (!!this.syncInterval && this.syncInterval > 0) ||
-          (!!this.pushSyncHeartbeatInterval &&
-            this.pushSyncHeartbeatInterval > 0),
+        this.backgroundFetchEnabled,
         this.pushSync
       );
       writeCapacitorConfig(this.buildDir, {
@@ -243,62 +255,42 @@ export class MobileBuilder {
         buildType: this.buildType,
       });
       this.capacitorHelper.addPlatforms();
-
       if (this.appIcon) prepAppIcon(this.buildDir, this.appIcon);
-      copyServerFiles(this.buildDir);
-      await copySiteLogo(this.buildDir);
-      copyTranslationFiles(this.buildDir);
-      writeCfgFile({
-        buildDir: this.buildDir,
-        entryPoint: this.entryPoint,
-        entryPointType: this.entryPointType,
-        serverPath: this.serverURL,
-        synchedTables: this.synchedTables,
-        tenantAppName: this.tenantAppName,
-        autoPublicLogin: this.autoPublicLogin,
-        showContinueAsPublicUser: this.showContinueAsPublicUser,
-        allowOfflineMode: this.allowOfflineMode,
-        syncOnReconnect: this.syncOnReconnect,
-        syncOnAppResume: this.syncOnAppResume,
-        pushSync: this.pushSync,
-        syncInterval: this.syncInterval ? this.syncInterval : 0,
-        pushSyncHeartbeatInterval: this.pushSyncHeartbeatInterval
-          ? this.pushSyncHeartbeatInterval
-          : 0,
-        allowShareTo: this.allowShareTo,
-        apnsEnvironment:
-          this.buildType === "debug" ? "development" : "production",
-      });
-      let resultCode = await bundlePackagesAndPlugins(
-        this.buildDir,
-        this.plugins
-      );
-      if (resultCode !== 0) return resultCode;
-      copyPluginMobileAppDirs(this.buildDir);
-      if (this.pushNotificationsEnabled || this.pushSync) {
-        copyOptionalSource(this.buildDir, "notifications.js");
-        if (this.pushSync && this.platforms.includes("ios"))
-          copyOptionalSource(this.buildDir, "ios_silent_push.js");
-      }
-      if (
-        (this.syncInterval && this.syncInterval > 0) ||
-        (this.pushSyncHeartbeatInterval && this.pushSyncHeartbeatInterval > 0)
-      )
-        copyOptionalSource(this.buildDir, "background.js");
-      resultCode = bundleMobileAppCode(this.buildDir);
-      if (resultCode !== 0) return resultCode;
-      await copyPublicDirs(this.buildDir);
-      await buildTablesFile(this.buildDir, this.includedPlugins);
-      if (this.splashPage)
-        await prepareSplashPage(
+
+      let resultCode: number | null;
+      if (this.remoteSchemaUrl) {
+        // everything saltcorn-specific (schema, plugin bundles, site
+        // assets...) is prepared and zipped by the remote server itself -
+        // this machine only ever does Capacitor/native work
+        await fetchRemoteAppBundle(
           this.buildDir,
-          this.splashPage,
-          this.serverURL,
-          this.tenantAppName,
-          this.user
+          this.remoteSchemaUrl,
+          this.remoteApiKey,
+          {
+            includedPlugins: this.includedPlugins,
+            platforms: this.platforms,
+            synchedTables: this.synchedTables,
+            entryPoint: this.entryPoint,
+            entryPointType: this.entryPointType,
+            serverURL: this.serverURL,
+            splashPage: this.splashPage,
+            tenantAppName: this.tenantAppName,
+            buildType: this.buildType,
+            autoPublicLogin: this.autoPublicLogin,
+            showContinueAsPublicUser: this.showContinueAsPublicUser,
+            allowOfflineMode: this.allowOfflineMode,
+            syncOnReconnect: this.syncOnReconnect,
+            syncOnAppResume: this.syncOnAppResume,
+            pushSync: this.pushSync,
+            syncInterval: this.syncInterval,
+            pushSyncHeartbeatInterval: this.pushSyncHeartbeatInterval,
+          }
         );
-      resultCode = await createSqliteDb(this.buildDir);
-      if (resultCode !== 0) return resultCode;
+        resultCode = 0;
+      } else {
+        resultCode = await this.prepareAppContent();
+        if (resultCode !== 0) return resultCode;
+      }
 
       if (this.platforms.includes("ios")) await this.handleIosPlatform();
       if (this.platforms.includes("android"))
@@ -318,6 +310,97 @@ export class MobileBuilder {
     } catch (e: any) {
       console.error(e);
       return 1;
+    }
+  }
+
+  /**
+   * Everything saltcorn-specific that goes into buildDir/www: server
+   * assets, site logo, translations, cfg file, plugin bundles, app code,
+   * public dirs, schema data, splash page, sqlite db. Runs locally for a
+   * normal build, or on the remote server for prepareRemoteBundle.
+   */
+  private async prepareAppContent(): Promise<number | null> {
+    copyServerFiles(this.buildDir);
+    await copySiteLogo(this.buildDir);
+    copyTranslationFiles(this.buildDir);
+    writeCfgFile({
+      buildDir: this.buildDir,
+      entryPoint: this.entryPoint,
+      entryPointType: this.entryPointType,
+      serverPath: this.serverURL,
+      synchedTables: this.synchedTables,
+      tenantAppName: this.tenantAppName,
+      autoPublicLogin: this.autoPublicLogin,
+      showContinueAsPublicUser: this.showContinueAsPublicUser,
+      allowOfflineMode: this.allowOfflineMode,
+      syncOnReconnect: this.syncOnReconnect,
+      syncOnAppResume: this.syncOnAppResume,
+      pushSync: this.pushSync,
+      syncInterval: this.syncInterval ? this.syncInterval : 0,
+      pushSyncHeartbeatInterval: this.pushSyncHeartbeatInterval
+        ? this.pushSyncHeartbeatInterval
+        : 0,
+      allowShareTo: this.allowShareTo,
+      apnsEnvironment:
+        this.buildType === "debug" ? "development" : "production",
+    });
+    let resultCode = await bundlePackagesAndPlugins(
+      this.buildDir,
+      this.plugins
+    );
+    if (resultCode !== 0) return resultCode;
+    copyPluginMobileAppDirs(this.buildDir);
+    if (this.pushNotificationsEnabled || this.pushSync) {
+      copyOptionalSource(this.buildDir, "notifications.js");
+      if (this.pushSync && this.platforms.includes("ios"))
+        copyOptionalSource(this.buildDir, "ios_silent_push.js");
+    }
+    if (
+      (this.syncInterval && this.syncInterval > 0) ||
+      (this.pushSyncHeartbeatInterval && this.pushSyncHeartbeatInterval > 0)
+    )
+      copyOptionalSource(this.buildDir, "background.js");
+    resultCode = bundleMobileAppCode(this.buildDir);
+    if (resultCode !== 0) return resultCode;
+    await copyPublicDirs(this.buildDir);
+    await buildTablesFile(this.buildDir, this.includedPlugins);
+    if (this.splashPage)
+      await prepareSplashPage(
+        this.buildDir,
+        this.splashPage,
+        this.serverURL,
+        this.tenantAppName,
+        this.user
+      );
+    return await createSqliteDb(this.buildDir);
+  }
+
+  /**
+   * Preps buildDir/www server-side and zips it - no native/Capacitor commands run here.
+   * @param outputZipPath path of the zip file to write
+   */
+  public async prepareRemoteBundle(
+    outputZipPath: string
+  ): Promise<number | null> {
+    try {
+      await Plugin.loadAllPlugins();
+      prepareBuildDir(
+        this.buildDir,
+        this.templateDir,
+        this.pushNotificationsEnabled,
+        this.backgroundFetchEnabled,
+        this.pushSync,
+        false
+      );
+      const resultCode = await this.prepareAppContent();
+      if (resultCode !== 0) return resultCode;
+      await zipDirectory(join(this.buildDir, "www"), outputZipPath);
+      return 0;
+    } catch (e: any) {
+      console.error(e);
+      return 1;
+    } finally {
+      rmSync(this.buildDir, { recursive: true, force: true });
     }
   }
 

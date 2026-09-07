@@ -1,0 +1,12 @@
+Build location sets where the build happens.
+
+**Local** does everything on this machine, reading the app schema from its own database. **Remote** fetches the app schema (views, pages, tables, plugins) from another server instead.
+
+Use Remote when this machine is just for building (e.g. a Mac for the Xcode toolchain), not your live server.
+
+**Setup:**
+1. Generate an API key for an admin user on your live server.
+2. Remote server URL: `https://<live-server>` (just the base URL)
+3. Remote API key: that key.
+
+Both fields are required when Build location is set to Remote.

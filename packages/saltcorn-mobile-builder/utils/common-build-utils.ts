@@ -1,18 +1,19 @@
 import db from "@saltcorn/data/db/index";
 import utils = require("@saltcorn/data/utils");
 const { getSafeSaltcornCmd } = utils;
-import { join, parse } from "path";
+import { join, parse, relative, sep } from "path";
 import {
   existsSync,
   mkdirSync,
   copySync,
   writeFileSync,
   readFileSync,
+  readdirSync,
   rmSync,
 } from "fs-extra";
 import fs from "fs";
 import { Row } from "@saltcorn/db-common/internal";
-import { spawnSync, execSync } from "child_process";
+import { spawnSync } from "child_process";
 import Page from "@saltcorn/data/models/page";
 import File from "@saltcorn/data/models/file";
 import type User from "@saltcorn/data/models/user";
@@ -23,34 +24,44 @@ import { available_languages } from "@saltcorn/data/models/config";
 import type { IosCfg } from "../mobile-builder";
 import { ReqRes } from "@saltcorn/types/common_types";
 import { CapacitorPlugin } from "@saltcorn/types/base_types";
+import { ZipBuilder } from "@saltcorn/admin-models/models/zip";
+import { extractZip } from "@saltcorn/admin-models/models/zip-extract";
 const resizer = require("resize-with-sharp-or-jimp");
 
 /**
- * copy saltcorn-mobile-app as a template to buildDir
- * and install the capacitor and cordova modules to node_modules (cap sync will be run later)
+ * Copies the template into buildDir and installs base build tooling (no Capacitor deps).
  * @param buildDir directory where the app will be build
- * @param templateDir directory of the template code that will be copied to 'buildDir'
- * @param pushEnabled are push notifications enabled?
- * @param backgroundFetchEnabled is background fetch enabled?
- * @param pushSyncEnabled is push sync enabled?
+ * @param templateDir directory of the template code to copy
  */
-export function prepareBuildDir(
-  buildDir: string,
-  templateDir: string,
-  pushEnabled: boolean,
-  backgroundFetchEnabled: boolean,
-  pushSyncEnabled: boolean
-) {
-  const state = getState();
-  if (!state) throw new Error("Unable to get the state object");
-
+export function prepareBuildDirBase(buildDir: string, templateDir: string) {
   if (existsSync(buildDir)) rmSync(buildDir, { force: true, recursive: true });
   copySync(templateDir, buildDir);
   rmSync(`${buildDir}/node_modules`, { recursive: true, force: true });
-  let result = spawnSync("npm", ["install"], {
+  const result = spawnSync("npm", ["install"], {
     cwd: buildDir,
   });
   console.log(result.output.toString());
+}
+
+/**
+ * Installs Capacitor/native/Cordova deps - build-machine only, not the remote server.
+ * @param buildDir prepareBuildDirBase'd build directory
+ * @param pushEnabled include push-notification native deps
+ * @param backgroundFetchEnabled include background-fetch native deps
+ * @param pushSyncEnabled include push-sync native deps
+ * @param includeNativeBuildTools also install CLI/asset/Cordova tools only the
+ *   build machine runs (addPlatforms/buildApp) - false for a remote bundle,
+ *   which only needs the packages the webpack build itself imports
+ */
+export function installCapacitorDeps(
+  buildDir: string,
+  pushEnabled: boolean,
+  backgroundFetchEnabled: boolean,
+  pushSyncEnabled: boolean,
+  includeNativeBuildTools: boolean = true
+) {
+  const state = getState();
+  if (!state) throw new Error("Unable to get the state object");
 
   // cap-plugins needed for saltcorn-plugins
   const additionalPlugins = state.capacitorPlugins.map(
@@ -59,14 +70,18 @@ export function prepareBuildDir(
 
   console.log("installing capacitor deps and plugins");
   const capDepsAndPlugins = [
-    "@capacitor/cli@7.4.5",
+    ...(includeNativeBuildTools
+      ? [
+          "@capacitor/cli@7.4.5",
+          "@capacitor/assets@3.0.5",
+          "@capacitor-community/sqlite@7.0.3",
+        ]
+      : []),
     "@capacitor/core@7.4.5",
-    "@capacitor/assets@3.0.5",
     "@capacitor/filesystem@7.1.6",
     "@capacitor/file-transfer@1.0.12",
     "@capacitor/camera@7.0.3",
     "@capacitor/network@7.0.3",
-    "@capacitor-community/sqlite@7.0.3",
     "@capacitor/screen-orientation@7.0.3",
     "@capacitor/app@7.1.0",
     "send-intent@7.0.0",
@@ -81,7 +96,7 @@ export function prepareBuildDir(
   ];
   console.log("capDepsAndPlugins", capDepsAndPlugins);
 
-  result = spawnSync(
+  let result = spawnSync(
     "npm",
     ["install", "--legacy-peer-deps", ...capDepsAndPlugins],
     {
@@ -91,18 +106,44 @@ export function prepareBuildDir(
   );
   console.log(result.output.toString());
 
-  console.log("installing cordova plugins");
-  const cordovaPlugins = [
-    "cordova-plugin-file@8.1.3",
-    "cordova-plugin-inappbrowser@6.0.0",
-  ];
-  result = spawnSync(
-    "npm",
-    ["install", "--legacy-peer-deps", ...cordovaPlugins],
-    {
-      cwd: buildDir,
-      maxBuffer: 1024 * 1024 * 10,
-    }
+  if (includeNativeBuildTools) {
+    console.log("installing cordova plugins");
+    const cordovaPlugins = [
+      "cordova-plugin-file@8.1.3",
+      "cordova-plugin-inappbrowser@6.0.0",
+    ];
+    result = spawnSync(
+      "npm",
+      ["install", "--legacy-peer-deps", ...cordovaPlugins],
+      {
+        cwd: buildDir,
+        maxBuffer: 1024 * 1024 * 10,
+      }
+    );
+  }
+}
+
+/**
+ * Full local build dir setup: template + build tooling + Capacitor/native
+ * deps. Used by the normal (non-remote) build path, which does everything
+ * on one machine.
+ * @param includeNativeBuildTools forwarded to installCapacitorDeps - false for a remote bundle
+ */
+export function prepareBuildDir(
+  buildDir: string,
+  templateDir: string,
+  pushEnabled: boolean,
+  backgroundFetchEnabled: boolean,
+  pushSyncEnabled: boolean,
+  includeNativeBuildTools: boolean = true
+) {
+  prepareBuildDirBase(buildDir, templateDir);
+  installCapacitorDeps(
+    buildDir,
+    pushEnabled,
+    backgroundFetchEnabled,
+    pushSyncEnabled,
+    includeNativeBuildTools
   );
 }
 
@@ -1323,106 +1364,105 @@ export function writeCfgFile({
   );
 }
 
-/**
- * create a file with all data from the db
- * the app updates its local db from this
- * @param buildDir directory where the app will be build
- * @param includedPlugins names of plugins that are bundled into the app
- */
-export async function buildTablesFile(
-  buildDir: string,
-  includedPlugins?: string[]
-) {
-  const state = getState();
-  if (!state) throw new Error("Unable to get the state object");
-  await state.refresh_config(true);
+const filterPluginFunc = async (state: any, plugin: any) => {
+  let module = state.plugins[plugin.name];
+  if (!module) module = state.plugins[state.plugin_module_names[plugin.name]];
+  if (module?.configuration_workflow) {
+    try {
+      const flow = await module.configuration_workflow();
+      for (const step of flow?.steps || []) {
+        if (step.form) {
+          const form = await step.form({});
+          for (const field of form?.fields || []) {
+            if (field.exclude_from_mobile || field.input_type === "password") {
+              delete plugin.configuration[field.name];
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.log(`Error in configuration_workflow of plugin ${plugin.name}`);
+      console.log(error);
+    }
+  }
+  return plugin;
+};
 
-  // remove cfgs with excludeFromMobile or input_type=password
-  const filterPluginFunc = async (plugin: any) => {
-    let module = state.plugins[plugin.name];
-    if (!module) module = state.plugins[state.plugin_module_names[plugin.name]];
-    if (module?.configuration_workflow) {
+const filterTableFunc = async (state: any, table: any) => {
+  let result = table;
+  if (table.provider_name) {
+    const oldProviderCfg = JSON.parse(
+      JSON.stringify(table.provider_cfg || {})
+    );
+    const provider = state.table_providers[table.provider_name];
+    if (provider?.configuration_workflow) {
       try {
-        const flow = await module.configuration_workflow();
+        const flow = await provider.configuration_workflow();
         for (const step of flow?.steps || []) {
           if (step.form) {
-            const form = await step.form({});
+            const form = await step.form(oldProviderCfg);
             for (const field of form?.fields || []) {
               if (
                 field.exclude_from_mobile ||
                 field.input_type === "password"
               ) {
-                delete plugin.configuration[field.name];
+                delete result.provider_cfg[field.name];
               }
             }
           }
         }
       } catch (error) {
-        console.log(`Error in configuration_workflow of plugin ${plugin.name}`);
+        console.log(
+          `Error in configuration_workflow of table provider ${table.provider_name}`
+        );
         console.log(error);
       }
     }
-    return plugin;
-  };
+  }
+  return result;
+};
 
-  const filterTableFunc = async (table: any) => {
-    let result = table;
-    if (table.provider_name) {
-      const oldProviderCfg = JSON.parse(
-        JSON.stringify(table.provider_cfg || {})
+const filterFunc = async (
+  state: any,
+  table: string,
+  rows: any,
+  includedPlugins?: string[]
+) => {
+  switch (table) {
+    case "_sc_plugins":
+      const included = rows.filter((plugin: any) =>
+        includedPlugins ? includedPlugins.includes(plugin.name) : true
       );
-      const provider = state.table_providers[table.provider_name];
-      if (provider?.configuration_workflow) {
-        try {
-          const flow = await provider.configuration_workflow();
-          for (const step of flow?.steps || []) {
-            if (step.form) {
-              const form = await step.form(oldProviderCfg);
-              for (const field of form?.fields || []) {
-                if (
-                  field.exclude_from_mobile ||
-                  field.input_type === "password"
-                ) {
-                  delete result.provider_cfg[field.name];
-                }
-              }
-            }
-          }
-        } catch (error) {
-          console.log(
-            `Error in configuration_workflow of table provider ${table.provider_name}`
-          );
-          console.log(error);
-        }
-      }
-    }
-    return result;
-  };
-
-  const filterFunc = async (table: string, rows: any) => {
-    switch (table) {
-      case "_sc_plugins":
-        const included = rows.filter((plugin: any) =>
-          includedPlugins ? includedPlugins.includes(plugin.name) : true
+      return await Promise.all(
+        included.map((plugin: any) => filterPluginFunc(state, plugin))
+      );
+    case "_sc_config":
+      const allCfgs = state.configs;
+      // remove cfgs with excludeFromMobile or input_type=password
+      return rows.filter((row: any) => {
+        const cfg = allCfgs[row.key];
+        return (
+          cfg && !(cfg.excludeFromMobile || cfg.input_type === "password")
         );
-        return await Promise.all(included.map(filterPluginFunc));
-      case "_sc_config":
-        const allCfgs = state.configs;
-        // remove cfgs with excludeFromMobile or input_type=password
-        return rows.filter((row: any) => {
-          const cfg = allCfgs[row.key];
-          return (
-            cfg && !(cfg.excludeFromMobile || cfg.input_type === "password")
-          );
-        });
-      case "_sc_tables":
-        return await Promise.all(rows.map(filterTableFunc));
-      default:
-        return rows;
-    }
-  };
+      });
+    case "_sc_tables":
+      return await Promise.all(
+        rows.map((table: any) => filterTableFunc(state, table))
+      );
+    default:
+      return rows;
+  }
+};
 
-  const wwwDir = join(buildDir, "www", "data");
+/**
+ * Reads and filters all _sc_ table rows for the sync/tables data dump.
+ * @param includedPlugins names of plugins that are bundled into the app
+ */
+const computeTablesData = async (includedPlugins?: string[]) => {
+  const state = getState();
+  if (!state) throw new Error("Unable to get the state object");
+  await state.refresh_config(true);
+
   const scTables = (await db.listScTables()).filter(
     (table: Row) =>
       [
@@ -1440,16 +1480,30 @@ export async function buildTablesFile(
       const dbData = await db.select(row.name);
       return {
         table: row.name,
-        rows: await filterFunc(row.name, dbData),
+        rows: await filterFunc(state, row.name, dbData, includedPlugins),
       };
     })
   );
-  const createdAt = new Date();
+  return { createdAt: new Date(), sc_tables: tablesWithData };
+};
+
+/**
+ * create a file with all data from the db
+ * the app updates its local db from this
+ * @param buildDir directory where the app will be build
+ * @param includedPlugins names of plugins that are bundled into the app
+ */
+export async function buildTablesFile(
+  buildDir: string,
+  includedPlugins?: string[]
+) {
+  const wwwDir = join(buildDir, "www", "data");
+  const { createdAt, sc_tables } = await computeTablesData(includedPlugins);
   writeFileSync(
     join(wwwDir, "tables.json"),
     JSON.stringify({
       created_at: createdAt.valueOf(),
-      sc_tables: tablesWithData,
+      sc_tables,
     })
   );
   writeFileSync(
@@ -1458,6 +1512,122 @@ export async function buildTablesFile(
       created_at: createdAt.valueOf(),
     })
   );
+}
+
+const walkDir = (dir: string): string[] => {
+  const results: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) results.push(...walkDir(full));
+    else results.push(full);
+  }
+  return results;
+};
+
+/**
+ * Zip a directory's contents (recursively), entry names relative to sourceDir.
+ * @param sourceDir directory to zip
+ * @param outputPath path of the zip file to write
+ */
+export async function zipDirectory(sourceDir: string, outputPath: string) {
+  const zip = await ZipBuilder.toFile(outputPath);
+  for (const filePath of walkDir(sourceDir)) {
+    const entryName = relative(sourceDir, filePath).split(sep).join("/");
+    await zip.addLocalFile(entryName, filePath);
+  }
+  await zip.finish();
+}
+
+/** Options controlling what a remote /api/mobile-app/build-bundle response contains. */
+export type RemoteAppBundleOptions = {
+  includedPlugins?: string[];
+  platforms: string[];
+  synchedTables?: string[];
+  entryPoint: string;
+  entryPointType: string;
+  serverURL: string;
+  splashPage?: string;
+  tenantAppName?: string;
+  buildType: string;
+  autoPublicLogin?: string;
+  showContinueAsPublicUser?: boolean;
+  allowOfflineMode?: string;
+  syncOnReconnect?: boolean;
+  syncOnAppResume?: boolean;
+  pushSync?: boolean;
+  syncInterval?: number;
+  pushSyncHeartbeatInterval?: number;
+};
+
+/**
+ * Fetches the remote server's prepared www/ bundle and extracts it into buildDir/www.
+ * @param buildDir directory where the app will be build
+ * @param remoteSchemaUrl the /api/mobile-app/build-bundle URL
+ * @param apiKey bearer token for an admin user on that server
+ * @param options this machine's build settings, so the remote content matches
+ */
+export async function fetchRemoteAppBundle(
+  buildDir: string,
+  remoteSchemaUrl: string,
+  apiKey: string | undefined,
+  options: RemoteAppBundleOptions
+) {
+  const url = new URL(
+    `${remoteSchemaUrl.replace(/\/+$/, "")}/api/mobile-app/build-bundle`
+  );
+  if (options.includedPlugins?.length)
+    url.searchParams.set("includedPlugins", options.includedPlugins.join(","));
+  for (const platform of options.platforms)
+    url.searchParams.append("platforms", platform);
+  for (const table of options.synchedTables || [])
+    url.searchParams.append("synchedTables", table);
+  // empty in by-role mode - omit rather than send the literal string "undefined"
+  if (options.entryPoint)
+    url.searchParams.set("entryPoint", options.entryPoint);
+  url.searchParams.set("entryPointType", options.entryPointType);
+  url.searchParams.set("serverURL", options.serverURL);
+  if (options.splashPage) url.searchParams.set("splashPage", options.splashPage);
+  if (options.tenantAppName)
+    url.searchParams.set("tenantAppName", options.tenantAppName);
+  url.searchParams.set("buildType", options.buildType);
+  if (options.autoPublicLogin)
+    url.searchParams.set("autoPublicLogin", options.autoPublicLogin);
+  if (options.showContinueAsPublicUser)
+    url.searchParams.set("showContinueAsPublicUser", "true");
+  if (options.allowOfflineMode)
+    url.searchParams.set("allowOfflineMode", options.allowOfflineMode);
+  if (options.syncOnReconnect) url.searchParams.set("syncOnReconnect", "true");
+  if (options.syncOnAppResume) url.searchParams.set("syncOnAppResume", "true");
+  if (options.pushSync) url.searchParams.set("pushSync", "true");
+  if (options.syncInterval)
+    url.searchParams.set("syncInterval", String(options.syncInterval));
+  if (options.pushSyncHeartbeatInterval)
+    url.searchParams.set(
+      "pushSyncHeartbeatInterval",
+      String(options.pushSyncHeartbeatInterval)
+    );
+
+  const res = await fetch(url.toString(), {
+    headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
+  });
+  if (!res.ok) {
+    // the server sends a JSON {error} body when it can, with the actual
+    // npm/webpack failure output - fall back to the bare status if not
+    let detail: string | undefined;
+    try {
+      detail = ((await res.json()) as any)?.error;
+    } catch {}
+    throw new Error(
+      `Unable to fetch remote app bundle from ${url}: ${detail || `${res.status} ${res.statusText}`}`
+    );
+  }
+  // saved in buildDir (not just os.tmpdir()) so it's easy to find and
+  // inspect alongside the rest of the build output; not part of the app
+  // itself, so keeping it around here is harmless
+  const tmpZip = join(buildDir, "remote-bundle.zip");
+  writeFileSync(tmpZip, Buffer.from(await res.arrayBuffer()));
+  console.log(`Remote app bundle saved to ${tmpZip}`);
+  await extractZip(tmpZip, join(buildDir, "www"));
 }
 
 /**

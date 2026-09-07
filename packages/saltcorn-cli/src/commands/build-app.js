@@ -1,5 +1,6 @@
 const { Command, Flags } = require("@oclif/core");
 const path = require("path");
+const os = require("os");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
 const { decodeProvisioningProfile } = require("@saltcorn/data/utils");
@@ -13,17 +14,9 @@ class BuildAppCommand extends Command {
   supportedPlatforms = ["android", "ios", "web"];
   staticPlugins = ["base", "sbadmin2"];
 
-  validateParameters(flags) {
+  // checks shared by the local build and the remote --remoteBundleOutput path
+  validateCommonParameters(flags) {
     const db = require("@saltcorn/data/db");
-    if (!flags.buildDirectory) {
-      throw new Error("Please specify a build directory");
-    }
-    if (flags.copyAppDirectory) {
-      if (!flags.userEmail)
-        throw new Error(
-          "When 'app target-directory' (-c) is set, a valid 'user email' (-u) is needed"
-        );
-    }
     if (!flags.entryPoint && flags.entryPointType !== "byrole") {
       throw new Error(
         "Please specify an entry point for the first view or use -t byrole"
@@ -52,7 +45,23 @@ class BuildAppCommand extends Command {
         `To build for tenant '${flags.tenantAppName}' please activate multi-tenancy`
       );
     }
+  }
 
+  validateParameters(flags) {
+    if (!flags.buildDirectory) {
+      throw new Error("Please specify a build directory");
+    }
+    if (flags.copyAppDirectory) {
+      if (!flags.userEmail)
+        throw new Error(
+          "When 'app target-directory' (-c) is set, a valid 'user email' (-u) is needed"
+        );
+    }
+    this.validateCommonParameters(flags);
+    // the API key goes in an Authorization header - don't send it in cleartext
+    if (flags.remoteSchemaUrl && !flags.remoteSchemaUrl.startsWith("https://")) {
+      throw new Error("--remoteSchemaUrl must start with https://");
+    }
     if (flags.platforms.includes("ios") && !flags.noProvisioningProfile) {
       if (!flags.provisioningProfile)
         throw new Error("Please specify a provisioning profile");
@@ -113,74 +122,114 @@ class BuildAppCommand extends Command {
     return result;
   }
 
+  // MobileBuilder config shared by the remote-bundle and normal build paths
+  baseBuilderConfig(flags, mobileAppDir) {
+    return {
+      appName: flags.appName,
+      appId: flags.appId,
+      appVersion: flags.appVersion,
+      templateDir: mobileAppDir,
+      cliDir: path.join(__dirname, "../.."),
+      platforms: flags.platforms || [],
+      synchedTables: flags.synchedTables,
+      includedPlugins: flags.includedPlugins,
+      entryPoint: flags.entryPoint,
+      entryPointType: flags.entryPointType ? flags.entryPointType : "view",
+      serverURL: flags.serverURL,
+      splashPage: flags.splashPage,
+      autoPublicLogin: flags.autoPublicLogin,
+      showContinueAsPublicUser: flags.showContinueAsPublicUser,
+      allowOfflineMode: flags.allowOfflineMode,
+      syncOnReconnect: flags.syncOnReconnect,
+      syncOnAppResume: flags.syncOnAppResume,
+      pushSync: flags.pushSync,
+      syncInterval: flags.syncInterval,
+      pushSyncHeartbeatInterval: flags.pushSyncHeartbeatInterval,
+      allowShareTo: flags.allowShareTo,
+      tenantAppName: flags.tenantAppName,
+      buildType: flags.buildType,
+    };
+  }
+
   async run() {
     const { flags } = await this.parse(BuildAppCommand);
-    this.validateParameters(flags);
-    const mobileAppDir = path.join(
-      require.resolve("@saltcorn/mobile-app"),
-      ".."
-    );
     const db = require("@saltcorn/data/db");
     if (db.is_it_multi_tenant() && flags.tenantAppName) {
       await init_multi_tenant(Plugin.loadAllPlugins, true, [
         flags.tenantAppName,
       ]);
     }
-    const doBuild = async () => {
-      const user = flags.userEmail
-        ? await User.findOne({ email: flags.userEmail })
-        : undefined;
-      if (!user && flags.userEmail)
-        throw new Error(`The user '${flags.userEmail}' does not exist'`);
-
-      const iosParams = await this.buildIosParams(flags);
-      const builder = new MobileBuilder({
-        appName: flags.appName,
-        appId: flags.appId,
-        appVersion: flags.appVersion,
-        appIcon: flags.appIcon,
-        templateDir: mobileAppDir,
-        buildDir: flags.buildDirectory,
-        cliDir: path.join(__dirname, "../.."),
-        useDocker: flags.useDocker,
-        platforms: flags.platforms,
-        synchedTables: flags.synchedTables,
-        includedPlugins: flags.includedPlugins,
-        entryPoint: flags.entryPoint,
-        entryPointType: flags.entryPointType ? flags.entryPointType : "view",
-        serverURL: flags.serverURL,
-        splashPage: flags.splashPage,
-        autoPublicLogin: flags.autoPublicLogin,
-        showContinueAsPublicUser: flags.showContinueAsPublicUser,
-        allowOfflineMode: flags.allowOfflineMode,
-        syncOnReconnect: flags.syncOnReconnect,
-        syncOnAppResume: flags.syncOnAppResume,
-        pushSync: flags.pushSync,
-        syncInterval: flags.syncInterval,
-        pushSyncHeartbeatInterval: flags.pushSyncHeartbeatInterval,
-        allowShareTo: flags.allowShareTo,
-        plugins: await this.uniquePlugins(flags.includedPlugins),
-        copyTargetDir: flags.copyAppDirectory,
-        user,
-        iosParams: iosParams,
-        tenantAppName: flags.tenantAppName,
-        buildType: flags.buildType,
-        keyStorePath: flags.androidKeystore,
-        keyStoreAlias: flags.androidKeyStoreAlias,
-        keyStorePassword: flags.androidKeystorePassword,
-        googleServicesFile: flags.googleServicesFile,
-      });
-      getState().log(5, "Building");
-      const result = await builder.build();
-      process.exit(result);
-    };
-    if (
-      flags.tenantAppName &&
-      flags.tenantAppName !== db.connectObj.default_schema
-    ) {
-      await db.runWithTenant(flags.tenantAppName, doBuild);
+    const mobileAppDir = path.join(
+      require.resolve("@saltcorn/mobile-app"),
+      ".."
+    );
+    if (flags.remoteBundleOutput) {
+      // used by /api/mobile-app/build-bundle - zips www/, skips Capacitor entirely
+      this.validateCommonParameters(flags);
+      const doZip = async () => {
+        const tmpBuildDir = path.join(
+          os.tmpdir(),
+          `sc-remote-bundle-${Date.now()}`
+        );
+        const builder = new MobileBuilder({
+          ...this.baseBuilderConfig(flags, mobileAppDir),
+          buildDir: tmpBuildDir,
+          // must run inside the tenant context below, not in baseBuilderConfig
+          plugins: await this.uniquePlugins(flags.includedPlugins),
+        });
+        const result = await builder.prepareRemoteBundle(
+          flags.remoteBundleOutput
+        );
+        if (result !== 0)
+          throw new Error(`prepareRemoteBundle failed with code ${result}`);
+      };
+      if (
+        flags.tenantAppName &&
+        flags.tenantAppName !== db.connectObj.default_schema
+      ) {
+        await db.runWithTenant(flags.tenantAppName, doZip);
+      } else {
+        await doZip();
+      }
     } else {
-      await doBuild();
+      this.validateParameters(flags);
+      const doBuild = async () => {
+        const user = flags.userEmail
+          ? await User.findOne({ email: flags.userEmail })
+          : undefined;
+        if (!user && flags.userEmail)
+          throw new Error(`The user '${flags.userEmail}' does not exist'`);
+
+        const iosParams = await this.buildIosParams(flags);
+        const builder = new MobileBuilder({
+          ...this.baseBuilderConfig(flags, mobileAppDir),
+          appIcon: flags.appIcon,
+          buildDir: flags.buildDirectory,
+          useDocker: flags.useDocker,
+          plugins: await this.uniquePlugins(flags.includedPlugins),
+          copyTargetDir: flags.copyAppDirectory,
+          user,
+          iosParams: iosParams,
+          keyStorePath: flags.androidKeystore,
+          keyStoreAlias: flags.androidKeyStoreAlias,
+          keyStorePassword: flags.androidKeystorePassword,
+          googleServicesFile: flags.googleServicesFile,
+          remoteSchemaUrl: flags.remoteSchemaUrl,
+          remoteApiKey: flags.remoteApiKey,
+          remotePushNotificationsEnabled: flags.remotePushNotificationsEnabled,
+        });
+        getState().log(5, "Building");
+        const result = await builder.build();
+        process.exit(result);
+      };
+      if (
+        flags.tenantAppName &&
+        flags.tenantAppName !== db.connectObj.default_schema
+      ) {
+        await db.runWithTenant(flags.tenantAppName, doBuild);
+      } else {
+        await doBuild();
+      }
     }
   }
 }
@@ -384,6 +433,42 @@ BuildAppCommand.flags = {
     string: "googleServicesFile",
     description:
       "Path to the google-services.json file for Firebase Push Notifications (Android only)",
+  }),
+  remoteSchemaUrl: Flags.string({
+    name: "remote schema url",
+    string: "remoteSchemaUrl",
+    description:
+      "Base URL of a saltcorn server (e.g. https://example.com) to fetch the " +
+      "schema/config snapshot from - /api/mobile-app/build-bundle is appended " +
+      "automatically - instead of reading the local database. Use this when " +
+      "building on a machine other than the one the app will connect to at " +
+      "runtime (e.g. a Mac used only for the native iOS build), so table/view " +
+      "ids always match the live server instead of a separately-restored copy.",
+  }),
+  remoteApiKey: Flags.string({
+    name: "remote api key",
+    string: "remoteApiKey",
+    description:
+      "API key (bearer token) for an admin user on the server given in --remoteSchemaUrl.",
+  }),
+  remotePushNotificationsEnabled: Flags.boolean({
+    name: "remote push notifications enabled",
+    string: "remotePushNotificationsEnabled",
+    description:
+      "Whether the server given in --remoteSchemaUrl has APN push configured - " +
+      "used instead of this machine's own local config to decide whether to " +
+      "bundle push support.",
+    default: false,
+  }),
+  remoteBundleOutput: Flags.string({
+    name: "remote bundle output",
+    string: "remoteBundleOutput",
+    description:
+      "Only prepare buildDir/www (schema, plugin bundles, site assets - " +
+      "everything saltcorn-specific) and write it as a zip file at this " +
+      "path, and exit - never touches Capacitor/native platforms. Used by " +
+      "the /api/mobile-app/build-bundle server route; not intended for " +
+      "direct use.",
   }),
 };
 
