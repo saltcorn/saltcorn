@@ -27,6 +27,8 @@ import { Container } from "./elements/Container";
 import { Image } from "./elements/Image";
 import { View } from "./elements/View";
 import { SearchBar } from "./elements/SearchBar";
+import { MessageList } from "./elements/MessageList";
+import { MessageForm } from "./elements/MessageForm";
 import { Link } from "./elements/Link";
 import { Page } from "./elements/Page";
 import { Prompt } from "./elements/Prompt";
@@ -866,6 +868,48 @@ const ToolboxEdit = ({ expanded }) => {
   );
 };
 
+/**
+ * @param {object} props
+ * @param {object} props.connectors
+ * @returns {WrapElem}
+ * @category saltcorn-builder
+ * @subcategory components / Toolbox
+ * @namespace
+ */
+const MessageListElem = ({ connectors }) => {
+  const { t } = useTranslation();
+  return (
+    <WrapElem
+      connectors={connectors}
+      icon="fas fa-comments"
+      title={t("The list of messages in the room")}
+      label="Messages"
+    >
+      <Element canvas is={MessageList}></Element>
+    </WrapElem>
+  );
+};
+/**
+ * @param {object} props
+ * @param {object} props.connectors
+ * @returns {WrapElem}
+ * @category saltcorn-builder
+ * @subcategory components / Toolbox
+ * @namespace
+ */
+const MessageFormElem = ({ connectors }) => {
+  const { t } = useTranslation();
+  return (
+    <WrapElem
+      connectors={connectors}
+      icon="fas fa-paper-plane"
+      title={t("The form for sending a new message")}
+      label="Send"
+    >
+      <Element canvas is={MessageForm}></Element>
+    </WrapElem>
+  );
+};
 export /**
  * @returns {Fragment}
  * @category saltcorn-builder
@@ -897,6 +941,36 @@ const ToolboxPage = ({ expanded }) => {
       // <PromptViewElem connectors={connectors} />,
       // <PromptFieldElem connectors={connectors} />,
       // <PromptActionElem connectors={connectors} />,
+    ],
+    expanded
+  );
+};
+
+export /**
+ * @returns {Fragment}
+ * @category saltcorn-builder
+ * @subcategory components / Toolbox
+ * @namespace
+ */
+const ToolboxRoom = ({ expanded }) => {
+  const { connectors } = useEditor();
+  const options = useContext(optionsCtx);
+  const { views, images, pages } = options;
+  return chunkToolBox(
+    [
+      <MessageListElem connectors={connectors} />,
+      <MessageFormElem connectors={connectors} />,
+      <TextElem connectors={connectors} />,
+      <ColumnsElem connectors={connectors} />,
+      <LineBreakElem connectors={connectors} />,
+      <ContainerElem connectors={connectors} />,
+      <CardElem connectors={connectors} />,
+      <TabsElem connectors={connectors} />,
+      <LinkElem connectors={connectors} />,
+      <ViewElem connectors={connectors} views={views} />,
+      <ImageElem connectors={connectors} images={images} />,
+      <HTMLElem connectors={connectors} />,
+      <PageElem connectors={connectors} pages={pages} />,
     ],
     expanded
   );

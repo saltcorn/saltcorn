@@ -1286,5 +1286,5 @@ span.copy-to-clipboard.copied::after {
   z-index: 5;
   background-color: var(--bs-body-bg, #fff);
   padding-top: 0.5rem;
-  padding-bottom: 0.75rem;
+  /* padding-bottom: 0.75rem; */
 }

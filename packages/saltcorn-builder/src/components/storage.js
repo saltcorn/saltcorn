@@ -31,6 +31,8 @@ import { ToggleFilter } from "./elements/ToggleFilter";
 import { DropMenu } from "./elements/DropMenu";
 import { Container } from "./elements/Container";
 import { Prompt } from "./elements/Prompt";
+import { MessageList } from "./elements/MessageList";
+import { MessageForm } from "./elements/MessageForm";
 import { rand_ident } from "./elements/utils";
 import { LibraryInstance } from "./elements/LibraryInstance";
 import { LibrarySlotInstance } from "./elements/LibrarySlotInstance";
@@ -84,6 +86,8 @@ const allElements = [
   ListColumn,
   ListColumns,
   Prompt,
+  MessageList,
+  MessageForm,
 ];
 
 /**

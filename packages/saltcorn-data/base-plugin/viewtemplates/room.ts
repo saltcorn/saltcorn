@@ -48,6 +48,11 @@ import {
 import { GenObj } from "@saltcorn/types/common_types";
 import { Req, Res } from "@saltcorn/types/base_types";
 import { traverse } from "../../models/layout.js";
+import renderLayout from "@saltcorn/markup/layout";
+import File from "../../models/file.js";
+import Page from "../../models/page.js";
+import PageGroup from "../../models/page_group.js";
+import User from "../../models/user.js";
 
 
 
@@ -184,31 +189,76 @@ const configuration_workflow = (req: Req) =>
         },
       },
       {
-        name: req.__("Appearance"),
-        form: async () =>
-          new Form({
-            fields: [
-              {
-                name: "msg_container_height",
-                label: req.__("Message container height"),
-                type: "String",
-                sublabel: req.__(
-                  "A CSS length, for example 400px or 60vh. The message list scrolls within this height. Leave blank to grow with the page"
-                ),
-              },
-              {
-                name: "pin_form_bottom",
-                label: req.__("Pin form to bottom"),
-                type: "Bool",
-                sublabel: req.__(
-                  "Fix the form below the message list, which then scrolls within the room. Sets the room to the container height, or 70vh if that is blank"
-                ),
-              },
-            ] as any,
-          }),
+        name: req.__("Layout"),
+        builder: async (context: GenObj) => {
+          const table = Table.findOne(context.table_id)!;
+          const images = await File.findImagesForBuilder();
+          const library = (await Library.find({})).filter((l: GenObj) =>
+            l.suitableFor("show")
+          );
+          const pages = (await Page.find({}, { cached: true })).map((p: GenObj) => ({
+            name: p.name,
+          }));
+          const groups = (await PageGroup.find({}, { cached: true })).map(
+            (g: GenObj) => ({ name: g.name })
+          );
+          const myviewrow = View.findOne({ name: context.viewname });
+          // rooms built before this step have no layout: start the canvas from
+          // what they were already rendering, so opening the builder does not
+          // wipe the message list. Workflow reads the layout back off context.
+          if (!context.layout)
+            context.layout = {
+              above: [
+                {
+                  type: "message_list",
+                  height: context.msg_container_height || "",
+                },
+                { type: "message_form", pinned: !!context.pin_form_bottom },
+              ],
+            };
+          return {
+            tableName: table.name,
+            fields: [],
+            images,
+            library,
+            pages,
+            page_groups: groups,
+            min_role: (myviewrow || {}).min_role,
+            roles: await User.get_roles(),
+            mode: "room",
+          };
+        },
       },
     ],
   });
+
+// a new Room starts as the layout it had before the builder existed
+const initial_config = async () => ({
+  columns: [],
+  layout: {
+    above: [{ type: "message_list" }, { type: "message_form" }],
+  },
+});
+
+// depth-first search for the first segment of a given type anywhere in a layout
+const findSegment = (layout: any, type: string): GenObj | undefined => {
+  if (!layout || typeof layout !== "object") return undefined;
+  if (Array.isArray(layout)) {
+    for (const l of layout) {
+      const found = findSegment(l, type);
+      if (found) return found;
+    }
+    return undefined;
+  }
+  if (layout.type === type) return layout;
+  for (const v of Object.values(layout)) {
+    if (v && typeof v === "object") {
+      const found = findSegment(v, type);
+      if (found) return found;
+    }
+  }
+  return undefined;
+};
 
 /**
  * @returns {object[]}
@@ -252,6 +302,7 @@ const run = async (
     participant_maxread_field,
     msg_container_height,
     pin_form_bottom,
+    layout,
   }: GenObj,
   state: GenObj,
   { req, res }: { req: Req; res: Res },
@@ -303,7 +354,7 @@ const run = async (
   const formview = await View.findOne({ name: msgform });
   if (!formview)
     throw new InvalidConfiguration("Message form view does not exist");
-  const { columns, layout } = formview.configuration;
+  const { columns, layout: formLayout } = formview.configuration;
   const msgtable = Table.findOne({ name: msgtable_name })!;
   if (participant_maxread_field) {
     const [part_table_name1, part_key_to_room1, part_maxread_field] =
@@ -320,7 +371,14 @@ const run = async (
         part_maxread_field
       );
   }
-  const formObj = await getForm(msgtable, viewname, columns, layout, null, req);
+  const formObj = await getForm(
+    msgtable,
+    viewname,
+    columns,
+    formLayout,
+    null,
+    req
+  );
 
   formObj.class = `room-${state.id}`;
   formObj.hidden("room_id");
@@ -338,27 +396,55 @@ const run = async (
     viewname: msgform,
   });
   const msgform_html = canWrite ? renderForm(formObj, req.csrfToken()) : false;
+
+  // views built before the Layout step existed have no layout: keep rendering
+  // them from the two settings the earlier Appearance step wrote
+  const listSeg = layout && findSegment(layout, "message_list");
+  const formSeg = layout && findSegment(layout, "message_form");
+  // a layout mentioning neither element would render a room with no messages
+  // and no way to send any, which is never intended: fall back to the default
+  const useLayout = layout && (listSeg || formSeg);
+  const height = useLayout ? listSeg?.height : msg_container_height;
+  const pinned = useLayout ? !!formSeg?.pinned : !!pin_form_bottom;
+
+  const message_list = div(
+    {
+      class: [
+        `msglist-${state.id}`,
+        "sc-room-msglist",
+        height && "sc-room-scroll",
+      ],
+      "data-user-id": req.user?.id,
+    },
+    msglist
+  );
+  const message_form = pinned
+    ? msgform_html && div({ class: "sc-room-form-pinned" }, msgform_html)
+    : msgform_html;
+
   return div(
     {
-      class: ["sc-room", pin_form_bottom && "sc-room-pinned"],
+      class: [
+        "sc-room",
+        pinned && "sc-room-pinned",
+        pinned && !height && "sc-room-fill",
+      ],
       style: {
-        "--sc-room-height": msg_container_height || false,
+        "--sc-room-height": height || false,
       },
     },
-    div(
-      {
-        class: [
-          `msglist-${state.id}`,
-          "sc-room-msglist",
-          msg_container_height && "sc-room-scroll",
-        ],
-        "data-user-id": req.user?.id,
-      },
-      msglist
-    ),
-    pin_form_bottom
-      ? msgform_html && div({ class: "sc-room-form-pinned" }, msgform_html)
-      : msgform_html,
+    useLayout
+      ? renderLayout({
+          blockDispatch: {
+            message_list: () => message_list,
+            message_form: () => message_form || "",
+          },
+          layout,
+          role,
+          req,
+          hints: (appState.getLayout(req.user as any) as any).hints || {},
+        })
+      : [message_list, message_form],
     script({
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
     }) + script(domReady(`init_room("${viewname}", ${state.id})`))
@@ -673,6 +759,7 @@ export default {
   configuration_workflow,
   run,
   get_state_fields,
+  initial_config,
   /** @type {boolean} */
   routes: { submit_msg_ajax, ack_read, fetch_older_msg, run_action },
   /** @type {boolean} */

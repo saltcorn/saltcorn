@@ -2883,6 +2883,21 @@ function room_at_bottom($list) {
   return el.scrollHeight - el.scrollTop - el.clientHeight < 50;
 }
 
+// gap left between the bottom of a viewport-filling room and the window edge
+const sc_room_bottom_gap = 16;
+
+// A pinned room with no configured height runs from wherever it starts down to
+// the bottom of the window. That distance depends on what is above it on the
+// page, which CSS cannot see, so measure it here; the stylesheet's 70vh is the
+// fallback until this runs.
+function room_fit_height(room_id) {
+  const room = room_msglist(room_id).closest(".sc-room-fill")[0];
+  if (!room) return;
+  const top = room.getBoundingClientRect().top;
+  const avail = window.innerHeight - top - sc_room_bottom_gap;
+  room.style.height = Math.max(avail, 200) + "px";
+}
+
 function room_scroll_bottom($list) {
   const el = $list[0];
   if (el && el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
@@ -2958,6 +2973,8 @@ function init_room(viewname, room_id) {
       $(`form.room-${room_id}`).trigger("reset");
     });
   });
+  room_fit_height(room_id);
+  $(window).on("resize", () => room_fit_height(room_id));
   room_scroll_bottom(room_msglist(room_id));
 }
 
