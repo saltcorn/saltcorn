@@ -21,6 +21,7 @@ const {
   div,
   h4,
   hr,
+  button,
   form,
   input,
   i,
@@ -349,6 +350,7 @@ const run = async (
     { req, res, orderBy: "id", orderDesc: true, limit }
   );
   vresps.reverse();
+  const n_retrieved = vresps.length;
 
   const msglist = vresps.map((r: GenObj) => r.html).join("");
   const formview = await View.findOne({ name: msgform });
@@ -356,6 +358,10 @@ const run = async (
     throw new InvalidConfiguration("Message form view does not exist");
   const { columns, layout: formLayout } = formview.configuration;
   const msgtable = Table.findOne({ name: msgtable_name })!;
+  const min_read_id = Math.min.apply(
+    Math,
+    vresps.map((r: GenObj) => r.row.id)
+  );
   if (participant_maxread_field) {
     const [part_table_name1, part_key_to_room1, part_maxread_field] =
       participant_maxread_field.split(".");
@@ -407,17 +413,28 @@ const run = async (
   const height = useLayout ? listSeg?.height : msg_container_height;
   const pinned = useLayout ? !!formSeg?.pinned : !!pin_form_bottom;
 
-  const message_list = div(
-    {
-      class: [
-        `msglist-${state.id}`,
-        "sc-room-msglist",
-        height && "sc-room-scroll",
-      ],
-      "data-user-id": req.user?.id,
-    },
-    msglist
-  );
+  const message_list =
+    (n_retrieved === limit
+      ? button(
+          {
+            class: "btn btn-outline-secondary mb-1 fetch_older",
+            onclick: `room_older('${viewname}',${state.id},this)`,
+            "data-lt-msg-id": min_read_id,
+          },
+          req.__("Show older messages")
+        )
+      : "") +
+    div(
+      {
+        class: [
+          `msglist-${state.id}`,
+          "sc-room-msglist",
+          height && "sc-room-scroll",
+        ],
+        "data-user-id": req.user?.id,
+      },
+      msglist
+    );
   const message_form = pinned
     ? msgform_html && div({ class: "sc-room-form-pinned" }, msgform_html)
     : msgform_html;
@@ -580,8 +597,8 @@ const fetch_older_msg = async (
   { req, res }: { req: Req; res: Res },
   { fetchOlderMsgQuery }: GenObj
 ) => {
-  const partRow = await fetchOlderMsgQuery(participant_field, body);
-  if (!partRow)
+  const authorized = await fetchOlderMsgQuery(participant_field, body);
+  if (!authorized)
     return {
       json: {
         error: "Not participating",
@@ -941,14 +958,22 @@ export default {
       };
     },
     async fetchOlderMsgQuery(participant_field: string, body: GenObj) {
+      // no participant table: fall back to the room table's read role, the
+      // same check run() and submitAjaxQuery make
+      if (!participant_field) {
+        const table = Table.findOne({ id: table_id })!;
+        const role = req && req.user ? req.user.role_id : 100;
+        return role <= table.min_role_read;
+      }
       const [part_table_name, part_key_to_room, part_user_field] =
         participant_field.split(".");
-      const parttable = Table.findOne({ name: part_table_name })!;
+      const parttable = Table.findOne({ name: part_table_name });
+      if (!parttable) return false;
       // check we participate
-      return await parttable.getRow({
+      return !!(await parttable.getRow({
         [part_user_field]: req.user ? req.user.id : 0,
         [part_key_to_room]: +body.room_id,
-      });
+      }));
     },
     async optionsQuery(reftable_name: string, type: string, attributes: GenObj, where: GenObj) {
       const rows = await db.select(

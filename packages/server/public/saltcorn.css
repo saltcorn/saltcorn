@@ -1281,6 +1281,10 @@ span.copy-to-clipboard.copied::after {
   max-height: none;
   overflow-y: auto;
 }
+.sc-room-pinned .fetch_older {
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
 .sc-room-form-pinned {
   flex: 0 0 auto;
   z-index: 5;

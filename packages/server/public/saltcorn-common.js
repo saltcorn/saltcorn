@@ -2919,10 +2919,14 @@ function room_prepend(room_id, html) {
   const $list = room_msglist(room_id);
   const el = $list[0];
   if (!el) return;
-  const prev_height = el.scrollHeight;
-  const prev_top = el.scrollTop;
+  const anchor = el.firstElementChild;
   $list.prepend(html);
-  el.scrollTop = prev_top + (el.scrollHeight - prev_height);
+  if (!anchor) return;
+  const anchor_bottom =
+    anchor.getBoundingClientRect().bottom -
+    el.getBoundingClientRect().top +
+    el.scrollTop;
+  el.scrollTop = Math.max(anchor_bottom - el.clientHeight, 0);
 }
 
 function room_older(viewname, room_id, btn) {
