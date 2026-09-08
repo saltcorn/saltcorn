@@ -2871,13 +2871,52 @@ function unique_field_from_rows(
   }
 }
 
+function room_msglist(room_id) {
+  return $(`.msglist-${room_id}`);
+}
+
+// true when the list is not a scroll container (the page scrolls, so new
+// messages should always be followed) or the reader is already at the end
+function room_at_bottom($list) {
+  const el = $list[0];
+  if (!el || el.scrollHeight <= el.clientHeight) return true;
+  return el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+}
+
+function room_scroll_bottom($list) {
+  const el = $list[0];
+  if (el && el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
+}
+
+// append newly arrived messages, keeping the reader at the end of the list if
+// they were already there. force is set for messages we sent ourselves.
+function room_append(room_id, html, force) {
+  const $list = room_msglist(room_id);
+  if (!$list.length) return;
+  const follow = force || room_at_bottom($list);
+  $list.append(html);
+  if (follow) room_scroll_bottom($list);
+}
+
+// history is prepended without animation, holding the reader's position:
+// growing the list above the viewport would otherwise jump them to the top
+function room_prepend(room_id, html) {
+  const $list = room_msglist(room_id);
+  const el = $list[0];
+  if (!el) return;
+  const prev_height = el.scrollHeight;
+  const prev_top = el.scrollTop;
+  $list.prepend(html);
+  el.scrollTop = prev_top + (el.scrollHeight - prev_height);
+}
+
 function room_older(viewname, room_id, btn) {
   view_post(
     viewname,
     "fetch_older_msg",
     { room_id, lt_msg_id: +$(btn).attr("data-lt-msg-id") },
     (res) => {
-      if (res.prepend) $(`.msglist-${room_id}`).prepend(res.prepend);
+      if (res.prepend) room_prepend(room_id, res.prepend);
       if (res.new_fetch_older_lt)
         $(btn).attr("data-lt-msg-id", res.new_fetch_older_lt);
       if (res.remove_fetch_older) $(btn).remove();
@@ -2906,7 +2945,7 @@ function init_room(viewname, room_id) {
       const my_user_id = $(`.msglist-${room_id}`).attr("data-user-id");
       if (+my_user_id === +msg.not_for_user_id) return;
     }
-    if (msg.append) $(`.msglist-${room_id}`).append(msg.append);
+    if (msg.append) room_append(room_id, msg.append);
     if (msg.pls_ack_msg_id)
       view_post(viewname, "ack_read", { room_id, id: msg.pls_ack_msg_id });
   });
@@ -2915,10 +2954,11 @@ function init_room(viewname, room_id) {
     e.preventDefault();
     var form_data = $(`form.room-${room_id}`).serialize();
     view_post(viewname, "submit_msg_ajax", form_data, (vpres) => {
-      if (vpres.append) $(`.msglist-${room_id}`).append(vpres.append);
+      if (vpres.append) room_append(room_id, vpres.append, true);
       $(`form.room-${room_id}`).trigger("reset");
     });
   });
+  room_scroll_bottom(room_msglist(room_id));
 }
 
 function init_collab_room(viewname, eventCfgs) {

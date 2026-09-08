@@ -21,7 +21,6 @@ const {
   div,
   h4,
   hr,
-  button,
   form,
   input,
   i,
@@ -184,6 +183,30 @@ const configuration_workflow = (req: Req) =>
           });
         },
       },
+      {
+        name: req.__("Appearance"),
+        form: async () =>
+          new Form({
+            fields: [
+              {
+                name: "msg_container_height",
+                label: req.__("Message container height"),
+                type: "String",
+                sublabel: req.__(
+                  "A CSS length, for example 400px or 60vh. The message list scrolls within this height. Leave blank to grow with the page"
+                ),
+              },
+              {
+                name: "pin_form_bottom",
+                label: req.__("Pin form to bottom"),
+                type: "Bool",
+                sublabel: req.__(
+                  "Fix the form below the message list, which then scrolls within the room. Sets the room to the container height, or 70vh if that is blank"
+                ),
+              },
+            ] as any,
+          }),
+      },
     ],
   });
 
@@ -227,6 +250,8 @@ const run = async (
     msgview,
     msgform,
     participant_maxread_field,
+    msg_container_height,
+    pin_form_bottom,
   }: GenObj,
   state: GenObj,
   { req, res }: { req: Req; res: Res },
@@ -273,7 +298,6 @@ const run = async (
     { req, res, orderBy: "id", orderDesc: true, limit }
   );
   vresps.reverse();
-  const n_retrieved = vresps.length;
 
   const msglist = vresps.map((r: GenObj) => r.html).join("");
   const formview = await View.findOne({ name: msgform });
@@ -281,10 +305,6 @@ const run = async (
     throw new InvalidConfiguration("Message form view does not exist");
   const { columns, layout } = formview.configuration;
   const msgtable = Table.findOne({ name: msgtable_name })!;
-  const min_read_id = Math.min.apply(
-    Math,
-    vresps.map((r: GenObj) => r.row.id)
-  );
   if (participant_maxread_field) {
     const [part_table_name1, part_key_to_room1, part_maxread_field] =
       participant_maxread_field.split(".");
@@ -317,18 +337,28 @@ const run = async (
     res,
     viewname: msgform,
   });
+  const msgform_html = canWrite ? renderForm(formObj, req.csrfToken()) : false;
   return div(
-    n_retrieved === limit &&
-      button(
-        {
-          class: "btn btn-outline-secondary mb-1 fetch_older",
-          onclick: `room_older('${viewname}',${state.id},this)`,
-          "data-lt-msg-id": min_read_id,
-        },
-        req.__("Show older messages")
-      ),
-    div({ class: `msglist-${state.id}`, "data-user-id": req.user?.id }, msglist),
-    canWrite && renderForm(formObj, req.csrfToken()),
+    {
+      class: ["sc-room", pin_form_bottom && "sc-room-pinned"],
+      style: {
+        "--sc-room-height": msg_container_height || false,
+      },
+    },
+    div(
+      {
+        class: [
+          `msglist-${state.id}`,
+          "sc-room-msglist",
+          msg_container_height && "sc-room-scroll",
+        ],
+        "data-user-id": req.user?.id,
+      },
+      msglist
+    ),
+    pin_form_bottom
+      ? msgform_html && div({ class: "sc-room-form-pinned" }, msgform_html)
+      : msgform_html,
     script({
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
     }) + script(domReady(`init_room("${viewname}", ${state.id})`))
