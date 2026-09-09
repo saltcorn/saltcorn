@@ -42,6 +42,7 @@ import {
   ToolboxPage,
   ToolboxFilter,
   ToolboxList,
+  ToolboxRoom,
 } from "./Toolbox";
 import { craftToSaltcorn, layoutToNodes, resolveLibraryRefs } from "./storage";
 import { Card } from "./elements/Card";
@@ -73,6 +74,8 @@ import { ListColumn } from "./elements/ListColumn";
 import { ListColumns } from "./elements/ListColumns";
 import { Prompt } from "./elements/Prompt";
 import { recursivelyCloneToElems } from "./elements/Clone";
+import { MessageList } from "./elements/MessageList";
+import { MessageForm } from "./elements/MessageForm";
 import { Page } from "./elements/Page";
 import CustomLayer from "./elements/CustomLayer";
 
@@ -980,7 +983,9 @@ const Builder = ({ options, layout, mode }) => {
           LibrarySlotElem,
           LibrarySlotInstance,
           Prompt,
-          Page
+          Page,
+          MessageList,
+          MessageForm
         }}
       >
         <Provider value={options}>
@@ -1021,6 +1026,7 @@ const Builder = ({ options, layout, mode }) => {
                             edit: <ToolboxEdit expanded={isLeftEnlarged} />,
                             page: <ToolboxPage expanded={isLeftEnlarged} />,
                             filter: <ToolboxFilter expanded={isLeftEnlarged} />,
+                            room: <ToolboxRoom expanded={isLeftEnlarged} />,
                           }[mode] || <div>{t("Missing mode")}</div>}
                         </div>
                         <div accordiontitle={t("Library")}>

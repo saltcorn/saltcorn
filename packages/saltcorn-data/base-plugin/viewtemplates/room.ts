@@ -49,6 +49,11 @@ import {
 import { GenObj } from "@saltcorn/types/common_types";
 import { Req, Res } from "@saltcorn/types/base_types";
 import { traverse } from "../../models/layout.js";
+import renderLayout from "@saltcorn/markup/layout";
+import File from "../../models/file.js";
+import Page from "../../models/page.js";
+import PageGroup from "../../models/page_group.js";
+import User from "../../models/user.js";
 
 
 
@@ -100,9 +105,15 @@ const configuration_workflow = (req: Req) =>
                 ];
 
                 const views = await View.find_possible_links_to_table(table);
-                msgview_options[`${table.name}.${key_field.name}`] = views.map(
-                  (v: GenObj) => v.name
-                );
+                // The show slot renders every message. A view that handles form
+                // posts is an editor, and would render each message as a
+                // populated edit form rather than as a message.
+                msgview_options[`${table.name}.${key_field.name}`] = views
+                  .filter(
+                    (v: GenObj) =>
+                      !v.viewtemplateObj?.runPost || v.name === context.msgview
+                  )
+                  .map((v: GenObj) => v.name);
                 msgform_options[`${table.name}.${key_field.name}`] = views.map(
                   (v: GenObj) => v.name
                 );
@@ -184,8 +195,77 @@ const configuration_workflow = (req: Req) =>
           });
         },
       },
+      {
+        name: req.__("Layout"),
+        builder: async (context: GenObj) => {
+          const table = Table.findOne(context.table_id)!;
+          const images = await File.findImagesForBuilder();
+          const library = (await Library.find({})).filter((l: GenObj) =>
+            l.suitableFor("show")
+          );
+          const pages = (await Page.find({}, { cached: true })).map((p: GenObj) => ({
+            name: p.name,
+          }));
+          const groups = (await PageGroup.find({}, { cached: true })).map(
+            (g: GenObj) => ({ name: g.name })
+          );
+          const myviewrow = View.findOne({ name: context.viewname });
+          // rooms built before this step have no layout: start the canvas from
+          // what they were already rendering, so opening the builder does not
+          // wipe the message list. Workflow reads the layout back off context.
+          if (!context.layout)
+            context.layout = {
+              above: [
+                {
+                  type: "message_list",
+                  height: context.msg_container_height || "",
+                },
+                { type: "message_form", pinned: !!context.pin_form_bottom },
+              ],
+            };
+          return {
+            tableName: table.name,
+            fields: [],
+            images,
+            library,
+            pages,
+            page_groups: groups,
+            min_role: (myviewrow || {}).min_role,
+            roles: await User.get_roles(),
+            mode: "room",
+          };
+        },
+      },
     ],
   });
+
+// a new Room starts as the layout it had before the builder existed
+const initial_config = async () => ({
+  columns: [],
+  layout: {
+    above: [{ type: "message_list" }, { type: "message_form" }],
+  },
+});
+
+// depth-first search for the first segment of a given type anywhere in a layout
+const findSegment = (layout: any, type: string): GenObj | undefined => {
+  if (!layout || typeof layout !== "object") return undefined;
+  if (Array.isArray(layout)) {
+    for (const l of layout) {
+      const found = findSegment(l, type);
+      if (found) return found;
+    }
+    return undefined;
+  }
+  if (layout.type === type) return layout;
+  for (const v of Object.values(layout)) {
+    if (v && typeof v === "object") {
+      const found = findSegment(v, type);
+      if (found) return found;
+    }
+  }
+  return undefined;
+};
 
 /**
  * @returns {object[]}
@@ -227,6 +307,9 @@ const run = async (
     msgview,
     msgform,
     participant_maxread_field,
+    msg_container_height,
+    pin_form_bottom,
+    layout,
   }: GenObj,
   state: GenObj,
   { req, res }: { req: Req; res: Res },
@@ -240,9 +323,17 @@ const run = async (
   const locale = req.getLocale();
   const role = req && req.user ? req.user.role_id : 100;
   const __ = (s: string) => appState.i18n.__({ phrase: s, locale }) || s;
-  if (!msgview || !msgform || !msgsender_field || !msg_relation)
+  const missing = [
+    !msg_relation && "Message relation",
+    !msgsender_field && "Message sender field",
+    !msgview && "Message show view",
+    !msgform && "New message form view",
+  ].filter(Boolean);
+  if (missing.length)
     throw new InvalidConfiguration(
-      `View ${viewname} incorrectly configured: must supply Message views, Message sender and Participant fields`
+      `View ${viewname} incorrectly configured: must supply ${missing.join(
+        ", "
+      )}`
     );
 
   const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
@@ -267,6 +358,15 @@ const run = async (
 
     canWrite = role <= table.min_role_write;
   }
+  const listSeg = layout && findSegment(layout, "message_list");
+  const animateName = listSeg?.animateName;
+  const animate = {
+    name: animateName && animateName !== "None" ? animateName : undefined,
+    duration: listSeg?.animateDuration || undefined,
+    delay: listSeg?.animateDelay || undefined,
+  };
+  // never hide without an animation to reveal it again
+  const initialHide = animate.name && listSeg?.animateInitialHide;
   const v = await View.findOne({ name: msgview });
   const vresps: any[] = await v!.runMany(
     { [msgkey_to_room]: state.id },
@@ -275,11 +375,21 @@ const run = async (
   vresps.reverse();
   const n_retrieved = vresps.length;
 
-  const msglist = vresps.map((r: GenObj) => r.html).join("");
+  const msglist = vresps
+    .map((r: GenObj) =>
+      div(
+        {
+          class: "sc-room-msg",
+          "data-animate-initial-hide": initialHide ? "" : undefined,
+        },
+        r.html
+      )
+    )
+    .join("");
   const formview = await View.findOne({ name: msgform });
   if (!formview)
     throw new InvalidConfiguration("Message form view does not exist");
-  const { columns, layout } = formview.configuration;
+  const { columns, layout: formLayout } = formview.configuration;
   const msgtable = Table.findOne({ name: msgtable_name })!;
   const min_read_id = Math.min.apply(
     Math,
@@ -300,7 +410,14 @@ const run = async (
         part_maxread_field
       );
   }
-  const formObj = await getForm(msgtable, viewname, columns, layout, null, req);
+  const formObj = await getForm(
+    msgtable,
+    viewname,
+    columns,
+    formLayout,
+    null,
+    req
+  );
 
   formObj.class = `room-${state.id}`;
   formObj.hidden("room_id");
@@ -317,18 +434,69 @@ const run = async (
     res,
     viewname: msgform,
   });
+  const msgform_html = canWrite ? renderForm(formObj, req.csrfToken()) : false;
+
+  // views built before the Layout step existed have no layout: keep rendering
+  // them from the two settings the earlier Appearance step wrote
+  const formSeg = layout && findSegment(layout, "message_form");
+  // a layout mentioning neither element would render a room with no messages
+  // and no way to send any, which is never intended: fall back to the default
+  const useLayout = layout && (listSeg || formSeg);
+  const height = useLayout ? listSeg?.height : msg_container_height;
+  const pinned = useLayout ? !!formSeg?.pinned : !!pin_form_bottom;
+
+  const message_list =
+    (n_retrieved === limit
+      ? button(
+          {
+            class: "btn btn-outline-secondary mb-1 fetch_older",
+            onclick: `room_older('${viewname}',${state.id},this)`,
+            "data-lt-msg-id": min_read_id,
+          },
+          req.__("Show older messages")
+        )
+      : "") +
+    div(
+      {
+        class: [
+          `msglist-${state.id}`,
+          "sc-room-msglist",
+          height && "sc-room-scroll",
+        ],
+        "data-user-id": req.user?.id,
+        "data-msg-animate": animate.name,
+        "data-msg-animate-duration": animate.duration,
+        "data-msg-animate-delay": animate.delay,
+      },
+      msglist
+    );
+  const message_form = pinned
+    ? msgform_html && div({ class: "sc-room-form-pinned" }, msgform_html)
+    : msgform_html;
+
   return div(
-    n_retrieved === limit &&
-      button(
-        {
-          class: "btn btn-outline-secondary mb-1 fetch_older",
-          onclick: `room_older('${viewname}',${state.id},this)`,
-          "data-lt-msg-id": min_read_id,
-        },
-        req.__("Show older messages")
-      ),
-    div({ class: `msglist-${state.id}`, "data-user-id": req.user?.id }, msglist),
-    canWrite && renderForm(formObj, req.csrfToken()),
+    {
+      class: [
+        "sc-room",
+        pinned && "sc-room-pinned",
+        pinned && !height && "sc-room-fill",
+      ],
+      style: {
+        "--sc-room-height": height || false,
+      },
+    },
+    useLayout
+      ? renderLayout({
+          blockDispatch: {
+            message_list: () => message_list,
+            message_form: () => message_form || "",
+          },
+          layout,
+          role,
+          req,
+          hints: (appState.getLayout(req.user as any) as any).hints || {},
+        })
+      : [message_list, message_form],
     script({
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
     }) + script(domReady(`init_room("${viewname}", ${state.id})`))
@@ -464,8 +632,8 @@ const fetch_older_msg = async (
   { req, res }: { req: Req; res: Res },
   { fetchOlderMsgQuery }: GenObj
 ) => {
-  const partRow = await fetchOlderMsgQuery(participant_field, body);
-  if (!partRow)
+  const authorized = await fetchOlderMsgQuery(participant_field, body);
+  if (!authorized)
     return {
       json: {
         error: "Not participating",
@@ -491,7 +659,9 @@ const fetch_older_msg = async (
     Math,
     vresps.map((r: GenObj) => r.row.id)
   );
-  const msglist = vresps.map((r: GenObj) => r.html).join("");
+  const msglist = vresps
+    .map((r: GenObj) => div({ class: "sc-room-msg" }, r.html))
+    .join("");
   return {
     json: {
       success: "ok",
@@ -643,6 +813,7 @@ export default {
   configuration_workflow,
   run,
   get_state_fields,
+  initial_config,
   /** @type {boolean} */
   routes: { submit_msg_ajax, ack_read, fetch_older_msg, run_action },
   /** @type {boolean} */
@@ -824,14 +995,22 @@ export default {
       };
     },
     async fetchOlderMsgQuery(participant_field: string, body: GenObj) {
+      // no participant table: fall back to the room table's read role, the
+      // same check run() and submitAjaxQuery make
+      if (!participant_field) {
+        const table = Table.findOne({ id: table_id })!;
+        const role = req && req.user ? req.user.role_id : 100;
+        return role <= table.min_role_read;
+      }
       const [part_table_name, part_key_to_room, part_user_field] =
         participant_field.split(".");
-      const parttable = Table.findOne({ name: part_table_name })!;
+      const parttable = Table.findOne({ name: part_table_name });
+      if (!parttable) return false;
       // check we participate
-      return await parttable.getRow({
+      return !!(await parttable.getRow({
         [part_user_field]: req.user ? req.user.id : 0,
         [part_key_to_room]: +body.room_id,
-      });
+      }));
     },
     async optionsQuery(reftable_name: string, type: string, attributes: GenObj, where: GenObj) {
       const rows = await db.select(

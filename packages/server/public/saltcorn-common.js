@@ -2871,13 +2871,93 @@ function unique_field_from_rows(
   }
 }
 
+function room_msglist(room_id) {
+  return $(`.msglist-${room_id}`);
+}
+
+// true when the list is not a scroll container (the page scrolls, so new
+// messages should always be followed) or the reader is already at the end
+function room_at_bottom($list) {
+  const el = $list[0];
+  if (!el || el.scrollHeight <= el.clientHeight) return true;
+  return el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+}
+
+// gap left between the bottom of a viewport-filling room and the window edge
+const sc_room_bottom_gap = 16;
+
+// A pinned room with no configured height runs from wherever it starts down to
+// the bottom of the window. That distance depends on what is above it on the
+// page, which CSS cannot see, so measure it here; the stylesheet's 70vh is the
+// fallback until this runs.
+function room_fit_height(room_id) {
+  const room = room_msglist(room_id).closest(".sc-room-fill")[0];
+  if (!room) return;
+  const top = room.getBoundingClientRect().top;
+  const avail = window.innerHeight - top - sc_room_bottom_gap;
+  room.style.height = Math.max(avail, 200) + "px";
+}
+
+function room_animate_msg(el, $list) {
+  const name = $list.attr("data-msg-animate");
+  if (!name || !el) return;
+  const duration = $list.attr("data-msg-animate-duration");
+  const delay = $list.attr("data-msg-animate-delay");
+  if (duration) el.style.animationDuration = duration + "s";
+  if (delay) el.style.animationDelay = delay + "s";
+  el.style.animationName = name;
+  el.style.animationFillMode = "both";
+  el.removeAttribute("data-animate-initial-hide");
+}
+
+function room_animate_existing(room_id) {
+  const $list = room_msglist(room_id);
+  if (!$list.attr("data-msg-animate")) return;
+  $list.children(".sc-room-msg").each(function () {
+    room_animate_msg(this, $list);
+  });
+}
+
+function room_scroll_bottom($list) {
+  const el = $list[0];
+  if (el && el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
+}
+
+// append newly arrived messages, keeping the reader at the end of the list if
+// they were already there. force is set for messages we sent ourselves.
+function room_append(room_id, html, force) {
+  const $list = room_msglist(room_id);
+  if (!$list.length) return;
+  const follow = force || room_at_bottom($list);
+  const $msg = $("<div>").addClass("sc-room-msg").html(html);
+  $list.append($msg);
+  room_animate_msg($msg[0], $list);
+  if (follow) room_scroll_bottom($list);
+}
+
+// history is prepended without animation, holding the reader's position:
+// growing the list above the viewport would otherwise jump them to the top
+function room_prepend(room_id, html) {
+  const $list = room_msglist(room_id);
+  const el = $list[0];
+  if (!el) return;
+  const anchor = el.firstElementChild;
+  $list.prepend(html);
+  if (!anchor) return;
+  const anchor_bottom =
+    anchor.getBoundingClientRect().bottom -
+    el.getBoundingClientRect().top +
+    el.scrollTop;
+  el.scrollTop = Math.max(anchor_bottom - el.clientHeight, 0);
+}
+
 function room_older(viewname, room_id, btn) {
   view_post(
     viewname,
     "fetch_older_msg",
     { room_id, lt_msg_id: +$(btn).attr("data-lt-msg-id") },
     (res) => {
-      if (res.prepend) $(`.msglist-${room_id}`).prepend(res.prepend);
+      if (res.prepend) room_prepend(room_id, res.prepend);
       if (res.new_fetch_older_lt)
         $(btn).attr("data-lt-msg-id", res.new_fetch_older_lt);
       if (res.remove_fetch_older) $(btn).remove();
@@ -2899,6 +2979,7 @@ function get_shared_socket() {
 }
 
 function init_room(viewname, room_id) {
+  room_animate_existing(room_id);
   let socket = get_shared_socket();
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
@@ -2906,7 +2987,7 @@ function init_room(viewname, room_id) {
       const my_user_id = $(`.msglist-${room_id}`).attr("data-user-id");
       if (+my_user_id === +msg.not_for_user_id) return;
     }
-    if (msg.append) $(`.msglist-${room_id}`).append(msg.append);
+    if (msg.append) room_append(room_id, msg.append);
     if (msg.pls_ack_msg_id)
       view_post(viewname, "ack_read", { room_id, id: msg.pls_ack_msg_id });
   });
@@ -2915,10 +2996,13 @@ function init_room(viewname, room_id) {
     e.preventDefault();
     var form_data = $(`form.room-${room_id}`).serialize();
     view_post(viewname, "submit_msg_ajax", form_data, (vpres) => {
-      if (vpres.append) $(`.msglist-${room_id}`).append(vpres.append);
+      if (vpres.append) room_append(room_id, vpres.append, true);
       $(`form.room-${room_id}`).trigger("reset");
     });
   });
+  room_fit_height(room_id);
+  $(window).on("resize", () => room_fit_height(room_id));
+  room_scroll_bottom(room_msglist(room_id));
 }
 
 function init_collab_room(viewname, eventCfgs) {

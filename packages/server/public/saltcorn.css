@@ -1259,3 +1259,36 @@ span.copy-to-clipboard.copied::after {
     }
   }
 }
+
+.sc-room-msglist.sc-room-scroll {
+  max-height: var(--sc-room-height);
+  overflow-y: auto;
+}
+.sc-room-msglist.sc-room-scroll,
+.sc-room-pinned .sc-room-msglist {
+  overflow-x: auto;
+  padding-left: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
+  padding-right: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
+}
+.sc-room-pinned {
+  display: flex;
+  flex-direction: column;
+  height: var(--sc-room-height, 70vh);
+}
+.sc-room-pinned .sc-room-msglist {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+.sc-room-pinned .fetch_older {
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+.sc-room-form-pinned {
+  flex: 0 0 auto;
+  z-index: 5;
+  background-color: var(--bs-body-bg, #fff);
+  padding-top: 0.5rem;
+  /* padding-bottom: 0.75rem; */
+}
