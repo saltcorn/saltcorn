@@ -30,6 +30,8 @@ import {
 import Table from "@saltcorn/data/models/table";
 import Plugin from "@saltcorn/data/models/plugin";
 import File from "@saltcorn/data/models/file";
+// @ts-ignore
+import passport from "passport";
 import { spawn, exec } from "child_process";
 import User from "@saltcorn/data/models/user";
 import Trigger from "@saltcorn/data/models/trigger";
@@ -2475,21 +2477,39 @@ const buildDialogScript = (capacitorBuilderAvailable: any, isSbadmin2: any) =>
 
   const entryByRoleBox = document.getElementById('entryPointByRoleBoxId');
   if (entryByRoleBox) {
-    entryByRoleBox.addEventListener('change', () => {
-      const entryByRole = entryByRoleBox.checked;
-      const entryRow = document.getElementById('entryPointRowId');
-      const selector = document.getElementById('entrySelectorsId');
-      if (entryByRole) {
-        entryRow.classList.remove('border', 'border-2', 'p-3', 'rounded');
-        selector.classList.add('d-none');
-      }
-      else {
-        entryRow.classList.add('border', 'border-2', 'p-3', 'rounded');
-        selector.classList.remove('d-none');
-      }
-    });
+    entryByRoleBox.addEventListener('change', apply_entry_point_ui);
   } else
     console.error('entryByRoleBox not found');
+
+  const remoteSchemaUrlInput = document.getElementById('remoteSchemaUrlInputId');
+  if (remoteSchemaUrlInput)
+    remoteSchemaUrlInput.addEventListener('change', fetch_remote_schema_info);
+  else
+    console.error('remoteSchemaUrlInput not found');
+
+  const collapseSectionIds = [
+    'commonSettingsContainerId',
+    'buildConfigFormGroupId',
+    'androidConfigFormGroupId',
+    'iOSConfigFormGroupId',
+  ];
+  const updateOpenSectionsParam = () => {
+    const open = collapseSectionIds.filter((id) => {
+      const el = document.getElementById(id);
+      return el && el.classList.contains('show');
+    });
+    const url = new URL(window.location.href);
+    if (open.length) url.searchParams.set('open', open.join(','));
+    else url.searchParams.delete('open');
+    history.replaceState(null, '', url);
+  };
+  collapseSectionIds.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('shown.bs.collapse', updateOpenSectionsParam);
+      el.addEventListener('hidden.bs.collapse', updateOpenSectionsParam);
+    }
+  });
 `)}
   </script>`;
 
@@ -2566,6 +2586,15 @@ const versFullfilled = (version: any, minMajVersion: any) => {
  * iOS Config Box
  * @param {any} param0
  */
+// ids of open collapsible sections, from the ?open=id1,id2 query param
+const getOpenBuildSections = (req: Req): string[] => {
+  const q = req.query.open;
+  // no "open" param at all (not even empty) - plain page load, default to
+  // the common config open; an explicit "?open=" means the user closed it
+  if (typeof q !== "string") return ["commonSettingsContainerId"];
+  return q.split(",").filter(Boolean);
+};
+
 const buildIosConfigBox = ({
   req,
   isMac,
@@ -2908,6 +2937,9 @@ const buildIosConfigBox = ({
     );
   };
 
+  const iOSConfigOpen = getOpenBuildSections(req).includes(
+    "iOSConfigFormGroupId"
+  );
   return div(
     { class: "my-3" },
     p(
@@ -2918,7 +2950,7 @@ const buildIosConfigBox = ({
           type: "button",
           "data-bs-toggle": "collapse",
           "data-bs-target": "#iOSConfigFormGroupId",
-          "aria-expanded": "false",
+          "aria-expanded": iOSConfigOpen ? "true" : "false",
           "aria-controls": "iOSConfigFormGroupId",
         },
         i({ class: "fas fa-chevron-down" })
@@ -2927,7 +2959,9 @@ const buildIosConfigBox = ({
     div(
       {
         id: "iOSConfigFormGroupId",
-        class: "form-group border border-2 p-3 rounded collapse",
+        class: `form-group border border-2 p-3 rounded collapse${
+          iOSConfigOpen ? " show" : ""
+        }`,
       },
       toolsInfoBox(),
       provisioningFilesBox(),
@@ -2960,9 +2994,14 @@ router.get(
   "/build-mobile-app",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    const views = (await View.find())!;
-    const pages = (await Page.find())!;
-    const pageGroups = (await PageGroup.find())!;
+    // opt out of the browser's back-forward cache - otherwise the back
+    // button can restore a frozen snapshot from before a config change
+    // (e.g. remote/local build mode), with none of this route's or the
+    // page's init logic re-run
+    res.set("Cache-Control", "no-store");
+    let views: any[] = (await View.find())!;
+    let pages: any[] = (await Page.find())!;
+    let pageGroups: any[] = (await PageGroup.find())!;
     const images = (await File.find({ mime_super: "image" })).filter(
       (image: any) => image.filename?.endsWith(".png")
     );
@@ -2983,16 +3022,32 @@ router.get(
       ...allAppCfgFiles,
     ];
     const withSyncInfo = (await Table.find({ has_sync_info: true }))!;
-    const plugins = (await Plugin.find()).filter(
+    let plugins: any[] = (await Plugin.find()).filter(
       (plugin: any) =>
         ["base", "sbadmin2"].indexOf(plugin.name) < 0 &&
         !plugin.exclude_from_mobile()
     );
-    const pluginsReadyForMobile = plugins
+    let pluginsReadyForMobile = plugins
       .filter((plugin: any) => plugin.ready_for_mobile())
       .map((plugin: any) => plugin.name);
     const builderSettings =
       getState()!.getConfig("mobile_builder_settings") || {};
+    // remote mode: show the cached remote schema, not this machine's local one -
+    // only if the cache is for the currently configured URL
+    if (
+      builderSettings.remoteSchemaUrl &&
+      builderSettings.remoteSchemaInfo &&
+      builderSettings.remoteSchemaInfoUrl === builderSettings.remoteSchemaUrl
+    ) {
+      const cached = builderSettings.remoteSchemaInfo;
+      views = (cached.views || []).map((name: string) => ({ name }));
+      pages = (cached.pages || []).map((name: string) => ({ name }));
+      pageGroups = (cached.pageGroups || []).map((name: string) => ({
+        name,
+      }));
+      plugins = (cached.plugins || []).map((name: string) => ({ name }));
+      pluginsReadyForMobile = cached.pluginsReadyForMobile || [];
+    }
     const scVersion = getState()!.scVersion;
     const dockerAvailable = await imageAvailable(
       "saltcorn/capacitor-builder",
@@ -3010,7 +3065,19 @@ router.get(
     const iosRuntimeVersion = iosRuntimeCheckRes.version;
     const layout = getState()!.getLayout(req.user);
     const isSbadmin2 = layout === getState()!.layouts.sbadmin2;
+    const isRemoteBuildMode = !!builderSettings.remoteSchemaUrl;
     const isEntrypointByRole = builderSettings.entryPointByRole === "on";
+    const hasSavedRemoteApiKey = !!builderSettings.remoteApiKey;
+    const openBuildSections = getOpenBuildSections(req);
+    const isCommonConfigOpen = openBuildSections.includes(
+      "commonSettingsContainerId"
+    );
+    const isBuildConfigOpen = openBuildSections.includes(
+      "buildConfigFormGroupId"
+    );
+    const isAndroidConfigOpen = openBuildSections.includes(
+      "androidConfigFormGroupId"
+    );
 
     const keyCfg = getState()!.getConfig("firebase_json_key");
     const fbJSONKey = keyCfg ? path.basename(keyCfg) : null;
@@ -3076,7 +3143,7 @@ router.get(
                         type: "button",
                         "data-bs-toggle": "collapse",
                         "data-bs-target": "#commonSettingsContainerId",
-                        "aria-expanded": "true",
+                        "aria-expanded": isCommonConfigOpen ? "true" : "false",
                         "aria-controls": "commonSettingsContainerId",
                       },
                       i({ class: "fas fa-chevron-down" })
@@ -3085,24 +3152,13 @@ router.get(
                   div(
                     {
                       id: "commonSettingsContainerId",
-                      class:
-                        "form-group border border-2 p-3 rounded collapse show",
+                      class: `form-group border border-2 p-3 rounded collapse${
+                        isCommonConfigOpen ? " show" : ""
+                      }`,
                     },
                     div(
                       { class: "row pb-2" },
-                      div({ class: "col-sm-4 fw-bold" }, req.__("Entry point")),
-                      div({ class: "col-sm-4 fw-bold" }, req.__("Platform")),
-                      div(
-                        {
-                          class: `col-sm-1 fw-bold d-flex justify-content-center ${
-                            builderSettings.androidPlatform !== "on"
-                              ? "d-none"
-                              : ""
-                          }`,
-                          id: "dockerLabelId",
-                        },
-                        req.__("docker")
-                      )
+                      div({ class: "col-sm-4 fw-bold" }, req.__("Entry point"))
                     ),
                     div(
                       { class: "row mb-3" },
@@ -3290,56 +3346,6 @@ router.get(
                               .join("")
                           )
                         )
-                      ),
-                      div(
-                        { class: "col-sm-4" },
-                        // android
-                        div(
-                          { class: "container ps-0" },
-                          div(
-                            { class: "row" },
-                            div({ class: "col-sm-8" }, req.__("android")),
-                            div(
-                              { class: "col-sm" },
-                              input({
-                                type: "checkbox",
-                                class: "form-check-input",
-                                name: "androidPlatform",
-                                id: "androidCheckboxId",
-                                onClick: "toggle_android_platform()",
-                                checked:
-                                  builderSettings.androidPlatform === "on",
-                              })
-                            )
-                          ),
-                          // iOS
-                          div(
-                            { class: "row" },
-                            div({ class: "col-sm-8" }, req.__("iOS")),
-                            div(
-                              { class: "col-sm" },
-                              input({
-                                type: "checkbox",
-                                class: "form-check-input",
-                                name: "iOSPlatform",
-                                id: "iOSCheckboxId",
-                                checked: builderSettings.iOSPlatform === "on",
-                              })
-                            )
-                          )
-                        )
-                      ),
-                      // android with docker
-                      div(
-                        { class: "col-sm-1 d-flex justify-content-center" },
-                        input({
-                          type: "checkbox",
-                          class: "form-check-input",
-                          name: "useDocker",
-                          id: "dockerCheckboxId",
-                          hidden: builderSettings.androidPlatform !== "on",
-                          checked: builderSettings.useDocker === "on",
-                        })
                       )
                     ),
                     // app name
@@ -3560,59 +3566,6 @@ router.get(
                       )
                     ),
 
-                    // build type
-                    div(
-                      { class: "row pb-3 pt-2" },
-                      div(
-                        { class: "col-sm-10" },
-                        label(
-                          {
-                            for: "splashPageInputId",
-                            class: "form-label fw-bold",
-                          },
-                          req.__("Build type")
-                        ),
-
-                        div(
-                          { class: "form-check" },
-                          input({
-                            type: "radio",
-                            id: "debugBuildTypeId",
-                            class: "form-check-input me-2",
-                            name: "buildType",
-                            value: "debug",
-                            checked: builderSettings.buildType === "debug",
-                          }),
-                          label(
-                            {
-                              for: "debugBuildTypeId",
-                              class: "form-label",
-                            },
-                            req.__("debug")
-                          )
-                        ),
-                        div(
-                          { class: "form-check" },
-                          input({
-                            type: "radio",
-                            id: "releaseBuildTypeId",
-                            class: "form-check-input me-2",
-                            name: "buildType",
-                            value: "release",
-                            checked:
-                              builderSettings.buildType === "release" ||
-                              !builderSettings.buildType,
-                          }),
-                          label(
-                            {
-                              for: "releaseBuildTypeId",
-                              class: "form-label",
-                            },
-                            req.__("release")
-                          )
-                        )
-                      )
-                    ),
                     // included/excluded plugins
                     div(
                       {
@@ -4042,8 +3995,288 @@ router.get(
                           class: "btn btn-outline-secondary p-1 me-2",
                           type: "button",
                           "data-bs-toggle": "collapse",
+                          "data-bs-target": "#buildConfigFormGroupId",
+                          "aria-expanded": isBuildConfigOpen ? "true" : "false",
+                          "aria-controls": "buildConfigFormGroupId",
+                        },
+                        i({ class: "fas fa-chevron-down" })
+                      ) + "Build configurations"
+                    ),
+                    div(
+                      {
+                        id: "buildConfigFormGroupId",
+                        class: `form-group border border-2 p-3 rounded collapse${
+                          isBuildConfigOpen ? " show" : ""
+                        }`,
+                      },
+                      div(
+                        {
+                          class: "form-group border border-2 p-3 rounded mb-3",
+                        },
+                        // platform header
+                        div(
+                          { class: "row pb-2" },
+                          div(
+                            { class: "col-sm-4 fw-bold" },
+                            req.__("Platform")
+                          ),
+                          div(
+                            {
+                              class: `col-sm-1 fw-bold d-flex justify-content-center ${
+                                builderSettings.androidPlatform !== "on"
+                                  ? "d-none"
+                                  : ""
+                              }`,
+                              id: "dockerLabelId",
+                            },
+                            req.__("docker")
+                          )
+                        ),
+                        // platform checkboxes + docker
+                        div(
+                          { class: "row mb-3" },
+                          div(
+                            { class: "col-sm-4" },
+                            // android
+                            div(
+                              { class: "container ps-0" },
+                              div(
+                                { class: "row" },
+                                div({ class: "col-sm-8" }, req.__("android")),
+                                div(
+                                  { class: "col-sm" },
+                                  input({
+                                    type: "checkbox",
+                                    class: "form-check-input",
+                                    name: "androidPlatform",
+                                    id: "androidCheckboxId",
+                                    onClick: "toggle_android_platform()",
+                                    checked:
+                                      builderSettings.androidPlatform === "on",
+                                  })
+                                )
+                              ),
+                              // iOS
+                              div(
+                                { class: "row" },
+                                div({ class: "col-sm-8" }, req.__("iOS")),
+                                div(
+                                  { class: "col-sm" },
+                                  input({
+                                    type: "checkbox",
+                                    class: "form-check-input",
+                                    name: "iOSPlatform",
+                                    id: "iOSCheckboxId",
+                                    checked:
+                                      builderSettings.iOSPlatform === "on",
+                                  })
+                                )
+                              )
+                            )
+                          ),
+                          // android with docker
+                          div(
+                            { class: "col-sm-1 d-flex justify-content-center" },
+                            input({
+                              type: "checkbox",
+                              class: "form-check-input",
+                              name: "useDocker",
+                              id: "dockerCheckboxId",
+                              hidden: builderSettings.androidPlatform !== "on",
+                              checked: builderSettings.useDocker === "on",
+                            })
+                          )
+                        ),
+                        // build type
+                        div(
+                          { class: "row pb-3 pt-2" },
+                          div(
+                            { class: "col-sm-10" },
+                            label(
+                              {
+                                for: "debugBuildTypeId",
+                                class: "form-label fw-bold",
+                              },
+                              req.__("Build type")
+                            ),
+                            div(
+                              { class: "form-check" },
+                              input({
+                                type: "radio",
+                                id: "debugBuildTypeId",
+                                class: "form-check-input me-2",
+                                name: "buildType",
+                                value: "debug",
+                                checked:
+                                  builderSettings.buildType === "debug" ||
+                                  !builderSettings.buildType,
+                              }),
+                              label(
+                                {
+                                  for: "debugBuildTypeId",
+                                  class: "form-label",
+                                },
+                                req.__("debug")
+                              )
+                            ),
+                            div(
+                              { class: "form-check" },
+                              input({
+                                type: "radio",
+                                id: "releaseBuildTypeId",
+                                class: "form-check-input me-2",
+                                name: "buildType",
+                                value: "release",
+                                checked:
+                                  builderSettings.buildType === "release",
+                              }),
+                              label(
+                                {
+                                  for: "releaseBuildTypeId",
+                                  class: "form-label",
+                                },
+                                req.__("release")
+                              )
+                            )
+                          )
+                        )
+                      ),
+                      div(
+                        { class: "form-group border border-2 p-3 rounded" },
+                        // build location: local or remote
+                        div(
+                          { class: "row pb-2 pt-2" },
+                          div(
+                            { class: "col-sm-10" },
+                            label(
+                              { class: "form-label fw-bold" },
+                              req.__("Build location"),
+                              a(
+                                {
+                                  href: "javascript:ajax_modal('/admin/help/Build location?')",
+                                },
+                                i({ class: "fas fa-question-circle ps-1" })
+                              )
+                            ),
+                            div(
+                              { class: "form-check" },
+                              input({
+                                type: "radio",
+                                id: "buildModeLocalId",
+                                class: "form-check-input me-2",
+                                name: "buildMode",
+                                value: "local",
+                                onClick: "toggle_build_mode()",
+                                checked: !isRemoteBuildMode,
+                              }),
+                              label(
+                                {
+                                  for: "buildModeLocalId",
+                                  class: "form-label",
+                                },
+                                req.__("Local")
+                              )
+                            ),
+                            div(
+                              { class: "form-check" },
+                              input({
+                                type: "radio",
+                                id: "buildModeRemoteId",
+                                class: "form-check-input me-2",
+                                name: "buildMode",
+                                value: "remote",
+                                onClick: "toggle_build_mode()",
+                                checked: isRemoteBuildMode,
+                              }),
+                              label(
+                                {
+                                  for: "buildModeRemoteId",
+                                  class: "form-label",
+                                },
+                                req.__("Remote")
+                              )
+                            )
+                          )
+                        ),
+                        // remote schema url + api key (remote mode only)
+                        div(
+                          {
+                            id: "remoteSchemaRowId",
+                            class: isRemoteBuildMode ? "" : "d-none",
+                          },
+                          div(
+                            { class: "row pb-2" },
+                            div(
+                              { class: "col-sm-10" },
+                              label(
+                                {
+                                  for: "remoteSchemaUrlInputId",
+                                  class: "form-label fw-bold",
+                                },
+                                req.__("Remote server URL")
+                              ),
+                              input({
+                                type: "text",
+                                class: "form-control",
+                                id: "remoteSchemaUrlInputId",
+                                value: builderSettings.remoteSchemaUrl || "",
+                                placeholder: "https://example.com",
+                                ...(isRemoteBuildMode
+                                  ? { name: "remoteSchemaUrl" }
+                                  : {}),
+                              }),
+                              i(
+                                req.__(
+                                  "Build from another server's live schema"
+                                )
+                              )
+                            )
+                          ),
+                          div(
+                            { class: "row pb-2" },
+                            div(
+                              { class: "col-sm-10" },
+                              label(
+                                {
+                                  for: "remoteApiKeyInputId",
+                                  class: "form-label fw-bold",
+                                },
+                                req.__("Remote API key")
+                              ),
+                              input({
+                                type: "password",
+                                class: "form-control",
+                                id: "remoteApiKeyInputId",
+                                value: "",
+                                placeholder: hasSavedRemoteApiKey
+                                  ? req.__(
+                                      "•••••••• (saved - leave blank to keep)"
+                                    )
+                                  : "",
+                                ...(isRemoteBuildMode
+                                  ? { name: "remoteApiKey" }
+                                  : {}),
+                              }),
+                              i(req.__("Admin API key for the URL above"))
+                            )
+                          )
+                        )
+                      )
+                    )
+                  ),
+                  div(
+                    { class: "mt-3 mb-3" },
+                    p(
+                      { class: "h3 ps-1" },
+                      button(
+                        {
+                          class: "btn btn-outline-secondary p-1 me-2",
+                          type: "button",
+                          "data-bs-toggle": "collapse",
                           "data-bs-target": "#androidConfigFormGroupId",
-                          "aria-expanded": "false",
+                          "aria-expanded": isAndroidConfigOpen
+                            ? "true"
+                            : "false",
                           "aria-controls": "androidConfigFormGroupId",
                         },
                         i({ class: "fas fa-chevron-down" })
@@ -4052,8 +4285,9 @@ router.get(
                     div(
                       {
                         id: "androidConfigFormGroupId",
-                        class:
-                          "form-group border border-2 p-3 rounded collapse",
+                        class: `form-group border border-2 p-3 rounded collapse${
+                          isAndroidConfigOpen ? " show" : ""
+                        }`,
                       },
 
                       div(
@@ -4601,7 +4835,27 @@ router.post(
       keystorePassword,
       firebaseJSONKey,
       googleServicesFile,
+      remoteSchemaUrl,
+      remoteApiKey,
     } = req.body || {};
+    if (remoteSchemaUrl && !remoteApiKey)
+      remoteApiKey = getState()!.getConfig(
+        "mobile_builder_settings",
+        {}
+      ).remoteApiKey;
+    if (remoteSchemaUrl && !remoteApiKey) {
+      return res.json({
+        error: req.__(
+          "Please enter a Remote API key - none was provided or previously saved."
+        ),
+      });
+    }
+    // the API key goes in an Authorization header - don't send it in cleartext
+    if (remoteSchemaUrl && !remoteSchemaUrl.startsWith("https://")) {
+      return res.json({
+        error: req.__("Remote schema URL must start with https://"),
+      });
+    }
     const receiveShareTriggers = Trigger.find({
       when_trigger: "ReceiveMobileShareData",
     })!;
@@ -4629,7 +4883,7 @@ router.post(
     }
     if (!includedPlugins) includedPlugins = [];
     if (!synchedTables) synchedTables = [];
-    if (!entryPoint) {
+    if (!entryPointByRole && !entryPoint) {
       return res.json({
         error: req.__("Please select an entry point."),
       });
@@ -4775,6 +5029,19 @@ router.post(
       spawnParams.push("--androidKeystorePassword", keystorePassword);
     if (googleServicesFile)
       spawnParams.push("--googleServicesFile", googleServicesFile);
+    if (remoteSchemaUrl) {
+      spawnParams.push("--remoteSchemaUrl", remoteSchemaUrl);
+      // whether to bundle push support follows the REMOTE server's own APN
+      // config (cached from the last successful schema fetch), not this
+      // machine's - see build-bundle-info's pushNotificationsEnabled
+      const cachedInfo = getState()!.getConfig(
+        "mobile_builder_settings",
+        {}
+      ).remoteSchemaInfo;
+      if (cachedInfo?.pushNotificationsEnabled)
+        spawnParams.push("--remotePushNotificationsEnabled");
+    }
+    if (remoteApiKey) spawnParams.push("--remoteApiKey", remoteApiKey);
 
     // if builDir exists, remove it
     if (
@@ -4905,12 +5172,124 @@ router.get(
   })
 );
 
+/** Fetches the remote server's build-bundle-info to populate the GUI's pickers. */
+const fetchRemoteSchemaInfo = async (
+  remoteSchemaUrl: string,
+  apiKey?: string
+): Promise<{
+  views: string[];
+  pages: string[];
+  pageGroups: string[];
+  plugins: string[];
+  pluginsReadyForMobile: string[];
+}> => {
+  const infoUrl = `${remoteSchemaUrl.replace(/\/+$/, "")}/admin/mobile-app/build-bundle-info`;
+  const res = await fetch(infoUrl, {
+    headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
+  });
+  if (!res.ok)
+    throw new Error(
+      `Unable to fetch remote schema from ${infoUrl}: ${res.status} ${res.statusText}`
+    );
+  return (await res.json()) as any;
+};
+
+router.post(
+  "/mobile-app/fetch-remote-schema-info",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    let { remoteSchemaUrl, remoteApiKey } = req.body || {};
+    if (!remoteSchemaUrl) {
+      res.json({ error: req.__("Please enter a Remote schema URL.") });
+      return;
+    }
+    // the API key goes in an Authorization header - don't send it in cleartext
+    if (!remoteSchemaUrl.startsWith("https://")) {
+      res.json({ error: req.__("Remote schema URL must start with https://") });
+      return;
+    }
+    if (!remoteApiKey)
+      remoteApiKey = getState()!.getConfig(
+        "mobile_builder_settings",
+        {}
+      ).remoteApiKey;
+    if (!remoteApiKey) {
+      res.json({
+        error: req.__(
+          "Please enter a Remote API key - none was provided or previously saved."
+        ),
+      });
+      return;
+    }
+    try {
+      const info = await fetchRemoteSchemaInfo(remoteSchemaUrl, remoteApiKey);
+      // cache for the next page load - see the same check above
+      const cfg = getState()!.getConfig("mobile_builder_settings", {});
+      await getState()!.setConfig("mobile_builder_settings", {
+        ...cfg,
+        remoteSchemaInfo: info,
+        remoteSchemaInfoUrl: remoteSchemaUrl,
+      });
+      res.json({ success: true, ...info });
+    } catch (e: any) {
+      res.json({ error: e.message });
+    }
+  })
+);
+
+/**
+ * Admin-only, bearer-auth: view/page/pagegroup/plugin names, for populating a remote build machine's pickers.
+ */
+router.get(
+  "/mobile-app/build-bundle-info",
+  error_catcher(async (req: Req, res: Res, next: any) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err: any, user: any, info: any) {
+        const authUser = req.user || user;
+        if (!authUser || authUser.role_id !== 1) {
+          res.status(401).json({ error: req.__("Not authorized") });
+          return;
+        }
+        const views = (await View.find())!;
+        const pages = (await Page.find())!;
+        const pageGroups = (await PageGroup.find())!;
+        const plugins = (await Plugin.find()).filter(
+          (plugin: any) =>
+            ["base", "sbadmin2"].indexOf(plugin.name) < 0 &&
+            !plugin.exclude_from_mobile()
+        );
+        res.json({
+          views: views.map((v: any) => v.name),
+          pages: pages.map((p: any) => p.name),
+          pageGroups: pageGroups.map((g: any) => g.name),
+          plugins: plugins.map((p: any) => p.name),
+          pluginsReadyForMobile: plugins
+            .filter((p: any) => p.ready_for_mobile())
+            .map((p: any) => p.name),
+          // this server's own APN push config - a build machine building
+          // against this schema should bundle push support based on this,
+          // not whatever its own (possibly unrelated) local config says
+          pushNotificationsEnabled: !!getState()!.getConfig(
+            "apn_signing_key_id"
+          ),
+        });
+      }
+    )(req, res, next);
+  })
+);
+
 router.post(
   "/mobile-app/save-config",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     try {
       const newCfg = { ...(req.body || {}) };
+      if (!newCfg.remoteApiKey) {
+        const oldCfg = getState()!.getConfig("mobile_builder_settings", {});
+        newCfg.remoteApiKey = oldCfg.remoteApiKey;
+      }
       const excludedPlugins = (await Plugin.find())
         .filter(
           (plugin: any) =>
@@ -5034,8 +5413,8 @@ router.post(
       }
       for (const table of tables) {
         if (table.name !== "users") await table.delete();
+        // reset users table row
         else
-          // reset users table row
           await table.update({
             min_role_read: 1,
             min_role_write: 1,

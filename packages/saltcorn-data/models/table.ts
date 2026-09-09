@@ -1559,6 +1559,8 @@ class Table implements AbstractTable {
     where: Where = {},
     selopts: SelectOptions & ForUserRequest = {}
   ): Promise<Row | null> {
+    // covers explicit null too, not just undefined (mobile API can send null)
+    where = where || {};
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = selopts;
     const use_forUser =
@@ -1655,6 +1657,8 @@ class Table implements AbstractTable {
     where: Where = {},
     selopts: SelectOptions & ForUserRequest = {}
   ): Promise<Row[]> {
+    // covers explicit null too, not just undefined (mobile API can send null)
+    where = where || {};
     const fields = this.fields;
     if (!this.fields) return [];
     const { forUser, forPublic, ...selopts1 } = selopts;
