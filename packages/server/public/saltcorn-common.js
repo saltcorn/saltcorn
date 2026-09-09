@@ -2898,6 +2898,26 @@ function room_fit_height(room_id) {
   room.style.height = Math.max(avail, 200) + "px";
 }
 
+function room_animate_msg(el, $list) {
+  const name = $list.attr("data-msg-animate");
+  if (!name || !el) return;
+  const duration = $list.attr("data-msg-animate-duration");
+  const delay = $list.attr("data-msg-animate-delay");
+  if (duration) el.style.animationDuration = duration + "s";
+  if (delay) el.style.animationDelay = delay + "s";
+  el.style.animationName = name;
+  el.style.animationFillMode = "both";
+  el.removeAttribute("data-animate-initial-hide");
+}
+
+function room_animate_existing(room_id) {
+  const $list = room_msglist(room_id);
+  if (!$list.attr("data-msg-animate")) return;
+  $list.children(".sc-room-msg").each(function () {
+    room_animate_msg(this, $list);
+  });
+}
+
 function room_scroll_bottom($list) {
   const el = $list[0];
   if (el && el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
@@ -2909,7 +2929,9 @@ function room_append(room_id, html, force) {
   const $list = room_msglist(room_id);
   if (!$list.length) return;
   const follow = force || room_at_bottom($list);
-  $list.append(html);
+  const $msg = $("<div>").addClass("sc-room-msg").html(html);
+  $list.append($msg);
+  room_animate_msg($msg[0], $list);
   if (follow) room_scroll_bottom($list);
 }
 
@@ -2957,6 +2979,7 @@ function get_shared_socket() {
 }
 
 function init_room(viewname, room_id) {
+  room_animate_existing(room_id);
   let socket = get_shared_socket();
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {

@@ -4,10 +4,11 @@
  * @subcategory components / elements
  */
 
-import React from "react";
+import React, { useContext } from "react";
 import useTranslation from "../../hooks/useTranslation";
+import optionsCtx from "../context";
 import { useNode } from "@craftjs/core";
-import { setAPropGen } from "./utils";
+import { setAPropGen, Accordion, SettingsRow } from "./utils";
 
 export /**
  * The list of messages in a Room view. The messages themselves are rendered by
@@ -59,28 +60,84 @@ export /**
  */
 const MessageListSettings = () => {
   const { t } = useTranslation();
+  const options = useContext(optionsCtx);
+  const node = useNode((node) => ({
+    height: node.data.props.height,
+    currentSettingsTab: node.data.props.currentSettingsTab,
+    animateName: node.data.props.animateName,
+    animateDelay: node.data.props.animateDelay,
+    animateDuration: node.data.props.animateDuration,
+    animateInitialHide: node.data.props.animateInitialHide,
+  }));
   const {
     actions: { setProp },
     height,
-  } = useNode((node) => ({ height: node.data.props.height }));
+    currentSettingsTab,
+  } = node;
   const setAProp = setAPropGen(setProp);
 
   return (
-    <div>
-      <label>{t("Height")}</label>
-      <input
-        type="text"
-        className="form-control"
-        value={height || ""}
-        spellCheck={false}
-        onChange={setAProp("height")}
-      />
-      <small className="text-muted">
-        {t(
-          "A CSS length, for example 400px or 60vh. The list scrolls within this height. Leave blank to grow with the page"
-        )}
-      </small>
-    </div>
+    <Accordion
+      value={currentSettingsTab}
+      onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
+    >
+      <div accordiontitle={t("Messages")} className="w-100">
+        <label>{t("Height")}</label>
+        <input
+          type="text"
+          className="form-control"
+          value={height || ""}
+          spellCheck={false}
+          onChange={setAProp("height")}
+        />
+        <small className="text-muted">
+          {t(
+            "A CSS length, for example 400px or 60vh. The list scrolls within this height. Leave blank to grow with the page"
+          )}
+        </small>
+      </div>
+      <table className="w-100" accordiontitle={t("Animate")}>
+        <tbody>
+          <SettingsRow
+            field={{
+              name: "animateName",
+              label: t("Animation"),
+              type: "select",
+              options: ["None", ...(options.keyframes || [])],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "animateDuration",
+              label: t("Duration (s)"),
+              type: "Float",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "animateDelay",
+              label: t("Delay (s)"),
+              type: "Float",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "animateInitialHide",
+              label: t("Initially hidden"),
+              type: "Bool",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+        </tbody>
+      </table>
+    </Accordion>
   );
 };
 
@@ -91,10 +148,20 @@ MessageList.craft = {
   displayName: "MessageList",
   props: {
     height: "",
+    animateName: "None",
+    animateDuration: "",
+    animateDelay: "",
+    animateInitialHide: false,
   },
   related: {
     settings: MessageListSettings,
     segment_type: "message_list",
-    fields: [{ name: "height" }],
+    fields: [
+      { name: "height" },
+      { name: "animateName" },
+      { name: "animateDuration" },
+      { name: "animateDelay" },
+      { name: "animateInitialHide" },
+    ],
   },
 };

@@ -105,9 +105,15 @@ const configuration_workflow = (req: Req) =>
                 ];
 
                 const views = await View.find_possible_links_to_table(table);
-                msgview_options[`${table.name}.${key_field.name}`] = views.map(
-                  (v: GenObj) => v.name
-                );
+                // The show slot renders every message. A view that handles form
+                // posts is an editor, and would render each message as a
+                // populated edit form rather than as a message.
+                msgview_options[`${table.name}.${key_field.name}`] = views
+                  .filter(
+                    (v: GenObj) =>
+                      !v.viewtemplateObj?.runPost || v.name === context.msgview
+                  )
+                  .map((v: GenObj) => v.name);
                 msgform_options[`${table.name}.${key_field.name}`] = views.map(
                   (v: GenObj) => v.name
                 );
@@ -317,9 +323,17 @@ const run = async (
   const locale = req.getLocale();
   const role = req && req.user ? req.user.role_id : 100;
   const __ = (s: string) => appState.i18n.__({ phrase: s, locale }) || s;
-  if (!msgview || !msgform || !msgsender_field || !msg_relation)
+  const missing = [
+    !msg_relation && "Message relation",
+    !msgsender_field && "Message sender field",
+    !msgview && "Message show view",
+    !msgform && "New message form view",
+  ].filter(Boolean);
+  if (missing.length)
     throw new InvalidConfiguration(
-      `View ${viewname} incorrectly configured: must supply Message views, Message sender and Participant fields`
+      `View ${viewname} incorrectly configured: must supply ${missing.join(
+        ", "
+      )}`
     );
 
   const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
@@ -344,6 +358,15 @@ const run = async (
 
     canWrite = role <= table.min_role_write;
   }
+  const listSeg = layout && findSegment(layout, "message_list");
+  const animateName = listSeg?.animateName;
+  const animate = {
+    name: animateName && animateName !== "None" ? animateName : undefined,
+    duration: listSeg?.animateDuration || undefined,
+    delay: listSeg?.animateDelay || undefined,
+  };
+  // never hide without an animation to reveal it again
+  const initialHide = animate.name && listSeg?.animateInitialHide;
   const v = await View.findOne({ name: msgview });
   const vresps: any[] = await v!.runMany(
     { [msgkey_to_room]: state.id },
@@ -352,7 +375,17 @@ const run = async (
   vresps.reverse();
   const n_retrieved = vresps.length;
 
-  const msglist = vresps.map((r: GenObj) => r.html).join("");
+  const msglist = vresps
+    .map((r: GenObj) =>
+      div(
+        {
+          class: "sc-room-msg",
+          "data-animate-initial-hide": initialHide ? "" : undefined,
+        },
+        r.html
+      )
+    )
+    .join("");
   const formview = await View.findOne({ name: msgform });
   if (!formview)
     throw new InvalidConfiguration("Message form view does not exist");
@@ -405,7 +438,6 @@ const run = async (
 
   // views built before the Layout step existed have no layout: keep rendering
   // them from the two settings the earlier Appearance step wrote
-  const listSeg = layout && findSegment(layout, "message_list");
   const formSeg = layout && findSegment(layout, "message_form");
   // a layout mentioning neither element would render a room with no messages
   // and no way to send any, which is never intended: fall back to the default
@@ -432,6 +464,9 @@ const run = async (
           height && "sc-room-scroll",
         ],
         "data-user-id": req.user?.id,
+        "data-msg-animate": animate.name,
+        "data-msg-animate-duration": animate.duration,
+        "data-msg-animate-delay": animate.delay,
       },
       msglist
     );
@@ -624,7 +659,9 @@ const fetch_older_msg = async (
     Math,
     vresps.map((r: GenObj) => r.row.id)
   );
-  const msglist = vresps.map((r: GenObj) => r.html).join("");
+  const msglist = vresps
+    .map((r: GenObj) => div({ class: "sc-room-msg" }, r.html))
+    .join("");
   return {
     json: {
       success: "ok",
