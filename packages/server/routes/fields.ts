@@ -795,6 +795,7 @@ const fieldFlow = (req: Req) =>
             },
           });
           await formfield.fill_fkey_options();
+          if (context.type === "File") formfield.input_type = "select";
           const defaultOptional = nrows === 0 || context.id;
           const setDefaultShowIf = defaultOptional
             ? { set_default: true }
