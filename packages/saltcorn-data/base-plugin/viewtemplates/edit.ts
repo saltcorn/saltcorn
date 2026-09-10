@@ -1185,8 +1185,7 @@ const runPost = async (
               } Ajax=${!!req.xhr}`
             );
             if (childRow[childTable.pk_name]) {
-              // routes through the query system (not childTable directly) so this
-              // proxies to the remote server in remote/mobile-online mode, like the parent row
+              // not childTable directly - proxies remotely, like the parent row
               const upd_res = tryUpdateChildQuery
                 ? await tryUpdateChildQuery(
                     childTable.id,
@@ -2274,7 +2273,7 @@ export default {
       const table = Table.findOne(table_id)!;
       return await tryUpdateImpl(row, id, table, req);
     },
-    // edit-in-edit child rows - table_id is the child table, not this view's own table
+    // for edit-in-edit child rows - childTableId, not this view's own table
     async tryInsertChildQuery(childTableId: number | string, row: GenObj) {
       const childTable = Table.findOne({ id: childTableId })!;
       return await childTable.tryInsertRow(row, req.user || { role_id: 100 });

@@ -49,9 +49,7 @@ export function prepareBuildDirBase(buildDir: string, templateDir: string) {
  * @param pushEnabled include push-notification native deps
  * @param backgroundFetchEnabled include background-fetch native deps
  * @param pushSyncEnabled include push-sync native deps
- * @param includeNativeBuildTools also install CLI/asset/Cordova tools only the
- *   build machine runs (addPlatforms/buildApp) - false for a remote bundle,
- *   which only needs the packages the webpack build itself imports
+ * @param includeNativeBuildTools install CLI/asset/Cordova tools too - false for a remote bundle
  */
 export function installCapacitorDeps(
   buildDir: string,

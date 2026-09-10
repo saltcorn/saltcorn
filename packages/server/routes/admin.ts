@@ -2589,8 +2589,7 @@ const versFullfilled = (version: any, minMajVersion: any) => {
 // ids of open collapsible sections, from the ?open=id1,id2 query param
 const getOpenBuildSections = (req: Req): string[] => {
   const q = req.query.open;
-  // no "open" param at all (not even empty) - plain page load, default to
-  // the common config open; an explicit "?open=" means the user closed it
+  // no param at all -> default common config open; explicit "?open=" means closed
   if (typeof q !== "string") return ["commonSettingsContainerId"];
   return q.split(",").filter(Boolean);
 };

@@ -259,9 +259,7 @@ export class MobileBuilder {
 
       let resultCode: number | null;
       if (this.remoteSchemaUrl) {
-        // everything saltcorn-specific (schema, plugin bundles, site
-        // assets...) is prepared and zipped by the remote server itself -
-        // this machine only ever does Capacitor/native work
+        // saltcorn stuff is prepared/zipped remotely - only Capacitor/native work here
         await fetchRemoteAppBundle(
           this.buildDir,
           this.remoteSchemaUrl,

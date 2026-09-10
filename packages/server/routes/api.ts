@@ -979,7 +979,7 @@ router.get(
             args.push("--entryPointType", q.entryPointType);
           if (q.serverURL) args.push("--serverURL", q.serverURL);
           if (q.splashPage) args.push("--splashPage", q.splashPage);
-          // this request's own tenant, never client-supplied - avoids building another tenant's app
+          // server's own tenant, not client-supplied - avoids cross-tenant builds
           if (
             db.is_it_multi_tenant() &&
             db.getTenantSchema() !== db.connectObj.default_schema
@@ -1002,7 +1002,7 @@ router.get(
               q.pushSyncHeartbeatInterval
             );
           if (allowShareTo) args.push("--allowShareTo");
-          // async spawn - spawnSync would block the whole event loop for the build's duration
+          // async spawn - spawnSync would block the whole event loop
           const { status, stdout, stderr, spawnError } = await new Promise<{
             status: number | null;
             stdout: string;
