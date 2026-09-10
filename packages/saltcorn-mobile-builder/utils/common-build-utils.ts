@@ -1605,25 +1605,61 @@ export async function fetchRemoteAppBundle(
       String(options.pushSyncHeartbeatInterval)
     );
 
-  const res = await fetch(url.toString(), {
-    headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
-  });
-  if (!res.ok) {
-    // the server sends a JSON {error} body when it can, with the actual
-    // npm/webpack failure output - fall back to the bare status if not
-    let detail: string | undefined;
+  const headers: Record<string, string> = apiKey
+    ? { Authorization: `Bearer ${apiKey}` }
+    : {};
+  const readError = async (res: Response): Promise<string | undefined> => {
     try {
-      detail = ((await res.json()) as any)?.error;
-    } catch {}
+      return ((await res.json()) as any)?.error;
+    } catch {
+      return undefined;
+    }
+  };
+
+  // poll instead of one long request - some NAT/routers kill an idle connection
+  const startRes = await fetch(url.toString(), { method: "POST", headers });
+  if (!startRes.ok)
     throw new Error(
-      `Unable to fetch remote app bundle from ${url}: ${detail || `${res.status} ${res.statusText}`}`
+      `Unable to start remote app bundle build at ${url}: ${(await readError(startRes)) || `${startRes.status} ${startRes.statusText}`}`
     );
+  const { job_id } = (await startRes.json()) as { job_id: string };
+
+  // origin+pathname, not url.toString() - that still has the build options
+  const statusUrl = new URL(url.pathname + "/status", url.origin);
+  statusUrl.searchParams.set("job_id", job_id);
+  const POLL_DEADLINE = Date.now() + 30 * 60 * 1000;
+  while (true) {
+    if (Date.now() > POLL_DEADLINE)
+      throw new Error(
+        `Timed out waiting for the remote app bundle build to finish (job ${job_id})`
+      );
+    await new Promise((r) => setTimeout(r, 3000));
+    const statusRes = await fetch(statusUrl.toString(), { headers });
+    if (!statusRes.ok)
+      throw new Error(
+        `Unable to check remote app bundle build status at ${statusUrl}: ${statusRes.status} ${statusRes.statusText}`
+      );
+    const { status, error } = (await statusRes.json()) as {
+      status: "running" | "done" | "error";
+      error?: string;
+    };
+    if (status === "error")
+      throw new Error(`Unable to build remote app bundle: ${error}`);
+    if (status === "done") break;
   }
+
+  const resultUrl = new URL(url.pathname + "/result", url.origin);
+  resultUrl.searchParams.set("job_id", job_id);
+  const resultRes = await fetch(resultUrl.toString(), { headers });
+  if (!resultRes.ok)
+    throw new Error(
+      `Unable to fetch remote app bundle from ${resultUrl}: ${(await readError(resultRes)) || `${resultRes.status} ${resultRes.statusText}`}`
+    );
   // saved in buildDir (not just os.tmpdir()) so it's easy to find and
   // inspect alongside the rest of the build output; not part of the app
   // itself, so keeping it around here is harmless
   const tmpZip = join(buildDir, "remote-bundle.zip");
-  writeFileSync(tmpZip, Buffer.from(await res.arrayBuffer()));
+  writeFileSync(tmpZip, Buffer.from(await resultRes.arrayBuffer()));
   console.log(`Remote app bundle saved to ${tmpZip}`);
   await extractZip(tmpZip, join(buildDir, "www"));
 }

@@ -37,6 +37,7 @@ import { getSafeSaltcornCmd } from "@saltcorn/data/utils";
 import { spawn } from "child_process";
 import { tmpdir } from "os";
 import fs from "fs";
+import crypto from "crypto";
 
 import {
   readState,
@@ -389,6 +390,165 @@ function validateNumberMin(value: any, min: any) {
   if (value < min) return false;
   return true;
 }
+
+type BuildBundleJob = {
+  status: "running" | "done" | "error";
+  tmpZip: string;
+  error?: string;
+};
+// in-memory only - a server restart just means the build machine starts a fresh job
+const buildBundleJobs = new Map<string, BuildBundleJob>();
+const BUILD_BUNDLE_JOB_TTL_MS = 30 * 60 * 1000;
+const cleanupBuildBundleJob = (jobId: string) => {
+  const job = buildBundleJobs.get(jobId);
+  if (job) fs.rmSync(job.tmpZip, { force: true });
+  buildBundleJobs.delete(jobId);
+};
+
+// shared bearer-auth + admin-role check for the three build-bundle routes below
+const withAdminBearer =
+  (handler: (req: Req, res: Res) => Promise<void>) =>
+  error_catcher(async (req: Req, res: Res, next: any) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err: any, user: any, info: any) {
+        const authUser = req.user || user;
+        if (!authUser || authUser.role_id !== 1) {
+          res.status(401).json({ error: req.__("Not authorized") });
+          return;
+        }
+        await handler(req, res);
+      }
+    )(req, res, next);
+  });
+
+/**
+ * Admin-only: starts a background build; poll .../status then fetch .../result.
+ * Registered before /:tableName below, or that would shadow it as a table lookup.
+ * @name post/mobile-app/build-bundle
+ * @function
+ * @memberof module:routes/api~apiRouter
+ */
+router.post(
+  "/mobile-app/build-bundle",
+  withAdminBearer(async (req: Req, res: Res) => {
+    const asList = (q: any): string[] | undefined =>
+      Array.isArray(q) ? q : typeof q === "string" ? q.split(",") : undefined;
+    const includedPlugins = asList(req.query.includedPlugins);
+    const platforms = asList(req.query.platforms);
+    const synchedTables = asList(req.query.synchedTables);
+    const q = req.query as Record<string, string | undefined>;
+    // this server's own triggers, not the build machine's
+    const receiveShareTriggers = Trigger.find({
+      when_trigger: "ReceiveMobileShareData",
+    })!;
+    const allowShareTo = receiveShareTriggers.length > 0;
+
+    const jobId = crypto.randomUUID();
+    // shells out to dodge a circular import on mobile-builder
+    const tmpZip = path.join(tmpdir(), `sc-mobile-build-bundle-${jobId}.zip`);
+    buildBundleJobs.set(jobId, { status: "running", tmpZip });
+    res.json({ job_id: jobId });
+
+    const args = ["build-app", "--remoteBundleOutput", tmpZip];
+    if (includedPlugins?.length)
+      args.push("--includedPlugins", ...includedPlugins);
+    if (platforms?.length) args.push("--platforms", ...platforms);
+    if (synchedTables?.length) args.push("--synchedTables", ...synchedTables);
+    if (q.entryPoint) args.push("--entryPoint", q.entryPoint);
+    if (q.entryPointType) args.push("--entryPointType", q.entryPointType);
+    if (q.serverURL) args.push("--serverURL", q.serverURL);
+    if (q.splashPage) args.push("--splashPage", q.splashPage);
+    // server's own tenant, not client-supplied - avoids cross-tenant builds
+    if (
+      db.is_it_multi_tenant() &&
+      db.getTenantSchema() !== db.connectObj.default_schema
+    )
+      args.push("--tenantAppName", db.getTenantSchema());
+    if (q.buildType) args.push("--buildType", q.buildType);
+    if (q.autoPublicLogin) args.push("--autoPublicLogin", q.autoPublicLogin);
+    if (q.showContinueAsPublicUser === "true")
+      args.push("--showContinueAsPublicUser");
+    if (q.allowOfflineMode)
+      args.push("--allowOfflineMode", q.allowOfflineMode);
+    if (q.syncOnReconnect === "true") args.push("--syncOnReconnect");
+    if (q.syncOnAppResume === "true") args.push("--syncOnAppResume");
+    if (q.pushSync === "true") args.push("--pushSync");
+    if (q.syncInterval) args.push("--syncInterval", q.syncInterval);
+    if (q.pushSyncHeartbeatInterval)
+      args.push("--pushSyncHeartbeatInterval", q.pushSyncHeartbeatInterval);
+    if (allowShareTo) args.push("--allowShareTo");
+
+    // response is already sent - this runs in the background
+    const child = spawn(getSafeSaltcornCmd(), args, {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (d) => (stdout += d));
+    child.stderr.on("data", (d) => (stderr += d));
+    const finish = (status: number | null, spawnError?: Error) => {
+      const job = buildBundleJobs.get(jobId);
+      if (!job) return; // result already collected, or expired
+      if (status !== 0 || spawnError) {
+        // the useful part could be in either stream
+        const detail =
+          [stdout, stderr, spawnError?.message].filter(Boolean).join("\n") ||
+          `exit code ${status}`;
+        job.status = "error";
+        job.error = `build-app --remoteBundleOutput failed:\n${detail}`;
+      } else job.status = "done";
+      setTimeout(() => cleanupBuildBundleJob(jobId), BUILD_BUNDLE_JOB_TTL_MS);
+    };
+    child.on("error", (spawnError) => finish(null, spawnError));
+    child.on("close", (status) => finish(status));
+  })
+);
+
+/**
+ * Admin-only: poll for a build-bundle job started via POST .../build-bundle.
+ * @name get/mobile-app/build-bundle/status
+ * @function
+ * @memberof module:routes/api~apiRouter
+ */
+router.get(
+  "/mobile-app/build-bundle/status",
+  withAdminBearer(async (req: Req, res: Res) => {
+    const job = buildBundleJobs.get(req.query.job_id as string);
+    if (!job) {
+      res.status(404).json({ error: "Unknown or expired build job" });
+      return;
+    }
+    res.json({ status: job.status, error: job.error });
+  })
+);
+
+/**
+ * Admin-only: fetch the finished zip for a build-bundle job. Deletes the
+ * job once served.
+ * @name get/mobile-app/build-bundle/result
+ * @function
+ * @memberof module:routes/api~apiRouter
+ */
+router.get(
+  "/mobile-app/build-bundle/result",
+  withAdminBearer(async (req: Req, res: Res) => {
+    const jobId = req.query.job_id as string;
+    const job = buildBundleJobs.get(jobId);
+    if (!job || job.status !== "done") {
+      res.status(409).json({ error: "Build not finished" });
+      return;
+    }
+    res.set("Content-Type", "application/zip");
+    res.set(
+      "Content-Disposition",
+      `attachment; filename="mobile-build-bundle.zip"`
+    );
+    res.send(fs.readFileSync(job.tmpZip));
+    cleanupBuildBundleJob(jobId);
+  })
+);
 
 router.get(
   "/:tableName/",
@@ -927,124 +1087,6 @@ router.delete(
         } else {
           getState()!.log(3, `API DELETE ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
-        }
-      }
-    )(req, res, next);
-  })
-);
-
-/**
- * Admin-only: everything a build machine needs to build the mobile app.
- * @name get/mobile-app/build-bundle
- * @function
- * @memberof module:routes/api~apiRouter
- */
-router.get(
-  "/mobile-app/build-bundle",
-  error_catcher(async (req: Req, res: Res, next: any) => {
-    await passport.authenticate(
-      "api-bearer",
-      { session: false },
-      async function (err: any, user: any, info: any) {
-        const authUser = req.user || user;
-        if (!authUser || authUser.role_id !== 1) {
-          res.status(401).json({ error: req.__("Not authorized") });
-          return;
-        }
-        const asList = (q: any): string[] | undefined =>
-          Array.isArray(q) ? q : typeof q === "string" ? q.split(",") : undefined;
-        const includedPlugins = asList(req.query.includedPlugins);
-        const platforms = asList(req.query.platforms);
-        const synchedTables = asList(req.query.synchedTables);
-        const q = req.query as Record<string, string | undefined>;
-        // this server's own triggers, not the build machine's
-        const receiveShareTriggers = Trigger.find({
-          when_trigger: "ReceiveMobileShareData",
-        })!;
-        const allowShareTo = receiveShareTriggers.length > 0;
-        // shells out to dodge a circular import on mobile-builder
-        const tmpZip = path.join(
-          tmpdir(),
-          `sc-mobile-build-bundle-${Date.now()}.zip`
-        );
-        try {
-          const args = ["build-app", "--remoteBundleOutput", tmpZip];
-          if (includedPlugins?.length)
-            args.push("--includedPlugins", ...includedPlugins);
-          if (platforms?.length) args.push("--platforms", ...platforms);
-          if (synchedTables?.length)
-            args.push("--synchedTables", ...synchedTables);
-          if (q.entryPoint) args.push("--entryPoint", q.entryPoint);
-          if (q.entryPointType)
-            args.push("--entryPointType", q.entryPointType);
-          if (q.serverURL) args.push("--serverURL", q.serverURL);
-          if (q.splashPage) args.push("--splashPage", q.splashPage);
-          // server's own tenant, not client-supplied - avoids cross-tenant builds
-          if (
-            db.is_it_multi_tenant() &&
-            db.getTenantSchema() !== db.connectObj.default_schema
-          )
-            args.push("--tenantAppName", db.getTenantSchema());
-          if (q.buildType) args.push("--buildType", q.buildType);
-          if (q.autoPublicLogin)
-            args.push("--autoPublicLogin", q.autoPublicLogin);
-          if (q.showContinueAsPublicUser === "true")
-            args.push("--showContinueAsPublicUser");
-          if (q.allowOfflineMode)
-            args.push("--allowOfflineMode", q.allowOfflineMode);
-          if (q.syncOnReconnect === "true") args.push("--syncOnReconnect");
-          if (q.syncOnAppResume === "true") args.push("--syncOnAppResume");
-          if (q.pushSync === "true") args.push("--pushSync");
-          if (q.syncInterval) args.push("--syncInterval", q.syncInterval);
-          if (q.pushSyncHeartbeatInterval)
-            args.push(
-              "--pushSyncHeartbeatInterval",
-              q.pushSyncHeartbeatInterval
-            );
-          if (allowShareTo) args.push("--allowShareTo");
-          // async spawn - spawnSync would block the whole event loop
-          const { status, stdout, stderr, spawnError } = await new Promise<{
-            status: number | null;
-            stdout: string;
-            stderr: string;
-            spawnError?: Error;
-          }>((resolve) => {
-            const child = spawn(getSafeSaltcornCmd(), args, {
-              stdio: ["ignore", "pipe", "pipe"],
-            });
-            let stdout = "";
-            let stderr = "";
-            child.stdout.on("data", (d) => (stdout += d));
-            child.stderr.on("data", (d) => (stderr += d));
-            child.on("error", (spawnError) =>
-              resolve({ status: null, stdout, stderr, spawnError })
-            );
-            child.on("close", (status) =>
-              resolve({ status, stdout, stderr })
-            );
-          });
-          // unawaited callback, so a throw here just drops the connection
-          if (status !== 0 || spawnError) {
-            // the useful part could be in either stream
-            const detail =
-              [stdout, stderr, spawnError?.message]
-                .filter(Boolean)
-                .join("\n") || `exit code ${status}`;
-            res.status(500).json({
-              error: `build-app --remoteBundleOutput failed:\n${detail}`,
-            });
-            return;
-          }
-          res.set("Content-Type", "application/zip");
-          res.set(
-            "Content-Disposition",
-            `attachment; filename="mobile-build-bundle.zip"`
-          );
-          res.send(fs.readFileSync(tmpZip));
-        } catch (e: any) {
-          res.status(500).json({ error: e.message });
-        } finally {
-          fs.rmSync(tmpZip, { force: true });
         }
       }
     )(req, res, next);
