@@ -37,6 +37,7 @@ import { getSafeSaltcornCmd } from "@saltcorn/data/utils";
 import { spawn } from "child_process";
 import { tmpdir } from "os";
 import fs from "fs";
+import crypto from "crypto";
 
 import {
   readState,
@@ -389,6 +390,203 @@ function validateNumberMin(value: any, min: any) {
   if (value < min) return false;
   return true;
 }
+
+// on disk, per-tenant dir: visible to all workers, safe from cross-tenant access
+const BUILD_BUNDLE_JOB_TTL_MS = 30 * 60 * 1000;
+const BUILD_BUNDLE_JOBS_ROOT = path.join(tmpdir(), "sc-mobile-build-jobs");
+const safeTenantDirName = (tenant: string) =>
+  tenant.replace(/[^a-zA-Z0-9_-]/g, "_");
+const buildBundleJobPaths = (tenant: string, jobId: string) => {
+  const dir = path.join(BUILD_BUNDLE_JOBS_ROOT, safeTenantDirName(tenant));
+  return {
+    zip: path.join(dir, `${jobId}.zip`),
+    // build-app writes here first - "zip" only appears once it's renamed
+    // into place below, so existsSync(zip) can't observe a half-written file
+    part: path.join(dir, `${jobId}.zip.part`),
+    error: path.join(dir, `${jobId}.error.txt`),
+  };
+};
+// any worker can run this - deleting an already-deleted file is a no-op
+const sweepBuildBundleJobs = async () => {
+  if (!fs.existsSync(BUILD_BUNDLE_JOBS_ROOT)) return;
+  for (const tenantDir of await fs.promises.readdir(BUILD_BUNDLE_JOBS_ROOT)) {
+    const dir = path.join(BUILD_BUNDLE_JOBS_ROOT, tenantDir);
+    for (const file of await fs.promises.readdir(dir)) {
+      const full = path.join(dir, file);
+      try {
+        const { mtimeMs } = await fs.promises.stat(full);
+        if (Date.now() - mtimeMs > BUILD_BUNDLE_JOB_TTL_MS)
+          await fs.promises.rm(full, { force: true });
+      } catch {}
+    }
+  }
+};
+// .catch, not awaited - an unhandled rejection here would crash the process
+setInterval(() => sweepBuildBundleJobs().catch(() => {}), 10 * 60 * 1000).unref?.();
+
+// shared bearer-auth + admin-role check for the three build-bundle routes below
+const withAdminBearer =
+  (handler: (req: Req, res: Res) => Promise<void>) =>
+  error_catcher(async (req: Req, res: Res, next: any) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err: any, user: any, info: any) {
+        const authUser = req.user || user;
+        if (!authUser || authUser.role_id !== 1) {
+          res.status(401).json({ error: req.__("Not authorized") });
+          return;
+        }
+        await handler(req, res);
+      }
+    )(req, res, next);
+  });
+
+/**
+ * Admin-only: starts a background build; poll .../status then fetch .../result.
+ * Must stay above /:tableName routes below (they'd shadow it).
+ * @name post/mobile-app/build-bundle
+ * @function
+ * @memberof module:routes/api~apiRouter
+ */
+router.post(
+  "/mobile-app/build-bundle",
+  withAdminBearer(async (req: Req, res: Res) => {
+    const asList = (q: any): string[] | undefined =>
+      Array.isArray(q) ? q : typeof q === "string" ? q.split(",") : undefined;
+    const includedPlugins = asList(req.query.includedPlugins);
+    const platforms = asList(req.query.platforms);
+    const synchedTables = asList(req.query.synchedTables);
+    const q = req.query as Record<string, string | undefined>;
+    // this server's own triggers, not the build machine's
+    const receiveShareTriggers = Trigger.find({
+      when_trigger: "ReceiveMobileShareData",
+    })!;
+    const allowShareTo = receiveShareTriggers.length > 0;
+
+    const tenant = db.getTenantSchema(); // capture now, not in the callbacks below
+    const jobId = crypto.randomUUID();
+    const { zip: tmpZip, part: tmpZipPart, error: tmpError } =
+      buildBundleJobPaths(tenant, jobId);
+    await fs.promises.mkdir(path.dirname(tmpZip), { recursive: true });
+    res.json({ job_id: jobId });
+
+    const args = ["build-app", "--remoteBundleOutput", tmpZipPart];
+    if (includedPlugins?.length)
+      args.push("--includedPlugins", ...includedPlugins);
+    if (platforms?.length) args.push("--platforms", ...platforms);
+    if (synchedTables?.length) args.push("--synchedTables", ...synchedTables);
+    if (q.entryPoint) args.push("--entryPoint", q.entryPoint);
+    if (q.entryPointType) args.push("--entryPointType", q.entryPointType);
+    if (q.serverURL) args.push("--serverURL", q.serverURL);
+    if (q.splashPage) args.push("--splashPage", q.splashPage);
+    // server's own tenant, not client-supplied - avoids cross-tenant builds
+    if (db.is_it_multi_tenant() && tenant !== db.connectObj.default_schema)
+      args.push("--tenantAppName", tenant);
+    if (q.buildType) args.push("--buildType", q.buildType);
+    if (q.autoPublicLogin) args.push("--autoPublicLogin", q.autoPublicLogin);
+    if (q.showContinueAsPublicUser === "true")
+      args.push("--showContinueAsPublicUser");
+    if (q.allowOfflineMode)
+      args.push("--allowOfflineMode", q.allowOfflineMode);
+    if (q.syncOnReconnect === "true") args.push("--syncOnReconnect");
+    if (q.syncOnAppResume === "true") args.push("--syncOnAppResume");
+    if (q.pushSync === "true") args.push("--pushSync");
+    if (q.syncInterval) args.push("--syncInterval", q.syncInterval);
+    if (q.pushSyncHeartbeatInterval)
+      args.push("--pushSyncHeartbeatInterval", q.pushSyncHeartbeatInterval);
+    if (allowShareTo) args.push("--allowShareTo");
+
+    // response is already sent - this runs in the background
+    const child = spawn(getSafeSaltcornCmd(), args, {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (d) => (stdout += d));
+    child.stderr.on("data", (d) => (stderr += d));
+    const finish = async (status: number | null, spawnError?: Error) => {
+      if (status !== 0 || spawnError) {
+        // the useful part could be in either stream
+        const detail =
+          [stdout, stderr, spawnError?.message].filter(Boolean).join("\n") ||
+          `exit code ${status}`;
+        await fs.promises.writeFile(
+          tmpError,
+          `build-app --remoteBundleOutput failed:\n${detail}`
+        );
+        await fs.promises.rm(tmpZipPart, { force: true });
+      } else {
+        // atomic: existsSync(tmpZip) can now only see a fully-written file
+        await fs.promises.rename(tmpZipPart, tmpZip);
+      }
+    };
+    // not awaited - these are event listeners; .catch to avoid an unhandled rejection
+    child.on("error", (spawnError) => finish(null, spawnError).catch(() => {}));
+    child.on("close", (status) => finish(status).catch(() => {}));
+  })
+);
+
+/**
+ * Admin-only: poll for a build-bundle job started via POST .../build-bundle.
+ * @name get/mobile-app/build-bundle/status
+ * @function
+ * @memberof module:routes/api~apiRouter
+ */
+router.get(
+  "/mobile-app/build-bundle/status",
+  withAdminBearer(async (req: Req, res: Res) => {
+    const { zip, error } = buildBundleJobPaths(
+      db.getTenantSchema(),
+      req.query.job_id as string
+    );
+    if (fs.existsSync(zip)) res.json({ status: "done" });
+    else if (fs.existsSync(error))
+      res.json({
+        status: "error",
+        error: await fs.promises.readFile(error, "utf8"),
+      });
+    // unknown job_id also lands here - client's poll deadline is the backstop
+    else res.json({ status: "running" });
+  })
+);
+
+/**
+ * Admin-only: fetch the finished zip for a build-bundle job. Deletes the
+ * job's files once served.
+ * @name get/mobile-app/build-bundle/result
+ * @function
+ * @memberof module:routes/api~apiRouter
+ */
+router.get(
+  "/mobile-app/build-bundle/result",
+  withAdminBearer(async (req: Req, res: Res) => {
+    const { zip, error } = buildBundleJobPaths(
+      db.getTenantSchema(),
+      req.query.job_id as string
+    );
+    if (!fs.existsSync(zip)) {
+      res.status(409).json({
+        error: fs.existsSync(error)
+          ? await fs.promises.readFile(error, "utf8")
+          : "Build not finished",
+      });
+      return;
+    }
+    res.set("Content-Type", "application/zip");
+    res.set(
+      "Content-Disposition",
+      `attachment; filename="mobile-build-bundle.zip"`
+    );
+    // stream instead of readFileSync - the bundle can be large and would block the event loop
+    fs.createReadStream(zip)
+      .pipe(res as any)
+      .on("close", () => {
+        fs.promises.rm(zip, { force: true }).catch(() => {});
+        fs.promises.rm(error, { force: true }).catch(() => {});
+      });
+  })
+);
 
 router.get(
   "/:tableName/",
@@ -927,124 +1125,6 @@ router.delete(
         } else {
           getState()!.log(3, `API DELETE ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
-        }
-      }
-    )(req, res, next);
-  })
-);
-
-/**
- * Admin-only: everything a build machine needs to build the mobile app.
- * @name get/mobile-app/build-bundle
- * @function
- * @memberof module:routes/api~apiRouter
- */
-router.get(
-  "/mobile-app/build-bundle",
-  error_catcher(async (req: Req, res: Res, next: any) => {
-    await passport.authenticate(
-      "api-bearer",
-      { session: false },
-      async function (err: any, user: any, info: any) {
-        const authUser = req.user || user;
-        if (!authUser || authUser.role_id !== 1) {
-          res.status(401).json({ error: req.__("Not authorized") });
-          return;
-        }
-        const asList = (q: any): string[] | undefined =>
-          Array.isArray(q) ? q : typeof q === "string" ? q.split(",") : undefined;
-        const includedPlugins = asList(req.query.includedPlugins);
-        const platforms = asList(req.query.platforms);
-        const synchedTables = asList(req.query.synchedTables);
-        const q = req.query as Record<string, string | undefined>;
-        // this server's own triggers, not the build machine's
-        const receiveShareTriggers = Trigger.find({
-          when_trigger: "ReceiveMobileShareData",
-        })!;
-        const allowShareTo = receiveShareTriggers.length > 0;
-        // shells out to dodge a circular import on mobile-builder
-        const tmpZip = path.join(
-          tmpdir(),
-          `sc-mobile-build-bundle-${Date.now()}.zip`
-        );
-        try {
-          const args = ["build-app", "--remoteBundleOutput", tmpZip];
-          if (includedPlugins?.length)
-            args.push("--includedPlugins", ...includedPlugins);
-          if (platforms?.length) args.push("--platforms", ...platforms);
-          if (synchedTables?.length)
-            args.push("--synchedTables", ...synchedTables);
-          if (q.entryPoint) args.push("--entryPoint", q.entryPoint);
-          if (q.entryPointType)
-            args.push("--entryPointType", q.entryPointType);
-          if (q.serverURL) args.push("--serverURL", q.serverURL);
-          if (q.splashPage) args.push("--splashPage", q.splashPage);
-          // this request's own tenant, never client-supplied - avoids building another tenant's app
-          if (
-            db.is_it_multi_tenant() &&
-            db.getTenantSchema() !== db.connectObj.default_schema
-          )
-            args.push("--tenantAppName", db.getTenantSchema());
-          if (q.buildType) args.push("--buildType", q.buildType);
-          if (q.autoPublicLogin)
-            args.push("--autoPublicLogin", q.autoPublicLogin);
-          if (q.showContinueAsPublicUser === "true")
-            args.push("--showContinueAsPublicUser");
-          if (q.allowOfflineMode)
-            args.push("--allowOfflineMode", q.allowOfflineMode);
-          if (q.syncOnReconnect === "true") args.push("--syncOnReconnect");
-          if (q.syncOnAppResume === "true") args.push("--syncOnAppResume");
-          if (q.pushSync === "true") args.push("--pushSync");
-          if (q.syncInterval) args.push("--syncInterval", q.syncInterval);
-          if (q.pushSyncHeartbeatInterval)
-            args.push(
-              "--pushSyncHeartbeatInterval",
-              q.pushSyncHeartbeatInterval
-            );
-          if (allowShareTo) args.push("--allowShareTo");
-          // async spawn - spawnSync would block the whole event loop for the build's duration
-          const { status, stdout, stderr, spawnError } = await new Promise<{
-            status: number | null;
-            stdout: string;
-            stderr: string;
-            spawnError?: Error;
-          }>((resolve) => {
-            const child = spawn(getSafeSaltcornCmd(), args, {
-              stdio: ["ignore", "pipe", "pipe"],
-            });
-            let stdout = "";
-            let stderr = "";
-            child.stdout.on("data", (d) => (stdout += d));
-            child.stderr.on("data", (d) => (stderr += d));
-            child.on("error", (spawnError) =>
-              resolve({ status: null, stdout, stderr, spawnError })
-            );
-            child.on("close", (status) =>
-              resolve({ status, stdout, stderr })
-            );
-          });
-          // unawaited callback, so a throw here just drops the connection
-          if (status !== 0 || spawnError) {
-            // the useful part could be in either stream
-            const detail =
-              [stdout, stderr, spawnError?.message]
-                .filter(Boolean)
-                .join("\n") || `exit code ${status}`;
-            res.status(500).json({
-              error: `build-app --remoteBundleOutput failed:\n${detail}`,
-            });
-            return;
-          }
-          res.set("Content-Type", "application/zip");
-          res.set(
-            "Content-Disposition",
-            `attachment; filename="mobile-build-bundle.zip"`
-          );
-          res.send(fs.readFileSync(tmpZip));
-        } catch (e: any) {
-          res.status(500).json({ error: e.message });
-        } finally {
-          fs.rmSync(tmpZip, { force: true });
         }
       }
     )(req, res, next);

@@ -999,6 +999,8 @@ const runPost = async (
   {
     tryInsertQuery,
     tryUpdateQuery,
+    tryInsertChildQuery,
+    tryUpdateChildQuery,
     getRowQuery,
     saveFileQuery,
     saveFileFromContentsQuery,
@@ -1183,13 +1185,20 @@ const runPost = async (
               } Ajax=${!!req.xhr}`
             );
             if (childRow[childTable.pk_name]) {
-              const upd_res = await childTable.tryUpdateRow(
-                childRow,
-                childRow[childTable.pk_name],
-                req.user || { role_id: 100 },
-                undefined,
-                { req }
-              );
+              // not childTable directly - proxies remotely, like the parent row
+              const upd_res = tryUpdateChildQuery
+                ? await tryUpdateChildQuery(
+                    childTable.id,
+                    childRow,
+                    childRow[childTable.pk_name]
+                  )
+                : await childTable.tryUpdateRow(
+                    childRow,
+                    childRow[childTable.pk_name],
+                    req.user || { role_id: 100 },
+                    undefined,
+                    { req }
+                  );
               if ((upd_res as any).error) {
                 await rollback();
 
@@ -1202,10 +1211,12 @@ const runPost = async (
                 return true;
               }
             } else {
-              const ins_res = await childTable.tryInsertRow(
-                childRow,
-                req.user || { role_id: 100 }
-              );
+              const ins_res = tryInsertChildQuery
+                ? await tryInsertChildQuery(childTable.id, childRow)
+                : await childTable.tryInsertRow(
+                    childRow,
+                    req.user || { role_id: 100 }
+                  );
               if ((ins_res as any).error) {
                 await rollback();
                 getState()!.log(
@@ -2261,6 +2272,25 @@ export default {
     async tryUpdateQuery(row: GenObj, id: any) {
       const table = Table.findOne(table_id)!;
       return await tryUpdateImpl(row, id, table, req);
+    },
+    // for edit-in-edit child rows - childTableId, not this view's own table
+    async tryInsertChildQuery(childTableId: number | string, row: GenObj) {
+      const childTable = Table.findOne({ id: childTableId })!;
+      return await childTable.tryInsertRow(row, req.user || { role_id: 100 });
+    },
+    async tryUpdateChildQuery(
+      childTableId: number | string,
+      row: GenObj,
+      id: any
+    ) {
+      const childTable = Table.findOne({ id: childTableId })!;
+      return await childTable.tryUpdateRow(
+        row,
+        id,
+        req.user || { role_id: 100 },
+        undefined,
+        { req }
+      );
     },
     async saveFileQuery(
       fieldVal: string,
