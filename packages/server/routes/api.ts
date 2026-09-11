@@ -391,19 +391,38 @@ function validateNumberMin(value: any, min: any) {
   return true;
 }
 
-type BuildBundleJob = {
-  status: "running" | "done" | "error";
-  tmpZip: string;
-  error?: string;
-};
-// in-memory only - a server restart just means the build machine starts a fresh job
-const buildBundleJobs = new Map<string, BuildBundleJob>();
+// on disk, per-tenant dir: visible to all workers, safe from cross-tenant access
 const BUILD_BUNDLE_JOB_TTL_MS = 30 * 60 * 1000;
-const cleanupBuildBundleJob = (jobId: string) => {
-  const job = buildBundleJobs.get(jobId);
-  if (job) fs.rmSync(job.tmpZip, { force: true });
-  buildBundleJobs.delete(jobId);
+const BUILD_BUNDLE_JOBS_ROOT = path.join(tmpdir(), "sc-mobile-build-jobs");
+const safeTenantDirName = (tenant: string) =>
+  tenant.replace(/[^a-zA-Z0-9_-]/g, "_");
+const buildBundleJobPaths = (tenant: string, jobId: string) => {
+  const dir = path.join(BUILD_BUNDLE_JOBS_ROOT, safeTenantDirName(tenant));
+  return {
+    zip: path.join(dir, `${jobId}.zip`),
+    // build-app writes here first - "zip" only appears once it's renamed
+    // into place below, so existsSync(zip) can't observe a half-written file
+    part: path.join(dir, `${jobId}.zip.part`),
+    error: path.join(dir, `${jobId}.error.txt`),
+  };
 };
+// any worker can run this - deleting an already-deleted file is a no-op
+const sweepBuildBundleJobs = async () => {
+  if (!fs.existsSync(BUILD_BUNDLE_JOBS_ROOT)) return;
+  for (const tenantDir of await fs.promises.readdir(BUILD_BUNDLE_JOBS_ROOT)) {
+    const dir = path.join(BUILD_BUNDLE_JOBS_ROOT, tenantDir);
+    for (const file of await fs.promises.readdir(dir)) {
+      const full = path.join(dir, file);
+      try {
+        const { mtimeMs } = await fs.promises.stat(full);
+        if (Date.now() - mtimeMs > BUILD_BUNDLE_JOB_TTL_MS)
+          await fs.promises.rm(full, { force: true });
+      } catch {}
+    }
+  }
+};
+// .catch, not awaited - an unhandled rejection here would crash the process
+setInterval(() => sweepBuildBundleJobs().catch(() => {}), 10 * 60 * 1000).unref?.();
 
 // shared bearer-auth + admin-role check for the three build-bundle routes below
 const withAdminBearer =
@@ -425,7 +444,7 @@ const withAdminBearer =
 
 /**
  * Admin-only: starts a background build; poll .../status then fetch .../result.
- * Registered before /:tableName below, or that would shadow it as a table lookup.
+ * Must stay above /:tableName routes below (they'd shadow it).
  * @name post/mobile-app/build-bundle
  * @function
  * @memberof module:routes/api~apiRouter
@@ -445,13 +464,14 @@ router.post(
     })!;
     const allowShareTo = receiveShareTriggers.length > 0;
 
+    const tenant = db.getTenantSchema(); // capture now, not in the callbacks below
     const jobId = crypto.randomUUID();
-    // shells out to dodge a circular import on mobile-builder
-    const tmpZip = path.join(tmpdir(), `sc-mobile-build-bundle-${jobId}.zip`);
-    buildBundleJobs.set(jobId, { status: "running", tmpZip });
+    const { zip: tmpZip, part: tmpZipPart, error: tmpError } =
+      buildBundleJobPaths(tenant, jobId);
+    await fs.promises.mkdir(path.dirname(tmpZip), { recursive: true });
     res.json({ job_id: jobId });
 
-    const args = ["build-app", "--remoteBundleOutput", tmpZip];
+    const args = ["build-app", "--remoteBundleOutput", tmpZipPart];
     if (includedPlugins?.length)
       args.push("--includedPlugins", ...includedPlugins);
     if (platforms?.length) args.push("--platforms", ...platforms);
@@ -461,11 +481,8 @@ router.post(
     if (q.serverURL) args.push("--serverURL", q.serverURL);
     if (q.splashPage) args.push("--splashPage", q.splashPage);
     // server's own tenant, not client-supplied - avoids cross-tenant builds
-    if (
-      db.is_it_multi_tenant() &&
-      db.getTenantSchema() !== db.connectObj.default_schema
-    )
-      args.push("--tenantAppName", db.getTenantSchema());
+    if (db.is_it_multi_tenant() && tenant !== db.connectObj.default_schema)
+      args.push("--tenantAppName", tenant);
     if (q.buildType) args.push("--buildType", q.buildType);
     if (q.autoPublicLogin) args.push("--autoPublicLogin", q.autoPublicLogin);
     if (q.showContinueAsPublicUser === "true")
@@ -488,21 +505,25 @@ router.post(
     let stderr = "";
     child.stdout.on("data", (d) => (stdout += d));
     child.stderr.on("data", (d) => (stderr += d));
-    const finish = (status: number | null, spawnError?: Error) => {
-      const job = buildBundleJobs.get(jobId);
-      if (!job) return; // result already collected, or expired
+    const finish = async (status: number | null, spawnError?: Error) => {
       if (status !== 0 || spawnError) {
         // the useful part could be in either stream
         const detail =
           [stdout, stderr, spawnError?.message].filter(Boolean).join("\n") ||
           `exit code ${status}`;
-        job.status = "error";
-        job.error = `build-app --remoteBundleOutput failed:\n${detail}`;
-      } else job.status = "done";
-      setTimeout(() => cleanupBuildBundleJob(jobId), BUILD_BUNDLE_JOB_TTL_MS);
+        await fs.promises.writeFile(
+          tmpError,
+          `build-app --remoteBundleOutput failed:\n${detail}`
+        );
+        await fs.promises.rm(tmpZipPart, { force: true });
+      } else {
+        // atomic: existsSync(tmpZip) can now only see a fully-written file
+        await fs.promises.rename(tmpZipPart, tmpZip);
+      }
     };
-    child.on("error", (spawnError) => finish(null, spawnError));
-    child.on("close", (status) => finish(status));
+    // not awaited - these are event listeners; .catch to avoid an unhandled rejection
+    child.on("error", (spawnError) => finish(null, spawnError).catch(() => {}));
+    child.on("close", (status) => finish(status).catch(() => {}));
   })
 );
 
@@ -515,18 +536,24 @@ router.post(
 router.get(
   "/mobile-app/build-bundle/status",
   withAdminBearer(async (req: Req, res: Res) => {
-    const job = buildBundleJobs.get(req.query.job_id as string);
-    if (!job) {
-      res.status(404).json({ error: "Unknown or expired build job" });
-      return;
-    }
-    res.json({ status: job.status, error: job.error });
+    const { zip, error } = buildBundleJobPaths(
+      db.getTenantSchema(),
+      req.query.job_id as string
+    );
+    if (fs.existsSync(zip)) res.json({ status: "done" });
+    else if (fs.existsSync(error))
+      res.json({
+        status: "error",
+        error: await fs.promises.readFile(error, "utf8"),
+      });
+    // unknown job_id also lands here - client's poll deadline is the backstop
+    else res.json({ status: "running" });
   })
 );
 
 /**
  * Admin-only: fetch the finished zip for a build-bundle job. Deletes the
- * job once served.
+ * job's files once served.
  * @name get/mobile-app/build-bundle/result
  * @function
  * @memberof module:routes/api~apiRouter
@@ -534,10 +561,16 @@ router.get(
 router.get(
   "/mobile-app/build-bundle/result",
   withAdminBearer(async (req: Req, res: Res) => {
-    const jobId = req.query.job_id as string;
-    const job = buildBundleJobs.get(jobId);
-    if (!job || job.status !== "done") {
-      res.status(409).json({ error: "Build not finished" });
+    const { zip, error } = buildBundleJobPaths(
+      db.getTenantSchema(),
+      req.query.job_id as string
+    );
+    if (!fs.existsSync(zip)) {
+      res.status(409).json({
+        error: fs.existsSync(error)
+          ? await fs.promises.readFile(error, "utf8")
+          : "Build not finished",
+      });
       return;
     }
     res.set("Content-Type", "application/zip");
@@ -545,8 +578,13 @@ router.get(
       "Content-Disposition",
       `attachment; filename="mobile-build-bundle.zip"`
     );
-    res.send(fs.readFileSync(job.tmpZip));
-    cleanupBuildBundleJob(jobId);
+    // stream instead of readFileSync - the bundle can be large and would block the event loop
+    fs.createReadStream(zip)
+      .pipe(res as any)
+      .on("close", () => {
+        fs.promises.rm(zip, { force: true }).catch(() => {});
+        fs.promises.rm(error, { force: true }).catch(() => {});
+      });
   })
 );
 

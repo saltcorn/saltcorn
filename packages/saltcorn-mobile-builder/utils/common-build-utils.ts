@@ -1616,6 +1616,7 @@ export async function fetchRemoteAppBundle(
     }
   };
 
+  console.log(`Fetching remote app bundle from ${remoteSchemaUrl}...`);
   // poll instead of one long request - some NAT/routers kill an idle connection
   const startRes = await fetch(url.toString(), { method: "POST", headers });
   if (!startRes.ok)
@@ -1662,6 +1663,7 @@ export async function fetchRemoteAppBundle(
   writeFileSync(tmpZip, Buffer.from(await resultRes.arrayBuffer()));
   console.log(`Remote app bundle saved to ${tmpZip}`);
   await extractZip(tmpZip, join(buildDir, "www"));
+  console.log("Remote app bundle fetch finished");
 }
 
 /**

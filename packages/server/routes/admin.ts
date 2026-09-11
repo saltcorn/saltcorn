@@ -2487,6 +2487,12 @@ const buildDialogScript = (capacitorBuilderAvailable: any, isSbadmin2: any) =>
   else
     console.error('remoteSchemaUrlInput not found');
 
+  const remoteApiKeyInput = document.getElementById('remoteApiKeyInputId');
+  if (remoteApiKeyInput)
+    remoteApiKeyInput.addEventListener('change', fetch_remote_schema_info);
+  else
+    console.error('remoteApiKeyInput not found');
+
   const collapseSectionIds = [
     'commonSettingsContainerId',
     'buildConfigFormGroupId',
