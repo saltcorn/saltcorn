@@ -424,7 +424,7 @@ export const update = async (
     const whereStrs: string[] = [];
     Object.keys(id).forEach((k) => {
       valList.push(id[k]);
-      whereStrs.push(`"${k}"=$${n}`);
+      whereStrs.push(`"${sqlsanitize(k)}"=$${n}`);
       n += 1;
     });
     whereS = whereStrs.join(" and ");
