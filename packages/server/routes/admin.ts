@@ -5295,6 +5295,11 @@ router.post(
         const oldCfg = getState()!.getConfig("mobile_builder_settings", {});
         newCfg.remoteApiKey = oldCfg.remoteApiKey;
       }
+      // not form fields - fetch-remote-schema-info sets these; preserve them
+      // here or every unrelated auto-save (any field change) would wipe them
+      const oldCfgForSchema = getState()!.getConfig("mobile_builder_settings", {});
+      newCfg.remoteSchemaInfo = oldCfgForSchema.remoteSchemaInfo;
+      newCfg.remoteSchemaInfoUrl = oldCfgForSchema.remoteSchemaInfoUrl;
       const excludedPlugins = (await Plugin.find())
         .filter(
           (plugin: any) =>
