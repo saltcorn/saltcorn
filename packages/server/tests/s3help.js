@@ -13,7 +13,7 @@
  *
  *   docker run -d --name sc-minio -p 9000:9000 \
  *     -e MINIO_ROOT_USER=saltcorn -e MINIO_ROOT_PASSWORD=scsecretkey \
- *     minio/minio:RELEASE.2025-04-22T22-12-26Z server /data
+ *     quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z server /data
  *   SALTCORN_TEST_S3_ENDPOINT=localhost:9000 npx saltcorn run-tests server \
  *     -f tests/s3_storage.test.js
  *
