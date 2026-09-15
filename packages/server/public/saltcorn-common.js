@@ -130,9 +130,17 @@ function rep_del(e) {
 
 function reindex(element, oldix, newix) {
   $(element)
-    .find("input,textarea")
+    .find("input")
     .each(function () {
       $(this).attr("value", $(this).val());
+    });
+  $(element)
+    .find("textarea")
+    .each(function () {
+      // textarea's value is not attribute-backed, unlike input - the
+      // live value has to go into the child text node so it survives
+      // the html()/reparse below
+      $(this).text($(this).val());
     });
   $(element)
     .find("select")
