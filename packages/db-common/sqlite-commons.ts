@@ -238,6 +238,16 @@ export const slugify = (s: string): string =>
   s.toLowerCase().replace(/\s+/g, "-");
 
 /**
+ * Run work after the current transaction commits. withTransaction here is a
+ * pass-through holding no connection, so there is nothing to defer and f runs
+ * immediately. For pg compatibility.
+ * @param f work to run
+ */
+export const afterCommit = async (f: () => Promise<void>) => {
+  await f();
+};
+
+/**
  * simulate the pg transaction behavior with aborted flag
  * @param f code to run in transaction
  * @param onError error callback

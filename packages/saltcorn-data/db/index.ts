@@ -30,7 +30,6 @@ import { getConnectObject as getConnectObjectMobile } from "./connect_mobile.js"
 const reset = async (...args: any[]): Promise<void> =>
   (await import("./reset_schema.js")).default(...args);
 
-
 /** @type {any} */
 const connectObj = isNode() ? getConnectObject() : getConnectObjectMobile();
 
@@ -90,6 +89,9 @@ const dbExports: DbExportsType = {
   connectObj,
   isSQLite,
   is_node,
+  afterCommit: async (f: () => Promise<void>) => {
+    await f();
+  },
   ...dbModule,
   mkWhere: (q: Where) => mkWhere(q, isSQLite),
   getTenantSchemaPrefix,

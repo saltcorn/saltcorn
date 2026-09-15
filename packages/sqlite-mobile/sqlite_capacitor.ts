@@ -19,6 +19,7 @@ import {
   do_drop_index,
   slugify,
   withTransaction,
+  afterCommit,
   tryCatchInTransaction,
 } from "@saltcorn/db-common/sqlite-commons";
 import {
@@ -27,7 +28,7 @@ import {
   SQLiteDBConnection,
 } from "@capacitor-community/sqlite";
 
-export { slugify, withTransaction, tryCatchInTransaction };
+export { slugify, withTransaction, afterCommit, tryCatchInTransaction };
 
 declare let window: any;
 

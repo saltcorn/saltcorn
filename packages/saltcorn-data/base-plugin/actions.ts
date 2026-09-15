@@ -2433,6 +2433,7 @@ export default {
         "Weekly",
         "Daily",
         "Often",
+        "Cron",
         "Startup",
       ].includes(when_trigger)
         ? undefined

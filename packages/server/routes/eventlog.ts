@@ -8,6 +8,7 @@ import Router from "express-promise-router";
 import { isAdmin, error_catcher } from "./utils.js";
 import { getState } from "@saltcorn/data/db/state";
 import Trigger from "@saltcorn/data/models/trigger";
+import db from "@saltcorn/data/db";
 
 /**
  * @type {object}
@@ -54,7 +55,29 @@ const logSettingsForm = async (req: Req) => {
     t.setHours(t.getHours() + nhrs);
     return t;
   };
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const fields: any[] = [
+    // the scheduler is a single loop shared by all tenants, so its tick is
+    // only settable on the root tenant
+    ...(isRoot
+      ? [
+          {
+            input_type: "section_header",
+            label: req.__("Scheduler"),
+          },
+          {
+            name: "scheduler_tick_seconds",
+            label: req.__("Tick (seconds)"),
+            type: "Integer",
+            attributes: { min: 10 },
+            sublabel: req.__(
+              "How often the scheduler looks for work: the interval at which " +
+                "Often triggers run, and the finest resolution available to " +
+                "Cron triggers. Applies to every tenant."
+            ),
+          },
+        ]
+      : []),
     {
       input_type: "section_header",
       label: req.__("Periodic trigger timing (next event)"),
@@ -206,6 +229,9 @@ router.get(
     form.values.enable_dynamic_updates = getState()!.getConfig(
       "enable_dynamic_updates",
       true
+    );
+    form.values.scheduler_tick_seconds = getState()!.getConfig(
+      "scheduler_tick_seconds"
     );
     ["error", "finished", "running", "waiting"].forEach((k: any) => {
       let cfgk = `delete_${k}_workflows_days`;
@@ -429,6 +455,12 @@ router.post(
         "enable_dynamic_updates",
         form.values.enable_dynamic_updates
       );
+      if (form.values.scheduler_tick_seconds)
+        await getState()!.setConfig(
+          "scheduler_tick_seconds",
+          form.values.scheduler_tick_seconds
+        );
+      delete form.values.scheduler_tick_seconds;
       for (const status of ["error", "finished", "running", "waiting"]) {
         let k = `delete_${status}_workflows_days`;
         if (form.values[k]) {

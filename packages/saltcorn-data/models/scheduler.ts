@@ -15,6 +15,7 @@ import * as mocks from "../tests/mocks.js";
 import WorkflowRun from "./workflow_run.js";
 import Notification from "./notification.js";
 import { MailQueue } from "./internal/mail_queue.js";
+import { cronDueInWindow, isValidCron } from "./internal/cron.js";
 import User from "./user.js";
 import { mockReqRes } from "../tests/mocks.js";
 
@@ -44,6 +45,10 @@ const intervalIsNow = async (name: string): Promise<boolean> => {
 
   return due < now;
 };
+
+const DEFAULT_TICK_SECONDS = 60 * 5;
+// a floor on the configured tick, so a mistyped setting cannot spin the loop
+const MIN_TICK_SECONDS = 10;
 
 const regexHHMM = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
 const regexDDHHMM = /^([a-zA-Z]*) ([0-1]?[0-9]|2[0-3]) ([0-5][0-9])$/;
@@ -89,6 +94,28 @@ const getWeeklyTriggersDueNow = (tickSeconds: number): Array<Trigger> => {
     const nextTick = new Date();
     nextTick.setSeconds(nextTick.getSeconds() + tickSeconds);
     return time_to_run >= now && time_to_run < nextTick;
+  });
+};
+
+const getCronTriggersDueNow = (tickSeconds: number): Array<Trigger> => {
+  const now = new Date();
+  const triggers = [
+    ...Trigger.find({ when_trigger: "Cron" }),
+    ...getState()!.virtual_triggers.filter(
+      (tr: Trigger) => tr.when_trigger === "Cron"
+    ),
+  ];
+
+  return triggers.filter((tr) => {
+    if (!tr.channel) return false;
+    if (!isValidCron(tr.channel)) {
+      getState()!.log(
+        2,
+        `Trigger ${tr.name}: not a valid cron expression: ${tr.channel}`
+      );
+      return false;
+    }
+    return cronDueInWindow(tr.channel, now, tickSeconds);
   });
 };
 
@@ -182,6 +209,24 @@ const checkAvailability = async (
 };
 
 /**
+ * How many seconds between scheduler ticks.
+ *
+ * An explicitly supplied value wins, for tests and embedders. Otherwise take
+ * the root tenant's configured value, which is re-read on every tick so that
+ * changing it does not need a restart.
+ *
+ * @param explicit - tick passed to runScheduler, if any
+ * @returns {number}
+ */
+const resolveTickSeconds = (explicit?: number): number => {
+  if (explicit) return explicit;
+  const cfg = +getState()?.getConfig("scheduler_tick_seconds", 0);
+  // absent, zero or unparseable: fall back to the default
+  if (!cfg) return DEFAULT_TICK_SECONDS;
+  return Math.max(cfg, MIN_TICK_SECONDS);
+};
+
+/**
  * @param {object} opts
  * @param {function} [opts.stop_when]
  * @param {number} [opts.number]
@@ -192,7 +237,7 @@ const checkAvailability = async (
  */
 const runScheduler = async ({
   stop_when = () => false,
-  tickSeconds = 60 * 5,
+  tickSeconds,
   watchReaper,
   port,
   host,
@@ -213,7 +258,8 @@ const runScheduler = async ({
     }
   | any = {}) => {
   let stopit;
-  const run = async () => {
+  const getTickSeconds = () => resolveTickSeconds(tickSeconds);
+  const run = async (tickSeconds: number) => {
     if (watchReaper && port) await checkAvailability(port, host);
     if (disableScheduler) return;
 
@@ -249,6 +295,7 @@ const runScheduler = async ({
         const trsDaily = await getIntervalTriggersDueNow("Daily", 24);
         const trsDailyNowTime = getDailyTriggersDueNow(tickSeconds);
         const trsWeeklyNowTime = getWeeklyTriggersDueNow(tickSeconds);
+        const trsCron = getCronTriggersDueNow(tickSeconds);
         const trsWeekly = await getIntervalTriggersDueNow("Weekly", 24 * 7);
         const allTriggers = [
           ...triggers,
@@ -258,6 +305,7 @@ const runScheduler = async ({
           ...trsWeekly,
           ...trsDailyNowTime,
           ...trsWeeklyNowTime,
+          ...trsCron,
         ];
         for (const trigger of allTriggers) {
           try {
@@ -355,19 +403,21 @@ const runScheduler = async ({
     }
   };
 
-  let i = 0;
-  const firstrun = new Date();
-  await run();
+  let nextTick = new Date();
+  await run(getTickSeconds());
 
   while (!stopit) {
-    i += 1;
-    await sleepUntil(firstrun, tickSeconds * i);
-    await run();
+    const thisTick = getTickSeconds();
+    await sleepUntil(nextTick, thisTick);
+    nextTick = new Date(nextTick.getTime() + thisTick * 1000);
+    await run(thisTick);
   }
 };
 
 export {
   runScheduler,
+  resolveTickSeconds,
   getDailyTriggersDueNow,
   getWeeklyTriggersDueNow,
+  getCronTriggersDueNow,
 };

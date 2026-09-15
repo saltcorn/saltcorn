@@ -49,6 +49,7 @@ export type DbExportsType = {
     fn: (rollback: any) => Promise<any>,
     onError?: (e: Error) => Promise<void>
   ) => Promise<any>;
+  afterCommit: (fn: () => Promise<void>) => Promise<void>;
   count: (
     table: string,
     where?: Where | undefined,
@@ -83,6 +84,7 @@ export type DbExportsType = {
     };
     client?: DbClient | null;
     inTransaction?: boolean;
+    afterCommit?: Array<() => Promise<void>>;
   };
   drop_fts_index: (table: string) => Promise<void>;
   drop_index: (table: string, columns: string[]) => Promise<void>;
