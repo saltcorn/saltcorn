@@ -109,7 +109,12 @@ const action_url = (
     };
   else if (action_name.startsWith("Toggle")) {
     const field_name = action_name.replace("Toggle ", "");
-    return `/edit/toggle/${table.name}/${r[pk_name]}/${field_name}?redirect=/view/${viewname}`;
+    const url = `/edit/toggle/${table.name}/${r[pk_name]}/${field_name}?redirect=/view/${viewname}`;
+    return {
+      javascript: `${isNode() ? "ajax" : "local"}_post_btn('${
+        !isNode() ? "post" : ""
+      }${url}', true)`,
+    };
   }
   return {
     javascript: `${confirmStr}{${spinner ? "spin_action_link(this);" : ""}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${

@@ -718,14 +718,11 @@ describe("index", () => {
         btnClass: "btn-primary",
       });
 
-      expect(result).toContain('<form action="/submit" method="post">');
+      expect(result).toContain("onclick=\"native_post_btn('/submit', 'post', 'csrfToken123')\"");
       expect(result).toContain(
-        '<input type="hidden" name="_csrf" value="csrfToken123">'
+        '<button type="button" onclick="native_post_btn(\'/submit\', \'post\', \'csrfToken123\')" class=" btn  btn-primary d-inline-block">Submit</button>'
       );
-      expect(result).toContain(
-        '<button type="submit" class=" btn  btn-primary d-inline-block">Submit</button>'
-      );
-      expect(result).toContain("</form>");
+      expect(result).not.toContain("<form");
     });
 
     it("renders a basic post button", () => {
@@ -733,14 +730,11 @@ describe("index", () => {
         btnClass: "btn-primary",
       });
 
-      expect(result).toContain('<form action="/submit" method="post">');
+      expect(result).toContain("onclick=\"native_post_btn('/submit', 'post', 'csrfToken123')\"");
       expect(result).toContain(
-        '<input type="hidden" name="_csrf" value="csrfToken123">'
+        '<button type="button" onclick="native_post_btn(\'/submit\', \'post\', \'csrfToken123\')" class=" btn  btn-primary d-inline-block">Submit</button>'
       );
-      expect(result).toContain(
-        '<button type="submit" class=" btn  btn-primary d-inline-block">Submit</button>'
-      );
-      expect(result).toContain("</form>");
+      expect(result).not.toContain("<form");
     });
   });
 
@@ -755,7 +749,7 @@ describe("index", () => {
       const normalized = result.replace(/\s+/g, " ").trim();
 
       expect(normalized).toBe(
-        `<form action=\"/delete\" method=\"post\"><input type=\"hidden\" name=\"_csrf\" value=\"csrfToken123\"><button type=\"submit\" class=\"btn btn-danger btn-sm\" onclick=\"return confirm('Are you sure?')\"><i class=\"fas fa-trash-alt\"></i></button></form>`
+        `<button type=\"button\" class=\"btn btn-danger btn-sm\" onclick=\"if(confirm('Are you sure?')) native_post_btn('/delete', 'post', 'csrfToken123')\"><i class=\"fas fa-trash-alt\"></i></button>`
           .replace(/\s+/g, " ")
           .trim()
       );
@@ -772,13 +766,8 @@ describe("index", () => {
       const result = post_dropdown_item("/delete", "Delete", req, true);
       expect(result).toContain('<a class="dropdown-item"');
       expect(result).toContain("onclick=\"if(confirm('Are you sure?'))");
-      expect(result).toContain("$('#delete').submit()\">Delete</a>");
-      expect(result).toContain(
-        '<form id="delete" action="/delete" method="post">'
-      );
-      expect(result).toContain(
-        '<input type="hidden" name="_csrf" value="csrfToken123">'
-      );
+      expect(result).toContain("native_post_btn('/delete', 'post', 'csrfToken123')\">Delete</a>");
+      expect(result).not.toContain("<form");
     });
   });
 
