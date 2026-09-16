@@ -60,8 +60,8 @@ test.describe('E2E Test Suite', () => {
     // select the required check box
     await page.waitForSelector(pageobject.RequiredcheckboxLocator);
     await page.check(pageobject.RequiredcheckboxLocator);
-    // Click on next button
-    await functions.submit();
+    // a plain String field's wizard is 2 steps - a 3rd submit() here waits
+    // out the full timeout for a button that never appears
     await functions.submit();
     await functions.submit();
   });

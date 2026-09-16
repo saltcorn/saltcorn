@@ -483,14 +483,14 @@ describe("Show view", () => {
       ...showbooks1,
       response: !remoteQueries
         ? `<div class="row"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-start" style="min-height: 0px;    "><span class="d-inline"><button type="button" onclick="native_post_btn('/delete/books/1?redirect=%2F', 'post', '')" class=" btn  btn-primary  d-inline-block">Delete</button></span></div><div class="text-start" style="min-height: 0px;    ">VERY LONG</div>`
-        : `<div class="row"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-start" style="min-height: 0px;    "><span class="d-inline"><button type="button" onclick="local_post_btn('/delete/books/1?redirect=%2F')" class=" btn  btn-primary  d-inline-block">Delete</button></span></div><div class="text-start" style="min-height: 0px;    ">VERY LONG</div>`,
+        : `<div class="row"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-start" style="min-height: 0px;    "><span class="d-inline"><button type="button" onclick="local_post_btn('post/delete/books/1?redirect=%2F')" class=" btn  btn-primary  d-inline-block">Delete</button></span></div><div class="text-start" style="min-height: 0px;    ">VERY LONG</div>`,
     });
     await test_show({
       ...showbooks1,
       id: 2,
       response: !remoteQueries
         ? `<div class="row"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-start" style="min-height: 0px;    "><span class="d-inline"><button type="button" onclick="native_post_btn('/delete/books/2?redirect=%2F', 'post', '')" class=" btn  btn-primary  d-inline-block">Delete</button></span></div>`
-        : `<div class="row"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-start" style="min-height: 0px;    "><span class="d-inline"><button type="button" onclick="local_post_btn('/delete/books/2?redirect=%2F')" class=" btn  btn-primary  d-inline-block">Delete</button></span></div>`,
+        : `<div class="row"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-start" style="min-height: 0px;    "><span class="d-inline"><button type="button" onclick="local_post_btn('post/delete/books/2?redirect=%2F')" class=" btn  btn-primary  d-inline-block">Delete</button></span></div>`,
     });
   });
   it("should render double join embedded exactly", async () => {

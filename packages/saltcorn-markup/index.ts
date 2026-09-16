@@ -52,7 +52,8 @@ const buildButtonCallback = (
 ): string => {
   const isNode = typeof window === "undefined";
   // href/csrf are literals here, not looked up via closest("form")
-  if (!isNode) return `local_post_btn('${href}')`; // mobile: app's own navigation
+  // mobile router only matches "post/..." paths (routing/index.js)
+  if (!isNode) return `local_post_btn('post${href}')`;
   if (ajax)
     return `ajax_post_btn('${href}', ${reload_on_done}, ${reload_delay}, '${csrfToken}')`;
   return `native_post_btn('${href}', 'post', '${csrfToken}')`;

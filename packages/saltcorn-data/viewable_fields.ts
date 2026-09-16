@@ -95,15 +95,17 @@ const action_url = (
   const pk_name = table.pk_name;
   const __ = getReq__();
   const confirmStr = confirm ? `if(confirm('${__("Are you sure?")}'))` : "";
+  // computed once - calling isNode() twice let the two uses disagree on mobile
+  const onNode = isNode();
   if (action_name === "Delete") {
     return {
-      javascript: `${confirmStr}${isNode() ? "ajax" : "local"}_post_btn('${
-        !isNode() ? "post" : ""
+      javascript: `${confirmStr}${onNode ? "ajax" : "local"}_post_btn('${
+        !onNode ? "post" : ""
       }${table.delete_url(r, `redirect=/view/${viewname}`)}', true)`,
     };
   } else if (action_name === "GoBack")
     return {
-      javascript: isNode()
+      javascript: onNode
         ? "history.back()"
         : "parent.saltcorn.mobileApp.navigation.goBack()",
     };
@@ -111,8 +113,8 @@ const action_url = (
     const field_name = action_name.replace("Toggle ", "");
     const url = `/edit/toggle/${table.name}/${r[pk_name]}/${field_name}?redirect=/view/${viewname}`;
     return {
-      javascript: `${isNode() ? "ajax" : "local"}_post_btn('${
-        !isNode() ? "post" : ""
+      javascript: `${onNode ? "ajax" : "local"}_post_btn('${
+        !onNode ? "post" : ""
       }${url}', true)`,
     };
   }

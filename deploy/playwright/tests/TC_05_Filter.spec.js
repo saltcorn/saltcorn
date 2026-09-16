@@ -69,9 +69,8 @@ test.describe.serial('E2E Test Suite', () => {
             await functions.submit();
             // Fill the status option in option field
             await functions.fill_Text(pageobject.optioninput, 'Member, Prospect, Lapsed');
-            // click on next button
-            await functions.submit();
-            // click on finish button
+            // a String field's wizard is 2 steps - a 3rd submit() here waits
+            // out the full timeout for a button that never appears
             await functions.submit();
         }
         await page.click(pageobject.EditlinkLocator);

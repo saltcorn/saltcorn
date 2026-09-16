@@ -113,7 +113,7 @@ class PageLocators {
     this.createuserbutton = 'button[type="submit"]:has-text("Create")';
     this.searchbar = 'input[type=search]';
     this.userdropdown = '#content > div.dropdown-menu.dropdown-menu-end.show';
-    this.deleteuser = '#content > div.dropdown-menu.dropdown-menu-end.show > a:nth-child(11)';
+    this.deleteuser = '#content > div.dropdown-menu.dropdown-menu-end.show a[onclick*="/useradmin/delete/"]';
     this.helloWorldElement = 'div.d-inline:has-text("Hello world")';
     this.optionBio = 'select.form-control.form-select';
     this.mytable = 'a:has-text("My_Table")';
@@ -170,10 +170,10 @@ class PageLocators {
     this.flatpickrDateHeader = 'h5:has-text("flatpickr-date")';
     this.ckeditorHeader = 'h5:has-text("ckeditor4")';
     this.installButton = 'button.store-install:has-text("Install")';
-    this.installflatpickr = 'form[action="/plugins/install/flatpickr-date"] button:has-text("Install")';
-    this.removeFlatpickr = 'form[action*="/plugins/delete/flatpickr-date"] button:has-text("Remove")';
-    this.installCkeditor4 = 'form[action="/plugins/install/ckeditor4"] button:has-text("Install")';
-    this.removeCkeditor4 = 'form[action*="/plugins/delete/ckeditor4"] button:has-text("Remove")';
+    this.installflatpickr = 'button[onclick*="/plugins/install/flatpickr-date"]';
+    this.removeFlatpickr = 'button[onclick*="/plugins/delete/flatpickr-date"]';
+    this.installCkeditor4 = 'button[onclick*="/plugins/install/ckeditor4"]';
+    this.removeCkeditor4 = 'button[onclick*="/plugins/delete/ckeditor4"]';
     this.hasdropdowncheckbox = 'div.form-check:has-text("Has Dropdown") input.form-check-input';
     this.Autofocuscheckbox = 'div.form-check:has-text("Autofocus") input.form-check-input';
     this.statebadgecheckbox = 'div.form-check:has-text("Show current state badges") input.form-check-input';
@@ -376,6 +376,8 @@ class PageLocators {
     this.showeditLink = 'a.btn.btn-primary:has(i.far.fa-edit)'
     this.secondrowcolumn = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
     this.secondrowcolumn1 = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas'
+    this.embedViewSource = 'div[title="Embed a view"]';
+    this.viewSelector = '.view-selector';
     this.optioninput = 'input[name="options"]';
     this.column5 = '.d-flex.justify-content-between.h-100 >> text=Column 5';
     this.headerlabel = 'input.form-control[value=""]';
@@ -450,8 +452,8 @@ class PageLocators {
     this.searchBarDropdownColumn = 'div.searchbar-dropdown.show .canvas';
     this.memberDDCheckbox = 'input#inputstatus0.form-check-input';
     this.kanbanHeader = 'h5:has-text("kanban")';
-    this.installkanban = 'form[action="/plugins/install/kanban"] button:has-text("Install")';
-    this.removeKanban = 'form[action*="/plugins/delete/kanban"] button:has-text("Remove")';
+    this.installkanban = 'button[onclick*="/plugins/install/kanban"]';
+    this.removeKanban = 'button[onclick*="/plugins/delete/kanban"]';
     this.Discriptiontab = 'div.tabulator-cell[tabulator-field="discription"]';
     this.Tasktable = 'a:has-text("Task")';
     this.Uniquecheckbox = "//input[@id='inputis_unique' and @type='checkbox']";
@@ -543,8 +545,8 @@ class PageLocators {
     this.columnSettings = 'div.bg-secondary:has-text("Column settings")';
     this.rightButtonalign = 'button[title="Right"].btn-outline-secondary';
     this.badgesHeader = 'h5:has-text("badges")';
-    this.installbadges = 'form[action="/plugins/install/badges"] button:has-text("Install")';
-    this.removeBadges = 'form[action*="/plugins/delete/badges"] button:has-text("Remove")';
+    this.installbadges = 'button[onclick*="/plugins/install/badges"]';
+    this.removeBadges = 'button[onclick*="/plugins/delete/badges"]';
     this.inputrelation = '#inputrelation';
     this.view2taskbadge = 'text=PersonTaskBadges [Badges] People';
     this.badgeLocator = 'span.badge.bg-secondary:has-text("Buy Milk")';
@@ -558,9 +560,9 @@ class PageLocators {
     this.bootstraptheme = 'h5:has-text("any-bootstrap-theme")';
     this.json = 'h5:has-text("json")';
     this.tabulator = 'h5:has-text("tabulator")';
-    this.installbootstap = 'form[action="/plugins/install/any-bootstrap-theme"] button:has-text("Install")';
-    this.installjson = 'form[action="/plugins/install/json"] >> button.store-install';
-    this.installtabulator = 'form[action="/plugins/install/tabulator"] button:has-text("Install")';
+    this.installbootstap = 'button[onclick*="/plugins/install/any-bootstrap-theme"]';
+    this.installjson = 'button[onclick*="/plugins/install/json"]';
+    this.installtabulator = 'button[onclick*="/plugins/install/tabulator"]';
     this.Installedthemelocator = 'a[href="/plugins?set=installed&amp;q=theme"]';
     this.devicePreviewTabletBtn = 'button.device-preview-btn:nth-of-type(2)';
     this.devicePreviewMobileBtn = 'button.device-preview-btn:nth-of-type(3)';
@@ -697,7 +699,7 @@ class PageLocators {
     this.inputcontent = '#inputcontent';
     this.fourthrowcolumn = '.builder-columns.row:nth-of-type(4) .split-col:nth-of-type(2) .canvas';
     this.MoneyHeader = 'h5:has-text("money")';
-    this.installmoney = 'form[action="/plugins/install/money"] button:has-text("Install")';
+    this.installmoney = 'button[onclick*="/plugins/install/money"]';
     this.Subs_Plantable = 'a:has-text("Subscription_Plan")';
     this.inputcurrency = '#inputcurrency';
     this.inputfilestype = '#inputfiles_accept_filter'
@@ -752,7 +754,7 @@ class PageLocators {
     this.PlanListMenu = 'a.nav-link[href="/view/Plan_List"]';
     this.removebtn = 'a.btnRemove >> i.fa-trash-alt';
     this.Many2ManyHeader = 'h5:has-text("many-to-many")';
-    this.installmany2many = 'form[action="/plugins/install/many-to-many"] button:has-text("Install")';
+    this.installmany2many = 'button[onclick*="/plugins/install/many-to-many"]';
     this.view2relation = 'text=Relation [Checkboxes many-to-many] My_Table';
     this.checkboxAdam = 'input.form-check-input[onchange*="value: \'Adam\'"]';
     this.donaldCheckbox = 'input.form-check-input[onchange*="value: \'Donald\'"]';
