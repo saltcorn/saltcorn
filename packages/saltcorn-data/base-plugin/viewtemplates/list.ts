@@ -945,6 +945,16 @@ const configuration_workflow = (req: Req) =>
             class: "validate-expression",
           });
           formfields.push({
+            name: "_row_class_formula",
+            label: req.__("Row class formula"),
+            sublabel: req.__(
+              "Formula for CSS classes on each row. Ex.: <code>`row-with-status-${status}`</code>"
+            ),
+            type: "String",
+            tab: "Functionality",
+            class: "validate-expression",
+          });
+          formfields.push({
             name: "_fts_search_bar",
             label: req.__("Search bar"),
             sublabel: req.__("Full-text search bar above the table"),
@@ -1492,6 +1502,11 @@ const run = async (
       default_state?._row_color_formula,
       fields
     );
+  if (default_state?._row_class_formula)
+    page_opts.row_class_function = get_expression_function(
+      default_state?._row_class_formula,
+      fields
+    );
   page_opts.show_subtotals = !!default_state?._subtotals;
   page_opts.show_grand_total = !!default_state?._grand_total;
 
@@ -1870,7 +1885,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _full_page_count _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _fts_search_bar _table_layout _subtotals _grand_total",
+      "_rows_per_page _full_page_count _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _row_class_formula _fts_search_bar _table_layout _subtotals _grand_total",
       "default_state"
     );
   }
@@ -1964,6 +1979,7 @@ export default {
       _header_filters_toggle,
       _header_filters_dropdown,
       _row_color_formula,
+      _row_class_formula,
       _fts_search_bar,
       _sticky_header,
       _subtotals,

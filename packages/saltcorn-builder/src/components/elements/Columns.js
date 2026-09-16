@@ -121,6 +121,7 @@ const Columns = ({
   colClasses,
   colStyles,
   customClass,
+  isFormula,
   breakpoints,
 }) => {
   const {
@@ -149,7 +150,9 @@ const Columns = ({
   }
   return (
     <div
-      className={`row builder-columns ${customClass || ""} ${selected ? "selected-node" : ""} ${
+      className={`row builder-columns ${
+        (!isFormula?.customClass && customClass) || ""
+      } ${selected ? "selected-node" : ""} ${
         typeof gx !== "undefined" && gx !== null ? `gx-${gx}` : ""
       } ${typeof gy !== "undefined" && gy !== null ? `gy-${gy}` : ""}`}
       ref={(dom) => connect(drag(dom))}
@@ -204,6 +207,7 @@ const ColumnsSettings = () => {
     colClasses: node.data.props.colClasses,
     colStyles: node.data.props.colStyles,
     customClass: node.data.props.customClass,
+    isFormula: node.data.props.isFormula,
     currentSettingsTab: node.data.props.currentSettingsTab,
   }));
   const {
@@ -409,6 +413,8 @@ const ColumnsSettings = () => {
               name: "customClass",
               label: t("Custom class"),
               type: "String",
+              canBeFormula: true,
+              formulaInEdit: true,
             }}
             node={node}
             setProp={setProp}
@@ -434,6 +440,7 @@ Columns.craft = {
     breakpoints: ["sm", "sm"],
     setting_col_n: 0,
     customClass: "",
+    isFormula: {},
   },
   related: {
     settings: ColumnsSettings,

@@ -409,6 +409,7 @@ const layoutToNodes = (
             header_label={col.header_label}
             col_width={col.col_width}
             showif={col.showif}
+            cell_css_formula={col.cell_css_formula}
             col_width_units={col.col_width_units}
             contents={toTag(col.contents)}
             {...addProps}
@@ -427,6 +428,7 @@ const layoutToNodes = (
           gx={segment.gx}
           gy={segment.gy}
           customClass={segment.customClass}
+          isFormula={segment.isFormula || {}}
           vAligns={segment.vAligns}
           colClasses={segment.colClasses}
           colStyles={segment.colStyles}
@@ -469,6 +471,7 @@ const layoutToNodes = (
             gx={segment.gx}
             gy={segment.gy}
             customClass={segment.customClass}
+            isFormula={segment.isFormula || {}}
             vAligns={segment.vAligns}
             colClasses={segment.colClasses}
             colStyles={segment.colStyles}
@@ -635,6 +638,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         alignment: node.props.alignment,
         header_label: node.props.header_label,
         showif: node.props.showif,
+        cell_css_formula: node.props.cell_css_formula,
         ...customProps,
       };
       (addFields || []).forEach((f) => {
@@ -728,6 +732,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         breakpoints: node.props.breakpoints,
         customClass: node.props.customClass,
+        isFormula: node.props.isFormula,
         gx: node.props.gx != null ? +node.props.gx : undefined,
         gy: node.props.gy != null ? +node.props.gy : undefined,
         aligns: node.props.aligns,

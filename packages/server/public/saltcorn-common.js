@@ -231,6 +231,26 @@ function apply_showif() {
       console.error(e);
     }
   });
+  $("[data-dyn-class]").each(function (ix, element) {
+    const e = $(element);
+    try {
+      const rec = get_form_record(e);
+      const result = new Function(
+        "row",
+        `{${Object.keys(rec).filter(valid_js_var_name).join(",")}}`,
+        "return " + decodeURIComponent(e.attr("data-dyn-class"))
+      )(rec, rec);
+      // only remove classes this formula added, never the static ones
+      e.removeClass(e.data("dyn-class-added") || []);
+      const added = (typeof result === "string" ? result.split(/\s+/) : [])
+        .filter(Boolean)
+        .filter((c) => !e.hasClass(c));
+      e.addClass(added);
+      e.data("dyn-class-added", added);
+    } catch (err) {
+      if (window._sc_loglevel > 4) console.error(err);
+    }
+  });
   $("[data-dyn-href]").each(function (ix, element) {
     try {
       const e = $(element);

@@ -327,14 +327,23 @@ export /**
  * @param {object} props.node
  * @param {string} props.nodekey
  * @param {string} props.children
+ * @param {boolean} [props.allowInEdit] also offer the formula in edit views
  * @returns {Fragment}
  * @namespace
  * @category saltcorn-builder
  * @subcategory components / elements / utils
  */
-const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
+const OrFormula = ({
+  setProp,
+  isFormula,
+  node,
+  nodekey,
+  children,
+  allowInEdit,
+}) => {
   const { mode } = React.useContext(optionsCtx);
-  const allowFormula = mode === "show" || mode === "list";
+  const allowFormula =
+    mode === "show" || mode === "list" || (allowInEdit && mode === "edit");
   /**
    * @returns {void}
    */
@@ -1616,6 +1625,7 @@ const SettingsRow = ({
     <OrFormula
       nodekey={field.name}
       isFormula={node.isFormula}
+      allowInEdit={field.formulaInEdit}
       {...{ setProp, node }}
     >
       <ConfigField
