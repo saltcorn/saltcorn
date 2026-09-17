@@ -11,10 +11,11 @@ import mkTable from "./table.js";
 import tabs from "./tabs.js";
 import tags from "./tags.js";
 import helpers from "./helpers.js";
-const { a, text, div, button, hr, time, i, input, text_attr, span } = tags;
+const { a, text, div, button, hr, time, i, input, text_attr, form, span } =
+  tags;
 import layoutUtils from "./layout_utils.js";
 import { Req } from "@saltcorn/types/base_types";
-const { alert, toast, show_icon_and_label } = layoutUtils;
+const { alert, toast, show_icon_and_label, validID } = layoutUtils;
 
 /**
  * @param {string} href
@@ -44,6 +45,16 @@ type PostBtnOpts = {
 declare let window: any;
 
 const buildButtonCallback = (
+  reload_on_done: boolean,
+  reload_delay?: number
+): string => {
+  const isNode = typeof window === "undefined";
+  if (isNode) return `ajax_post_btn(this, ${reload_on_done}, ${reload_delay})`;
+  else return "local_post_btn(this)";
+};
+
+// for post_btn_noform - embeddable content where a real <form> would be dropped
+const buildButtonCallbackNoForm = (
   href: string,
   ajax: boolean | undefined,
   reload_on_done: boolean,
@@ -100,6 +111,110 @@ const post_btn = (
     title,
     body,
   }: PostBtnOpts | any = {}
+): string =>
+  form(
+    {
+      action: text(href),
+      method: "post",
+      ...(formClass ? { class: formClass } : {}),
+    },
+    [
+      ajax ? "" : input({ type: "hidden", name: "_csrf", value: csrfToken }),
+      ...(!body
+        ? []
+        : Object.entries(body).map(([k, v]: any) =>
+            input({ type: "hidden", name: k, value: v })
+          )),
+      button(
+        {
+          ...(ajax ? { type: "button" } : { type: "submit" }),
+          ...(onClick && ajax
+            ? {
+                onclick: `${spinner ? "spin_action_link(this);" : ""}${buildButtonCallback(
+                  reload_on_done,
+                  reload_delay
+                )};${onClick}`,
+              }
+            : {
+                ...(onClick
+                  ? {
+                      onclick: `${spinner ? "spin_action_link(this);" : ""}${onClick}`,
+                    }
+                  : {
+                      ...(ajax && confirm
+                        ? {
+                            onclick: `if(confirm('${req.__("Are you sure?")}')) {${
+                              spinner ? "spin_action_link(this);" : ""
+                            }${buildButtonCallback(reload_on_done, reload_delay)}}`,
+                          }
+                        : {
+                            ...(ajax
+                              ? {
+                                  onclick: `${spinner ? "spin_action_link(this);" : ""}${buildButtonCallback(
+                                    reload_on_done,
+                                    reload_delay
+                                  )}`,
+                                }
+                              : {
+                                  ...(confirm && spinner
+                                    ? {
+                                        onclick: `if(confirm('${req.__("Are you sure?")}')){spin_action_link(this);return truel}else return false`,
+                                      }
+                                    : confirm
+                                      ? {
+                                          onclick: `return confirm('${req.__("Are you sure?")}')`,
+                                        }
+                                      : {
+                                          ...(spinner
+                                            ? {
+                                                onclick:
+                                                  "spin_action_link(this);",
+                                              }
+                                            : {}),
+                                        }),
+                                }),
+                          }),
+                    }),
+              }),
+          class: `${klass} btn ${small ? "btn-sm" : ""} ${btnClass} d-inline-block`,
+          ...(style ? { style } : {}),
+          ...(title ? { title: text_attr(title) } : {}),
+        },
+        show_icon_and_label(icon, s)
+      ),
+    ]
+  );
+
+/**
+ * Like post_btn, but never emits a <form> - for content that may be embedded
+ * inside another view's own <form>. Most callers should use post_btn instead.
+ * @param href
+ * @param s
+ * @param csrfToken
+ * @param opts
+ * @returns
+ */
+const post_btn_noform = (
+  href: string,
+  s: string,
+  csrfToken: string,
+  {
+    btnClass = "btn-primary",
+    onClick,
+    small,
+    style,
+    ajax,
+    reload_on_done,
+    reload_delay,
+    klass = "",
+    formClass,
+    spinner,
+    req,
+    confirm,
+    icon,
+    title,
+    body,
+  }: PostBtnOpts | any = {}
 ): string => {
   const bodyQuery = body
     ? Object.entries(body)
@@ -112,14 +227,16 @@ const post_btn = (
     ? `${href}${href.includes("?") ? "&" : "?"}${bodyQuery}`
     : href;
 
-  // ajax and native submit both fire from onclick, so no <form> is needed
-  const jsCall = buildButtonCallback(
-    targetHref,
-    ajax,
-    reload_on_done,
-    reload_delay,
-    csrfToken
-  );
+  // a "javascript:" href (some page.ts actions) runs directly - form.submit() won't execute it
+  const jsCall = targetHref.startsWith("javascript:")
+    ? targetHref.slice("javascript:".length)
+    : buildButtonCallbackNoForm(
+        targetHref,
+        ajax,
+        reload_on_done,
+        reload_delay,
+        csrfToken
+      );
   const onclick = confirm
     ? `if(confirm('${req.__("Are you sure?")}')) {${
         spinner ? "spin_action_link(this);" : ""
@@ -150,17 +267,21 @@ const post_btn = (
  * @returns return html form
  */
 const post_delete_btn = (href: string, req: Req, what?: string): string =>
-  button(
-    {
-      type: "button",
-      class: "btn btn-danger btn-sm",
-      onclick: `if(confirm('${
-        what
-          ? req.__("Are you sure you want to delete %s?", what)
-          : req.__("Are you sure?")
-      }')) native_post_btn('${href}', 'post', '${req.csrfToken()}')`,
-    },
-    i({ class: "fas fa-trash-alt" })
+  form(
+    { action: text(href), method: "post" },
+    input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+    button(
+      {
+        type: "submit",
+        class: "btn btn-danger btn-sm",
+        onclick: `return confirm('${
+          what
+            ? req.__("Are you sure you want to delete %s?", what)
+            : req.__("Are you sure?")
+        }')`,
+      },
+      i({ class: "fas fa-trash-alt" })
+    )
   );
 
 /**
@@ -178,6 +299,20 @@ const post_dropdown_item = (
   confirm?: boolean,
   what?: string
 ): string => {
+  const id = validID(
+    href
+      .split("/")
+      .join("")
+      .split(" ")
+      .join("")
+      .split("?")
+      .join("")
+      .split("=")
+      .join("")
+      .split("%")
+      .join("")
+  );
+
   const confirmationScript = confirm
     ? `if(confirm('${
         what
@@ -186,14 +321,29 @@ const post_dropdown_item = (
       }')) `
     : "";
 
-  // native_post_btn builds its own <form>, no per-item <form id="..."> needed
-  return a(
-    {
-      class: "dropdown-item",
-      onclick: `${confirmationScript}native_post_btn('${href}', 'post', '${req.csrfToken()}')`,
-    },
-    s
-  );
+  return [
+    a(
+      {
+        class: "dropdown-item",
+        onclick: `${confirmationScript}$('#${id}').submit()`,
+      },
+      s
+    ),
+    form(
+      {
+        id,
+        action: text(href),
+        method: "post",
+      },
+      [
+        input({
+          type: "hidden",
+          name: "_csrf",
+          value: req.csrfToken(),
+        }),
+      ]
+    ),
+  ].join("");
 };
 
 /**
@@ -300,6 +450,7 @@ export {
   renderBuilder,
   link,
   post_btn,
+  post_btn_noform,
   post_delete_btn,
   post_dropdown_item,
   tabs,
@@ -329,6 +480,7 @@ export default {
   renderBuilder,
   link,
   post_btn,
+  post_btn_noform,
   post_delete_btn,
   post_dropdown_item,
   tabs,

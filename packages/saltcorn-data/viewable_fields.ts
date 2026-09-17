@@ -48,7 +48,7 @@ import type { GenObj, Type } from "@saltcorn/types/common_types";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import type { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 
-const { post_btn } = markupPkg;
+const { post_btn_noform } = markupPkg;
 const { text, a, i, div, button, span, script, domReady, input } = tagsPkg;
 import {
   link_view,
@@ -207,7 +207,7 @@ const action_link = (
       label
     );
   else
-    return post_btn(url as string, label as string, req.csrfToken(), {
+    return post_btn_noform(url as string, label as string, req.csrfToken(), {
       confirm,
       req,
       icon: action_icon,
@@ -1076,7 +1076,7 @@ const get_viewable_fields = (
                 label
               );
             else
-              return post_btn(url as string, label as string, req.csrfToken(), {
+              return post_btn_noform(url as string, label as string, req.csrfToken(), {
                 small: true,
                 ajax: true,
                 icon,
