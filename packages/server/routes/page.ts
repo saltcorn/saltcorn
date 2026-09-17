@@ -55,7 +55,11 @@ const runPage = async (page: Page, req: Req, res: Res, tic: Date) => {
     role <= page.min_role ||
     (await page.authorize(req.user, { action: "get", req, state: req.query }))
   ) {
-    const contents = await page.run(req.query, { res, req });
+    const contents = await page.run(req.query, {
+      res,
+      req,
+      alreadyAuthorized: true,
+    });
     if (!contents) return;
     const title = scan_for_page_title(contents, page.title);
     const tock = new Date();

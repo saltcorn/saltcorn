@@ -661,11 +661,27 @@ const get_config_response = async (role_id: any, res: any, req: Req) => {
     res.redirect("/entities");
     return true;
   }
+  // page's own access was never checked elsewhere - true if allowed, else redirects and returns false
+  const authorizedOrRedirect = async (page: Page): Promise<boolean> => {
+    if (
+      role_id <= page.min_role ||
+      (await page.authorize(req.user, { action: "get", req, state: req.query }))
+    )
+      return true;
+    if (!req.user)
+      res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
+    else {
+      req.flash("danger", req.__("Not authorized"));
+      res.redirect("/");
+    }
+    return false;
+  };
   if (homeCfg) {
     const db_page = Page.findOne({ name: homeCfg })!;
     if (db_page) {
+      if (!(await authorizedOrRedirect(db_page))) return true;
       const pgcontents = await db_page.run(req.query, { res, req });
-      if (!pgcontents) return true;
+      if (pgcontents === null) return true; // res already redirected by an on_page_load action
       wrap(
         pgcontents,
         homeCfg,
@@ -680,7 +696,8 @@ const get_config_response = async (role_id: any, res: any, req: Req) => {
         const eligible = await getEligiblePage(group, req, res);
         if (typeof eligible === "string") wrap(eligible);
         else if (eligible) {
-          if (!("isReload" in eligible))
+          if (!("isReload" in eligible)) {
+            if (!(await authorizedOrRedirect(eligible))) return true;
             wrap(
               await eligible.run(req.query, { res, req }),
               homeCfg,
@@ -689,6 +706,7 @@ const get_config_response = async (role_id: any, res: any, req: Req) => {
               eligible.attributes?.no_menu,
               eligible.attributes?.request_fluid_layout
             );
+          }
         } else wrap(req.__("%s has no eligible page", group.name), homeCfg);
       } else res.redirect(homeCfg);
     }

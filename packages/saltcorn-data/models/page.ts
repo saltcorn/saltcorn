@@ -595,16 +595,27 @@ class Page implements AbstractPage {
         );
       } else {
         const role = (extraArgs.req.user || {}).role_id || 100;
-        const pageContent = await page.run(querystate, extraArgs);
-        segment.contents = (
-          getState()!.getLayout(extraArgs.req.user as any) as any
-        ).renderBody({
-          title: "",
-          body: pageContent,
-          req: extraArgs.req,
-          role,
-          alerts: [],
-        });
+        const authorized =
+          role <= page.min_role ||
+          (await page.authorize(extraArgs.req?.user, {
+            action: "get",
+            req: extraArgs.req,
+            state: querystate,
+          }));
+        const pageContent = authorized
+          ? await page.run(querystate, extraArgs)
+          : ""; // embed denied - checked here, not inside page.run()
+        segment.contents = pageContent
+          ? (
+              getState()!.getLayout(extraArgs.req.user as any) as any
+            ).renderBody({
+              title: "",
+              body: pageContent,
+              req: extraArgs.req,
+              role,
+              alerts: [],
+            })
+          : "";
       }
     });
   }

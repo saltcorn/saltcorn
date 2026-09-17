@@ -1626,3 +1626,97 @@ describe("Trigger.authorize", () => {
     expect(allowed).toBe(true);
   });
 });
+
+// req.user is role_id 1, which passes almost any min_role - need a weaker
+// user to test "role check fails, hook grants access anyway"
+const lowPrivReq = { ...req, user: { id: 99, role_id: 40, attributes: {} } };
+
+describe("View.run honors authorize_view, not just min_role", () => {
+  it("returns empty when role fails min_role and no hook grants access", async () => {
+    const view = await View.create({
+      viewtemplate: "Show",
+      name: "AuthzTestRunShow",
+      description: "",
+      min_role: 1,
+      table_id: Table.findOne("books")!.id,
+      default_render_page: "",
+      slug: { label: "", steps: [] },
+      attributes: {},
+      configuration: {
+        columns: [],
+        layout: { type: "blank", contents: "RUN_SHOW_SENTINEL" },
+      },
+    });
+    const html = await view.run({ id: 1 }, { req: lowPrivReq, res: mockReqRes.res } as any);
+    expect(html).toBe("");
+  });
+
+  it("runs when an authorize_view hook grants access despite insufficient role", async () => {
+    getState()!.registerPlugin("view_run_allow_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_view: async (request: AuthorizeAccessViewRequest) => {
+        if (request.view.name !== "AuthzTestRunShow") return null;
+        return { decision: "allow" };
+      },
+    } as unknown as Plugin);
+    const view = View.findOne({ name: "AuthzTestRunShow" });
+    assertIsSet(view);
+    const html = await view.run({ id: 1 }, { req: lowPrivReq, res: mockReqRes.res } as any);
+    expect(html).toContain("RUN_SHOW_SENTINEL");
+  });
+});
+
+// Page.run() itself does not check min_role/authorize_page - direct visits
+// are gated by the route (server/routes/page.ts), embeds by the embedder
+// (Page.renderEachEmbeddedPageInLayout). See that describe block below.
+describe("Page.run does not gate access itself", () => {
+  it("renders regardless of min_role for a direct call", async () => {
+    const page = await Page.create({
+      name: "AuthzTestRunPage",
+      title: "t",
+      description: "",
+      min_role: 1,
+      layout: { type: "blank", contents: "RUN_PAGE_SENTINEL" },
+    });
+    const contents = await page.run({}, { req: lowPrivReq, res: mockReqRes.res });
+    expect(JSON.stringify(contents)).toContain("RUN_PAGE_SENTINEL");
+  });
+});
+
+describe("Page embeds honor authorize_page, checked by the embedder", () => {
+  it("enforces min_role/authorize_page on an embedded page", async () => {
+    const inner = await Page.create({
+      name: "AuthzTestEmbeddedInnerPage",
+      title: "t",
+      description: "",
+      min_role: 1,
+      layout: { type: "blank", contents: "INNER_PAGE_SENTINEL" },
+    });
+    const outer = await Page.create({
+      name: "AuthzTestEmbeddedOuterPage",
+      title: "t",
+      description: "",
+      min_role: 100, // public - the outer page itself is always reachable
+      layout: { type: "page", page: inner.name },
+    });
+
+    const deniedContents = await outer.run(
+      {},
+      { req: lowPrivReq, res: mockReqRes.res }
+    );
+    expect(JSON.stringify(deniedContents)).not.toContain("INNER_PAGE_SENTINEL");
+
+    getState()!.registerPlugin("embedded_page_allow_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_page: async (request: AuthorizeAccessPageRequest) => {
+        if (request.page.name !== "AuthzTestEmbeddedInnerPage") return null;
+        return { decision: "allow" };
+      },
+    } as unknown as Plugin);
+    const allowedContents = await outer.run(
+      {},
+      { req: lowPrivReq, res: mockReqRes.res }
+    );
+    expect(JSON.stringify(allowedContents)).toContain("INNER_PAGE_SENTINEL");
+  });
+});
