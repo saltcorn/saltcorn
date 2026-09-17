@@ -5,7 +5,7 @@
  */
 /* globals $, validate_expression_elem */
 
-import React, { useContext, Fragment } from "react";
+import React, { useContext, Fragment, useRef } from "react";
 
 import { Element, useNode } from "@craftjs/core";
 import { Column } from "./Column";
@@ -48,6 +48,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faScroll, faRobot } from "@fortawesome/free-solid-svg-icons";
 import { BoxModelEditor } from "./BoxModelEditor";
+import { SingleLineEditor } from "./MonacoEditor";
 import previewCtx from "../preview_context";
 
 export /**
@@ -344,6 +345,7 @@ const ContainerSettings = () => {
    * @returns {function}
    */
   const setAProp = setAPropGen(setProp);
+  const showIfEditorRef = useRef(null);
   //console.log("transform", transform);
 
   return (
@@ -1033,14 +1035,15 @@ const ContainerSettings = () => {
           )}
           <tr>
             <td colSpan={2}>
-              <input
-                type="text"
-                placeholder={t("Example: x === y")}
-                className="form-control text-to-display"
+              <SingleLineEditor
+                ref={showIfEditorRef}
                 value={showIfFormula}
-                spellCheck={false}
-                onChange={setAProp("showIfFormula")}
-                onInput={(e) => validate_expression_elem($(e.target))}
+                setProp={setProp}
+                propKey="showIfFormula"
+                placeholder={t("Example: x === y")}
+                onInput={(value) =>
+                  validate_expression_elem(value, showIfEditorRef.current)
+                }
               />
               <div style={{ marginTop: "-5px" }}>
                 <small className="text-muted font-monospace">
