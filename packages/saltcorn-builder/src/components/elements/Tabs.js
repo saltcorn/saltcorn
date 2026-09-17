@@ -3,14 +3,16 @@
  * @module components/elements/Tabs
  * @subcategory components / elements
  */
+/* globals validate_expression_elem */
 
-import React, { Fragment, useState, useContext, useEffect } from "react";
+import React, { Fragment, useState, useContext, useEffect, useRef } from "react";
 import useTranslation from "../../hooks/useTranslation";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
 import optionsCtx from "../context";
 import { setAPropGen, buildOptions, ConfigField } from "./utils";
 import { ArrayManager } from "./ArrayManager";
+import { SingleLineEditor } from "./MonacoEditor";
 
 import { Element, useNode } from "@craftjs/core";
 
@@ -235,6 +237,7 @@ const TabsSettings = () => {
         });
   }, [field]);
   const setAProp = setAPropGen(setProp);
+  const showIfEditorRef = useRef(null);
   const styleOptions = ["Tabs", "Pills", "Accordion"];
   if (["show", "edit"].includes(options.mode))
     styleOptions.push("Value switch");
@@ -456,19 +459,18 @@ const TabsSettings = () => {
                 </tr>
                 <tr>
                   <td colSpan={2}>
-                    <input
-                      type="text"
-                      spellCheck={false}
-                      className="form-control text-to-display"
+                    <SingleLineEditor
+                      ref={showIfEditorRef}
                       value={showif?.[use_setting_tab_n] || ""}
-                      onChange={(e) => {
-                        if (!e.target) return;
-                        const value = e.target.value;
+                      onChange={(value) => {
                         setProp((prop) => {
                           if (!prop.showif) prop.showif = [];
                           prop.showif[use_setting_tab_n] = value;
                         });
                       }}
+                      onInput={(value) =>
+                        validate_expression_elem(value, showIfEditorRef.current)
+                      }
                     />
                   </td>
                 </tr>
