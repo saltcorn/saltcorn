@@ -48,7 +48,7 @@ import type { GenObj, Type } from "@saltcorn/types/common_types";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import type { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 
-const { post_btn } = markupPkg;
+const { post_btn_noform } = markupPkg;
 const { text, a, i, div, button, span, script, domReady, input } = tagsPkg;
 import {
   link_view,
@@ -95,21 +95,28 @@ const action_url = (
   const pk_name = table.pk_name;
   const __ = getReq__();
   const confirmStr = confirm ? `if(confirm('${__("Are you sure?")}'))` : "";
+  // computed once - calling isNode() twice let the two uses disagree on mobile
+  const onNode = isNode();
   if (action_name === "Delete") {
     return {
-      javascript: `${confirmStr}${isNode() ? "ajax" : "local"}_post_btn('${
-        !isNode() ? "post" : ""
+      javascript: `${confirmStr}${onNode ? "ajax" : "local"}_post_btn('${
+        !onNode ? "post" : ""
       }${table.delete_url(r, `redirect=/view/${viewname}`)}', true)`,
     };
   } else if (action_name === "GoBack")
     return {
-      javascript: isNode()
+      javascript: onNode
         ? "history.back()"
         : "parent.saltcorn.mobileApp.navigation.goBack()",
     };
   else if (action_name.startsWith("Toggle")) {
     const field_name = action_name.replace("Toggle ", "");
-    return `/edit/toggle/${table.name}/${r[pk_name]}/${field_name}?redirect=/view/${viewname}`;
+    const url = `/edit/toggle/${table.name}/${r[pk_name]}/${field_name}?redirect=/view/${viewname}`;
+    return {
+      javascript: `${onNode ? "ajax" : "local"}_post_btn('${
+        !onNode ? "post" : ""
+      }${url}', true)`,
+    };
   }
   return {
     javascript: `${confirmStr}{${spinner ? "spin_action_link(this);" : ""}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
@@ -200,7 +207,7 @@ const action_link = (
       label
     );
   else
-    return post_btn(url as string, label as string, req.csrfToken(), {
+    return post_btn_noform(url as string, label as string, req.csrfToken(), {
       confirm,
       req,
       icon: action_icon,
@@ -1069,7 +1076,7 @@ const get_viewable_fields = (
                 label
               );
             else
-              return post_btn(url as string, label as string, req.csrfToken(), {
+              return post_btn_noform(url as string, label as string, req.csrfToken(), {
                 small: true,
                 ajax: true,
                 icon,

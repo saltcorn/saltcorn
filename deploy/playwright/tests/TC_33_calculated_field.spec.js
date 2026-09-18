@@ -92,9 +92,9 @@ test.describe('E2E Test Suite', () => {
         await functions.fill_Text(pageobject.minlocator, '1900');
         // Fill the max length for field
         await functions.fill_Text(pageobject.maxlocator, '2025');
-        // Click on next button
-        await functions.submit();
-        // click on next button again
+        // a field's wizard is 2 steps (attributes, then done) - a 3rd
+        // submit() here waits out the full timeout for a button that never
+        // appears and misreports as "Target page ... closed"
         await functions.submit();
     });
 

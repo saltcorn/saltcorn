@@ -67,9 +67,8 @@ test.describe.serial('E2E Test Suite', () => {
             // Click on next button
             await functions.submit();
         });
-        // click on next button
-        await functions.submit();
-        // click on finish button
+        // a String field's wizard is 2 steps - a 3rd submit() here waits
+        // out the full timeout for a button that never appears
         await functions.submit();
         await customAssert('Create Discription field in task table ', async () => {
             // click on add field button
@@ -81,9 +80,7 @@ test.describe.serial('E2E Test Suite', () => {
             // Click on next button
             await functions.submit();
         });
-        // click on next button
-        await functions.submit();
-        // click on finish button
+        // a String field's wizard is 2 steps - see note above
         await functions.submit();
         await customAssert('Create Status field in task table ', async () => {
             // click on add field button
@@ -99,8 +96,6 @@ test.describe.serial('E2E Test Suite', () => {
             // click on next button
             await functions.submit();
         });
-        // click on finish button
-        await functions.submit();
     });
 
     // Input data in Task table
@@ -281,9 +276,8 @@ test.describe.serial('E2E Test Suite', () => {
             // Click on next button
             await functions.submit();
         });
-        // click on next button
-        await functions.submit();
-        // click on finish button
+        // a field's wizard is 2 steps - a 3rd submit() here waits out the
+        // full timeout for a button that never appears
         await functions.submit();
 
         await functions.views();

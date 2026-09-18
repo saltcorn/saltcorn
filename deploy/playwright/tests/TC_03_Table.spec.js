@@ -305,9 +305,9 @@ test.describe('E2E Test Suite', () => {
         await functions.fill_Text(pageobject.minlengthlocator, '20');
         // Fill the max length for field
         await functions.fill_Text(pageobject.maxlengthlocator, '100');
-        // click on next button
-        await functions.submit();
-        // click on finish button
+        // a String field's wizard is 2 steps (attributes, then done) - a 3rd
+        // submit() here waits out the full timeout for a button that never
+        // appears and misreports as "Target page ... closed"
         await functions.submit();
         // check visibility of Address field added
         await customAssert('Address field should be visible', async () => {

@@ -53,6 +53,23 @@ const buildButtonCallback = (
   else return "local_post_btn(this)";
 };
 
+// for post_btn_noform - embeddable content where a real <form> would be dropped
+const buildButtonCallbackNoForm = (
+  href: string,
+  ajax: boolean | undefined,
+  reload_on_done: boolean,
+  reload_delay: number | undefined,
+  csrfToken: string
+): string => {
+  const isNode = typeof window === "undefined";
+  // href/csrf are literals here, not looked up via closest("form")
+  // mobile router only matches "post/..." paths (routing/index.js)
+  if (!isNode) return `local_post_btn('post${href}')`;
+  if (ajax)
+    return `ajax_post_btn('${href}', ${reload_on_done}, ${reload_delay}, '${csrfToken}')`;
+  return `native_post_btn('${href}', 'post', '${csrfToken}')`;
+};
+
 /**
  * @param href
  * @param s
@@ -167,6 +184,80 @@ const post_btn = (
       ),
     ]
   );
+
+/**
+ * Like post_btn, but never emits a <form> - for content that may be embedded
+ * inside another view's own <form>. Most callers should use post_btn instead.
+ * @param href
+ * @param s
+ * @param csrfToken
+ * @param opts
+ * @returns
+ */
+const post_btn_noform = (
+  href: string,
+  s: string,
+  csrfToken: string,
+  {
+    btnClass = "btn-primary",
+    onClick,
+    small,
+    style,
+    ajax,
+    reload_on_done,
+    reload_delay,
+    klass = "",
+    formClass,
+    spinner,
+    req,
+    confirm,
+    icon,
+    title,
+    body,
+  }: PostBtnOpts | any = {}
+): string => {
+  const bodyQuery = body
+    ? Object.entries(body)
+        .map(
+          ([k, v]: any) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+        )
+        .join("&")
+    : "";
+  const targetHref = bodyQuery
+    ? `${href}${href.includes("?") ? "&" : "?"}${bodyQuery}`
+    : href;
+
+  // a "javascript:" href (some page.ts actions) runs directly - form.submit() won't execute it
+  const jsCall = targetHref.startsWith("javascript:")
+    ? targetHref.slice("javascript:".length)
+    : buildButtonCallbackNoForm(
+        targetHref,
+        ajax,
+        reload_on_done,
+        reload_delay,
+        csrfToken
+      );
+  const onclick = confirm
+    ? `if(confirm('${req.__("Are you sure?")}')) {${
+        spinner ? "spin_action_link(this);" : ""
+      }${onClick ? `${onClick};` : ""}${jsCall}}`
+    : `${spinner ? "spin_action_link(this);" : ""}${
+        onClick ? `${onClick};` : ""
+      }${jsCall}`;
+
+  const btn = button(
+    {
+      type: "button",
+      onclick,
+      class: `${klass} btn ${small ? "btn-sm" : ""} ${btnClass} d-inline-block`,
+      ...(style ? { style } : {}),
+      ...(title ? { title: text_attr(title) } : {}),
+    },
+    show_icon_and_label(icon, s)
+  );
+
+  return formClass ? span({ class: formClass }, btn) : btn;
+};
 
 /**
  * UI Form for Delete Item confirmation
@@ -359,6 +450,7 @@ export {
   renderBuilder,
   link,
   post_btn,
+  post_btn_noform,
   post_delete_btn,
   post_dropdown_item,
   tabs,
@@ -388,6 +480,7 @@ export default {
   renderBuilder,
   link,
   post_btn,
+  post_btn_noform,
   post_delete_btn,
   post_dropdown_item,
   tabs,
