@@ -107,7 +107,10 @@ router.get(
     }
     const isModal = req.headers?.saltcornmodalrequest;
 
-    const contents0 = await view.run_possibly_on_page(query, req, res);
+    const contents0 = await view.run_possibly_on_page(query, req, res, false, {
+      alreadyAuthorized: true,
+    });
+    if (res.headersSent) return; // an on_page_load action already redirected res directly
     const __ = (s: string) =>
       state.i18n.__({ phrase: s, locale: req.getLocale() }) || s;
     let title:
@@ -173,9 +176,9 @@ router.get(
         req.user,
         { req }
       );
-    if (typeof contents0 === "object" && "goto" in contents0)
+    if (contents0 && typeof contents0 === "object" && "goto" in contents0) {
       res.redirect((contents0 as any).goto);
-    else {
+    } else {
       const contents =
         typeof contents0 === "string"
           ? div(

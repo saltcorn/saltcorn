@@ -287,6 +287,7 @@ export type RunExtra = {
   redirect?: string;
   onRowSelect?: Function;
   removeIdFromstate?: boolean;
+  alreadyAuthorized?: boolean; // caller already did the min_role/authorize check
 } & ReqRes &
   SelectOptions;
 

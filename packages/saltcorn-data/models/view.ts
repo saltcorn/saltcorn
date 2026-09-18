@@ -542,7 +542,17 @@ class View implements AbstractView {
     const table_id = this.exttable_name || this.table_id;
     const role = extraArgs.req?.user?.role_id || 100;
     const state = nsState.getState()!;
-    if (role > this.min_role) return "";
+    if (
+      !extraArgs.alreadyAuthorized &&
+      role > this.min_role &&
+      !(await this.authorize(extraArgs.req?.user, {
+        action: "get",
+        req: extraArgs.req,
+        state: query,
+        remote,
+      }))
+    )
+      return "";
     try {
       const viewState = removeEmptyStringsKeepNull(query);
       state.log(
@@ -681,12 +691,34 @@ class View implements AbstractView {
     if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
-        // return contents
-        return (await db_page.run(query, { res, req, ...extra })) as any;
+        const role = req.user?.role_id || 100;
+        // db_page's own access was never checked by the view-level check above
+        if (
+          role > db_page.min_role &&
+          !(await db_page.authorize(req.user, {
+            action: "get",
+            req,
+            state: query,
+          }))
+        ) {
+          if (!req.user)
+            return {
+              goto: `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`,
+            };
+          req.flash("danger", req.__("Not authorized"));
+          return { goto: "/" };
+        }
+        const pageResult = await db_page.run(query, { res, req, ...extra });
+        if (pageResult === null) return ""; // res already redirected by an on_page_load action
+        return pageResult as any;
       }
     }
     const state = view.combine_state_and_default_state(query);
-    const resp = await view.run(state, { res, req, ...extra }, remote);
+    const resp = await view.run(
+      state,
+      { res, req, ...extra },
+      remote
+    );
     //console.log(req.headers);
 
     const isModal = req.headers?.saltcornmodalrequest;
