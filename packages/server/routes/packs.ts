@@ -45,6 +45,19 @@ import Library from "@saltcorn/data/models/library";
 import Trigger from "@saltcorn/data/models/trigger";
 import Role from "@saltcorn/data/models/role";
 import fs from "fs";
+import stream from "stream";
+
+/**
+ * Whether a Bool field on a posted form was ticked.
+ *
+ * An unticked checkbox is absent from the body, so presence alone is nearly
+ * enough — but a form posted by something other than this page (the API, a
+ * test, a curl) may send the field with a falsy value, and reading that as
+ * "ticked" would hand back a file to a caller that asked for the page.
+ */
+const is_checked = (v: any): boolean =>
+  v === true ||
+  (typeof v === "string" && !["", "false", "off", "0"].includes(v));
 
 /**
  * @type {object}
@@ -198,6 +211,14 @@ router.get(
           label: req.__("Include Event Logs"),
           type: "Bool",
         },
+        {
+          name: "download_as_file",
+          label: req.__("Download as JSON file"),
+          sublabel: req.__(
+            "Save the pack straight to a file instead of showing it on screen to copy."
+          ),
+          type: "Bool",
+        },
       ] as FieldLike[],
     });
     res.sendWrap(req.__(`Create Pack`), {
@@ -300,6 +321,18 @@ router.post(
         default:
           break;
       }
+    }
+    // Selecting 20k lines of JSON out of a <pre> to get it into a file is the
+    // whole of what this avoids (#4270). Indented, unlike the on-screen copy:
+    // this one is a file that will be read, diffed and committed, and it is the
+    // shape /entities/download-pack already writes.
+    if (is_checked(req.body?.download_as_file)) {
+      const readStream = new stream.PassThrough();
+      readStream.end(JSON.stringify(pack, null, 2));
+      res.type("application/json");
+      res.attachment("saltcorn-pack.json");
+      readStream.pipe(res as any);
+      return;
     }
     res.sendWrap(req.__(`Pack`), {
       above: [
