@@ -27,6 +27,7 @@ import {
   interpolate,
   validSqlId,
   renderServerSide,
+  stableStateKey,
 } from "../../utils.js";
 import {
   get_expression_function,
@@ -55,7 +56,13 @@ import Workflow from "../../models/workflow.js";
 import Trigger from "../../models/trigger.js";
 import File from "../../models/file.js";
 import { GenObj } from "@saltcorn/types/common_types";
-import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
+import {
+  Layout,
+  Column,
+  Req,
+  Res,
+  EmbedChain,
+} from "@saltcorn/types/base_types";
 import { Row } from "@saltcorn/db-common/dbtypes";
 
 const { div, text, span, a, text_attr, i, button, script, domReady } = tagsPkg;
@@ -502,7 +509,24 @@ const renderRows = async (
   });
 
   const owner_field = await table.owner_fieldname();
-  const subviewExtra = { ...extra };
+  // Show views this one is embedded in, directly or through other views.
+  // Meeting the same view with the same state again would recurse forever.
+  const embedChain: EmbedChain = extra.embedChain || [];
+  const stateKey = stableStateKey(state);
+  const loopStart = embedChain.findIndex(
+    (e) => e.viewname === viewname && e.state === stateKey
+  );
+  if (loopStart >= 0)
+    throw new InvalidConfiguration(
+      `View ${viewname} embeds itself with same state (${[
+        ...embedChain.slice(loopStart).map((e) => e.viewname),
+        viewname,
+      ].join(" → ")}); infinite loop detected`
+    );
+  const subviewExtra = {
+    ...extra,
+    embedChain: [...embedChain, { viewname, state: stateKey }],
+  };
   if (extra.req?.generate_email) {
     // no mjml markup for for nested subviews, only for the top view
     subviewExtra.req = { ...extra.req, isSubView: true };
@@ -610,13 +634,6 @@ const renderRows = async (
           if (segment.state === "local") {
             const state2 = { ...state1, ...extra_state };
             const qs = stateToQueryString(state2, true);
-            if (
-              view.name === viewname &&
-              JSON.stringify(state) === JSON.stringify(state2)
-            )
-              throw new InvalidConfiguration(
-                `View ${view.name} embeds itself with same state; inifinite loop detected`
-              );
             segment.contents = div(
               {
                 class: "d-inline",
@@ -633,14 +650,6 @@ const renderRows = async (
           } else {
             const state2 = { ...outerState, ...state1, ...extra_state };
             const qs = stateToQueryString(state2, true);
-
-            if (
-              view.name === viewname &&
-              JSON.stringify(state) === JSON.stringify(state2)
-            )
-              throw new InvalidConfiguration(
-                `View ${view.name} embeds itself with same state; inifinite loop detected`
-              );
 
             segment.contents = div(
               {

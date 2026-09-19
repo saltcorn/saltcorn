@@ -287,8 +287,12 @@ export type RunExtra = {
   redirect?: string;
   onRowSelect?: Function;
   removeIdFromstate?: boolean;
+  /** Show views (with state) this run is embedded in, to detect embed loops */
+  embedChain?: EmbedChain;
 } & ReqRes &
   SelectOptions;
+
+export type EmbedChain = { viewname: string; state: string }[];
 
 /** Views, pages, and tables referenced by a view/page's configuration. */
 export type ConnectedObjects = {
