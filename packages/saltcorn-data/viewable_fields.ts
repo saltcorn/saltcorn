@@ -57,7 +57,7 @@ import {
   stateToQueryString,
   pathToState,
 } from "./plugin-helper.js";
-import { Layout, Req, Res } from "@saltcorn/types/base_types";
+import { Layout, Req, Res, EmbedChain } from "@saltcorn/types/base_types";
 
 const { show_icon_and_label } = layoutUtilsPkg;
 
@@ -2287,6 +2287,7 @@ const transformForm = async ({
   optionsQuery,
   state,
   isPreview,
+  embedChain,
 }: {
   form: any;
   table: Table;
@@ -2303,6 +2304,7 @@ const transformForm = async ({
   optionsQuery?: GenObj;
   state?: GenObj;
   isPreview?: boolean;
+  embedChain?: EmbedChain;
 }): Promise<void> => {
   let originalState = state;
   let pseudo_row: GenObj = {};
@@ -2797,7 +2799,7 @@ const transformForm = async ({
           : view.renderLocally()
             ? await view.run(
                 { ...state, ...outerState, ...extra_state },
-                { req, res },
+                { req, res, embedChain },
                 view.isRemoteTable()
               )
             : await renderServerSide(view.name, {
