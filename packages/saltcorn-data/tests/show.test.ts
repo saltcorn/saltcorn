@@ -706,3 +706,107 @@ describe("get by date error", () => {
     expect(vres2).toBe("Carl Rogers");
   });
 });
+
+describe("embedded view loops", () => {
+  const embed = (view: string, relation: string) => ({
+    type: "view",
+    view,
+    relation,
+    state: "shared",
+    name: `embed_${view}`,
+  });
+  beforeAll(async () => {
+    const rooms = Table.findOne("rooms")!;
+    const messages = Table.findOne("messages")!;
+    // room show <-> message show
+    await mkViewWithCfg({
+      name: "loop_room_show",
+      table_id: rooms.id,
+      configuration: {
+        columns: [],
+        layout: embed("loop_msg_show", ".rooms.messages$room"),
+      },
+    });
+    await mkViewWithCfg({
+      name: "loop_msg_show",
+      table_id: messages.id,
+      configuration: {
+        columns: [],
+        layout: embed("loop_room_show", ".messages.room"),
+      },
+    });
+    // message show <-> room edit
+    await View.create({
+      name: "loop_room_edit",
+      table_id: rooms.id,
+      viewtemplate: "Edit",
+      min_role: 100,
+      configuration: {
+        columns: [],
+        layout: embed("loop_msg_show_edit", ".rooms.messages$room"),
+      },
+    });
+    await mkViewWithCfg({
+      name: "loop_msg_show_edit",
+      table_id: messages.id,
+      configuration: {
+        columns: [],
+        layout: embed("loop_room_edit", ".messages.room"),
+      },
+    });
+    // node show embedding the parent node's show, ends at the root
+    const nodes = await Table.create("loop_nodes");
+    await Field.create({
+      table: nodes,
+      name: "name",
+      label: "Name",
+      type: "String",
+    });
+    await Field.create({
+      table: nodes,
+      name: "parent",
+      label: "Parent",
+      type: "Key to loop_nodes",
+    });
+    await getState()!.refresh_tables();
+    const n1 = await nodes.insertRow({ name: "node1" });
+    const n2 = await nodes.insertRow({ name: "node2", parent: n1 });
+    await nodes.insertRow({ name: "node3", parent: n2 });
+    await mkViewWithCfg({
+      name: "loop_node_show",
+      table_id: nodes.id,
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", fieldview: "as_text" }],
+        layout: {
+          above: [
+            { type: "field", field_name: "name", fieldview: "as_text" },
+            embed("loop_node_show", ".loop_nodes.parent"),
+          ],
+        },
+      },
+    });
+  });
+  it("detects a parent/child Show loop", async () => {
+    const view = View.findOne({ name: "loop_room_show" });
+    assertIsSet(view);
+    await expect(view.run({ id: 1 }, mockReqRes)).rejects.toThrow(
+      "(loop_msg_show → loop_room_show → loop_msg_show); infinite loop detected"
+    );
+  });
+  it("detects a loop through an Edit view", async () => {
+    const view = View.findOne({ name: "loop_msg_show_edit" });
+    assertIsSet(view);
+    await expect(view.run({ id: 1 }, mockReqRes)).rejects.toThrow(
+      "(loop_msg_show_edit → loop_room_edit → loop_msg_show_edit); infinite loop detected"
+    );
+  });
+  it("renders a self-embedding Show that terminates", async () => {
+    const view = View.findOne({ name: "loop_node_show" });
+    assertIsSet(view);
+    const node3 = await Table.findOne("loop_nodes")!.getRow({ name: "node3" });
+    const vres = await view.run({ id: node3!.id }, mockReqRes);
+    expect(vres).toContain("node3");
+    expect(vres).toContain("node2");
+    expect(vres).toContain("node1");
+  });
+});
