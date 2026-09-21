@@ -1585,6 +1585,7 @@ router.post(
           plugin,
           schema === db.connectObj.default_schema || plugin.source === "github"
         );
+        await getState()!.refresh_views(); // picks up the plugin's headers without a restart
         req.flash("success", req.__(`Module %s installed`, plugin.name));
         for (const msg of msgs || []) req.flash("warning", msg);
         res.redirect(`/plugins`);
