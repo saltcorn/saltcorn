@@ -378,6 +378,7 @@ class PageLocators {
     this.secondrowcolumn1 = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas'
     this.embedViewSource = 'div[title="Embed a view"]';
     this.viewSelector = '.view-selector';
+    this.actionSelector = '.action-selector';
     this.optioninput = 'input[name="options"]';
     this.column5 = '.d-flex.justify-content-between.h-100 >> text=Column 5';
     this.headerlabel = 'input.form-control[value=""]';
