@@ -743,8 +743,9 @@ class Trigger implements AbstractTrigger {
   }
 
   /**
-   * Checks plugin `authorize_trigger` hooks. Combine with the caller's own
-   * role/min_role check, e.g. `role <= trigger.min_role || (await trigger.authorize(...))`.
+   * Full access decision: checks plugin `authorize_trigger` hooks and
+   * combines with min_role. A hook's explicit allow/deny always wins;
+   * only when every hook abstains does min_role decide.
    * @param user - the acting user (or undefined/public)
    * @param opts.action - "get" or "post"
    * @param opts.req - the request object, forwarded to hooks
@@ -771,7 +772,10 @@ class Trigger implements AbstractTrigger {
       },
       user
     );
-    return result.decision === "allow";
+    if (result?.decision === "deny") return false;
+    if (result?.decision === "allow") return true;
+    const role = user?.role_id ?? 100;
+    return role <= (this.min_role ?? 100);
   }
 
   static get abbreviated_actions() {

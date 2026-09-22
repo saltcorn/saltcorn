@@ -530,8 +530,9 @@ class Page implements AbstractPage {
   }
 
   /**
-   * Checks plugin `authorize_page` hooks. Combine with the caller's own
-   * role/min_role check, e.g. `role <= page.min_role || (await page.authorize(...))`.
+   * Full access decision: checks plugin `authorize_page` hooks and combines
+   * with min_role. A hook's explicit allow/deny always wins; only when
+   * every hook abstains does min_role decide.
    * @param user - the acting user (or undefined/public)
    * @param opts.action - "get" or "post"
    * @param opts.req - the request object, forwarded to hooks
@@ -558,7 +559,10 @@ class Page implements AbstractPage {
       },
       user
     );
-    return result.decision === "allow";
+    if (result?.decision === "deny") return false;
+    if (result?.decision === "allow") return true;
+    const role = user?.role_id ?? 100;
+    return role <= this.min_role;
   }
 
   get html_file(): string | undefined {
@@ -595,16 +599,25 @@ class Page implements AbstractPage {
         );
       } else {
         const role = (extraArgs.req.user || {}).role_id || 100;
-        const pageContent = await page.run(querystate, extraArgs);
-        segment.contents = (
-          getState()!.getLayout(extraArgs.req.user as any) as any
-        ).renderBody({
-          title: "",
-          body: pageContent,
+        const authorized = await page.authorize(extraArgs.req?.user, {
+          action: "get",
           req: extraArgs.req,
-          role,
-          alerts: [],
+          state: querystate,
         });
+        const pageContent = authorized
+          ? await page.run(querystate, extraArgs)
+          : ""; // embed denied - checked here, not inside page.run()
+        segment.contents = pageContent
+          ? (
+              getState()!.getLayout(extraArgs.req.user as any) as any
+            ).renderBody({
+              title: "",
+              body: pageContent,
+              req: extraArgs.req,
+              role,
+              alerts: [],
+            })
+          : "";
       }
     });
   }

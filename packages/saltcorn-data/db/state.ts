@@ -247,10 +247,11 @@ class State {
   copilot_skills: Array<CopilotSkill>;
   capacitorPlugins: Array<CapacitorPlugin>;
   exchange: Record<string, Array<unknown>>;
-  authorize_view_hooks: Array<AuthorizeAccessViewHook>;
-  authorize_page_hooks: Array<AuthorizeAccessPageHook>;
-  authorize_trigger_hooks: Array<AuthorizeAccessTriggerHook>;
-  authorize_api_hooks: Array<AuthorizeAccessApiHook>;
+  // keyed by plugin name so re-registering replaces the old hook instead of duplicating it
+  authorize_view_hooks: Record<string, AuthorizeAccessViewHook>;
+  authorize_page_hooks: Record<string, AuthorizeAccessPageHook>;
+  authorize_trigger_hooks: Record<string, AuthorizeAccessTriggerHook>;
+  authorize_api_hooks: Record<string, AuthorizeAccessApiHook>;
   sendMessageToWorkers?: Function;
   mobile_push_handler: Record<string, Function>;
   pushHelper?: PushMessageHelper;
@@ -300,10 +301,10 @@ class State {
     this.keyFieldviews = {};
     this.external_tables = {};
     this.exchange = {};
-    this.authorize_view_hooks = [];
-    this.authorize_page_hooks = [];
-    this.authorize_trigger_hooks = [];
-    this.authorize_api_hooks = [];
+    this.authorize_view_hooks = {};
+    this.authorize_page_hooks = {};
+    this.authorize_trigger_hooks = {};
+    this.authorize_api_hooks = {};
     this.verifier = null;
     this.i18n = new I18n.I18n();
     this.i18n.configure({
@@ -1124,15 +1125,20 @@ class State {
       if (!this.exchange[k]) this.exchange[k] = [];
       this.exchange[k].push(...(v as Array<unknown>));
     });
+    // keyed by name, so re-registering replaces this plugin's hook instead of duplicating it
     const authorizeViewHook = withCfg("authorize_view");
-    if (authorizeViewHook) this.authorize_view_hooks.push(authorizeViewHook);
+    if (authorizeViewHook) this.authorize_view_hooks[name] = authorizeViewHook;
+    else delete this.authorize_view_hooks[name];
     const authorizePageHook = withCfg("authorize_page");
-    if (authorizePageHook) this.authorize_page_hooks.push(authorizePageHook);
+    if (authorizePageHook) this.authorize_page_hooks[name] = authorizePageHook;
+    else delete this.authorize_page_hooks[name];
     const authorizeTriggerHook = withCfg("authorize_trigger");
     if (authorizeTriggerHook)
-      this.authorize_trigger_hooks.push(authorizeTriggerHook);
+      this.authorize_trigger_hooks[name] = authorizeTriggerHook;
+    else delete this.authorize_trigger_hooks[name];
     const authorizeApiHook = withCfg("authorize_api");
-    if (authorizeApiHook) this.authorize_api_hooks.push(authorizeApiHook);
+    if (authorizeApiHook) this.authorize_api_hooks[name] = authorizeApiHook;
+    else delete this.authorize_api_hooks[name];
     withCfg("copilot_skills", []).forEach((v: CopilotSkill) => {
       if (
         v?.function_name &&
@@ -1218,92 +1224,124 @@ class State {
   }
 
   /**
-   * Runs the registered authorize_* plugin hooks for the given kind;
-   * "allow" if any hook allows, else "deny".
+   * @param kind - which authorize_* hook store to look up
+   * @returns that kind's registered hooks, keyed by plugin name
+   */
+  private hooksFor(kind: AuthorizeAccessKind): Record<string, AnyAuthorizeAccessHook> {
+    switch (kind) {
+      case "view":
+        return this.authorize_view_hooks;
+      case "page":
+        return this.authorize_page_hooks;
+      case "trigger":
+        return this.authorize_trigger_hooks;
+      case "api":
+        return this.authorize_api_hooks;
+      default:
+        return {}; // reachable from JS plugin code with an untyped kind
+    }
+  }
+
+  /**
+   * Lets callers skip straight to their min_role fallback (no request
+   * object, no dispatch) when no plugin has an opinion on this kind at all.
+   * @param kind - which authorize_* hook store to check
+   */
+  hasAuthorizeHooks(kind: AuthorizeAccessKind): boolean {
+    return Object.keys(this.hooksFor(kind)).length > 0;
+  }
+
+  /**
+   * Runs every authorize_* hook for this kind; the highest-priority result
+   * wins (ties favor allow). Null means every hook abstained - callers then
+   * fall back to their own min_role check.
    * @param kind - which authorize_* hook array to run
    * @param request - action (get/post), the target entity, state/body, req
    * @param user
-   * @returns {Promise<AuthorizeAccessResult>}
+   * @returns {Promise<AuthorizeAccessResult | null>}
    */
   private async dispatchAuthorize(
     kind: AuthorizeAccessKind,
     request: AuthorizeAccessRequestBase,
     user: any
-  ): Promise<AuthorizeAccessResult> {
-    let hooks: Array<AnyAuthorizeAccessHook>;
-    switch (kind) {
-      case "view":
-        hooks = this.authorize_view_hooks;
-        break;
-      case "page":
-        hooks = this.authorize_page_hooks;
-        break;
-      case "trigger":
-        hooks = this.authorize_trigger_hooks;
-        break;
-      case "api":
-        hooks = this.authorize_api_hooks;
-        break;
+  ): Promise<AuthorizeAccessResult | null> {
+    const hookFns = Object.values(this.hooksFor(kind));
+    if (hookFns.length === 0) return null;
+    const results = await Promise.all(hookFns.map((hook) => hook(request, user)));
+    let best: AuthorizeAccessResult | null = null;
+    let bestPriority = -Infinity;
+    for (const res of results) {
+      if (!res?.decision) continue; // abstain
+      // a NaN/non-finite priority would poison every later comparison forever
+      const priority = Number.isFinite(res.priority) ? res.priority! : 0;
+      if (
+        !best ||
+        priority > bestPriority ||
+        (priority === bestPriority &&
+          res.decision === "allow" &&
+          best.decision === "deny")
+      ) {
+        best = res;
+        bestPriority = priority;
+      }
     }
-    let denyReason: string | undefined;
-    for (const hook of hooks) {
-      const res = await hook(request, user);
-      if (res?.decision === "allow") return res;
-      if (res?.decision === "deny" && res.reason && !denyReason)
-        denyReason = res.reason;
-    }
-    return { decision: "deny", reason: denyReason };
+    return best;
   }
 
   /**
-   * Checks plugin `authorize_view` hooks.
+   * Checks plugin `authorize_view` hooks. Returns null if every hook
+   * abstained (or there are none) - see dispatchAuthorize.
    * @param request
    * @param user
-   * @returns {Promise<AuthorizeAccessResult>}
+   * @returns {Promise<AuthorizeAccessResult | null>}
    */
   async authorizeView(
     request: AuthorizeAccessViewRequest,
     user: any
-  ): Promise<AuthorizeAccessResult> {
+  ): Promise<AuthorizeAccessResult | null> {
     return this.dispatchAuthorize("view", request, user);
   }
 
   /**
-   * Checks plugin `authorize_page` hooks.
+   * Checks plugin `authorize_page` hooks. Returns null if every hook
+   * abstained (or there are none) - see dispatchAuthorize.
    * @param request
    * @param user
-   * @returns {Promise<AuthorizeAccessResult>}
+   * @returns {Promise<AuthorizeAccessResult | null>}
    */
   async authorizePage(
     request: AuthorizeAccessPageRequest,
     user: any
-  ): Promise<AuthorizeAccessResult> {
+  ): Promise<AuthorizeAccessResult | null> {
     return this.dispatchAuthorize("page", request, user);
   }
 
   /**
-   * Checks plugin `authorize_trigger` hooks.
+   * Checks plugin `authorize_trigger` hooks. Returns null if every hook
+   * abstained (or there are none) - see dispatchAuthorize.
    * @param request
    * @param user
-   * @returns {Promise<AuthorizeAccessResult>}
+   * @returns {Promise<AuthorizeAccessResult | null>}
    */
   async authorizeTrigger(
     request: AuthorizeAccessTriggerRequest,
     user: any
-  ): Promise<AuthorizeAccessResult> {
+  ): Promise<AuthorizeAccessResult | null> {
     return this.dispatchAuthorize("trigger", request, user);
   }
 
   /**
-   * Checks plugin `authorize_api` hooks, for plugin-registered routes with
-   * no dedicated model (view/page/trigger) to hang an `authorize()` method
-   * off of. Combine with the caller's own role check.
+   * Access decision for a plugin API route (no view/page/trigger to hang
+   * authorize() off of). A hook's allow/deny always wins; role <= min_role
+   * only decides if every hook abstains.
    * @param user - the acting user (or undefined/public)
    * @param opts.route - identifier of the target route/action
    * @param opts.action - "get" or "post"
    * @param opts.req - the request object, forwarded to hooks
    * @param opts.state - query/state, for action "get"
    * @param opts.body - POST body, for action "post"
+   * @param role - the acting user's role_id
+   * @param min_role - the route's own minimum role
    * @returns {Promise<boolean>}
    */
   async authorizeApi(
@@ -1314,7 +1352,9 @@ class State {
       req: any;
       state?: GenObj;
       body?: GenObj;
-    }
+    },
+    role: number,
+    min_role: number
   ): Promise<boolean> {
     const result = await this.dispatchAuthorize(
       "api",
@@ -1327,7 +1367,9 @@ class State {
       },
       user
     );
-    return result.decision === "allow";
+    if (result?.decision === "deny") return false;
+    if (result?.decision === "allow") return true;
+    return role <= min_role;
   }
 
   /**
@@ -1530,10 +1572,10 @@ class State {
     this.external_tables = {};
     this.eventTypes = {};
     this.exchange = {};
-    this.authorize_view_hooks = [];
-    this.authorize_page_hooks = [];
-    this.authorize_trigger_hooks = [];
-    this.authorize_api_hooks = [];
+    this.authorize_view_hooks = {};
+    this.authorize_page_hooks = {};
+    this.authorize_trigger_hooks = {};
+    this.authorize_api_hooks = {};
     this.verifier = null;
     this.fonts = standard_fonts;
     this.iconSet = new Set(get_standard_icons());

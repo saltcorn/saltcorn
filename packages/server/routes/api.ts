@@ -124,30 +124,6 @@ function potentiallyAccessAllowedWrite(req: Req, user: any, table: any) {
       (table.ownership_field_id || table.ownership_formula))
   );
 }
-/**
- * Check that user has right to trigger call
- * @param {object} req httprequest
- * @param {object} user user based on access token
- * @param {Trigger} trigger
- * @returns {boolean}
- */
-async function accessAllowed(req: Req, user: any, trigger: any) {
-  const role =
-    req.user && req.user!.id
-      ? req.user!.role_id
-      : user && user.role_id
-        ? user.role_id
-        : 100;
-
-  if (role <= trigger.min_role) return true;
-  const action = req.method === "GET" ? "get" : "post";
-  return await trigger.authorize(user || req.user, {
-    action,
-    req,
-    state: action === "get" ? req.query : undefined,
-    body: action === "post" ? req.body : undefined,
-  });
-}
 
 const getFlashes = (req: Req) =>
   ["error", "success", "danger", "warning", "information"]
@@ -194,11 +170,8 @@ router.post(
     }
     // req.user is already set from the session by app.js's auth middleware.
     const user = req.user;
-    const role = user && user.id ? user.role_id : 100;
-    if (
-      role <= view.min_role ||
-      (await view.authorize(user, { action: "get", req })) // TODO set query to state
-    ) {
+    if (await view.authorize(user, { action: "get", req })) {
+      // TODO set query to state
       const queries = view.queries(false, req, res);
       if (Object.prototype.hasOwnProperty.call(queries, queryName)) {
         const { args } = req.body || {};
@@ -220,6 +193,26 @@ router.post(
       getState()!.log(3, `API viewQuery ${view.name} not authorized`);
       res.status(401).json({ error: req.__("Not authorized") });
     }
+  })
+);
+
+// serves a remote/mobile View.authorize() call - its own endpoint, not a viewtemplate query
+router.post(
+  "/viewAuthorize/:viewName",
+  error_catcher(async (req: Req, res: Res) => {
+    const { viewName } = req.params;
+    const view = await View.findOne({ name: viewName });
+    if (!view) {
+      getState()!.log(3, `API viewAuthorize ${viewName} not found`);
+      res.status(404).json({ error: req.__("View %s not found", viewName) });
+      return;
+    }
+    const { action, route, state, body } = req.body || {};
+    const result = await getState()!.authorizeView(
+      { action, view, route, state, body, req },
+      req.user
+    );
+    res.json({ success: result, alerts: getFlashes(req) });
   })
 );
 
@@ -855,7 +848,15 @@ router.all(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (await accessAllowed(req, user, trigger)) {
+        const action = req.method === "GET" ? "get" : "post";
+        if (
+          await trigger.authorize(req.user || user, {
+            action,
+            req,
+            state: action === "get" ? req.query : undefined,
+            body: action === "post" ? req.body : undefined,
+          })
+        ) {
           try {
             let resp: any;
             const row = req.method === "GET" ? req.query : req.body || {};

@@ -287,6 +287,8 @@ export type RunExtra = {
   redirect?: string;
   onRowSelect?: Function;
   removeIdFromstate?: boolean;
+  // the View instance already checked - safe to forward to an embedded view
+  alreadyAuthorizedFor?: any;
 } & ReqRes &
   SelectOptions;
 
@@ -676,9 +678,10 @@ export type AuthorizeAccessApiRequest = Omit<
 };
 
 /** The outcome of an authorize_* hook: allow, or deny with an optional reason. */
+// priority: higher wins across hooks; ties favor allow. Default 0.
 export type AuthorizeAccessResult =
-  | { decision: "allow" }
-  | { decision: "deny"; reason?: string };
+  | { decision: "allow"; priority?: number }
+  | { decision: "deny"; reason?: string; priority?: number };
 
 // Return null/undefined to abstain (no opinion); { decision: "deny" } is an
 // active decision, whose reason is kept for diagnostics.

@@ -37,10 +37,7 @@ export const postView = async (context) => {
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
   const mobileCfg = state.mobileConfig;
-  if (
-    mobileCfg.user.role_id > view.min_role &&
-    !(await view.authorize(mobileCfg.user, { action: "post", req, body }))
-  ) {
+  if (!(await view.authorize(mobileCfg.user, { action: "post", req, body }))) {
     throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   }
   await view.runPost(
@@ -92,7 +89,14 @@ export const postViewRoute = async (context) => {
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
   const { user, isOfflineMode } = state.mobileConfig;
-  if (user.role_id > view.min_role)
+  if (
+    !(await view.authorize(user, {
+      action: "post",
+      route: context.params.route,
+      req,
+      body: context.data || {},
+    }))
+  )
     throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
 
   if (!isOfflineMode && view.viewtemplateObj?.name === "WorkflowRoom") {
@@ -149,7 +153,6 @@ export const getView = async (context) => {
   const view = saltcorn.data.models.View.findOne({ name: viewname });
   if (!view) throw new Error(req.__("No such view: %s", viewname));
   if (
-    state.mobileConfig.user.role_id > view.min_role &&
     !(await view.authorize(state.mobileConfig.user, {
       action: "get",
       req,

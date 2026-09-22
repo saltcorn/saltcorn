@@ -1337,33 +1337,42 @@ describe("authorize_* hook dispatch", () => {
     let pageCalls = 0;
     let triggerCalls = 0;
     let apiCalls = 0;
+    // scoped to a probe marker (not a real entity name) - this test only
+    // checks that dispatch is scoped by kind, not any specific target, but
+    // an unconditional deny would otherwise leak into every later test that
+    // expects a genuine abstain (null) for an unrelated view/page/trigger
+    const probe = "counting_hooks_test_probe";
     const countingPlugin = {
       sc_plugin_api_version: 1,
-      authorize_view: async () => {
+      authorize_view: async (request: any) => {
+        if (request.probe !== probe) return null;
         viewCalls++;
         return { decision: "deny" };
       },
-      authorize_page: async () => {
+      authorize_page: async (request: any) => {
+        if (request.probe !== probe) return null;
         pageCalls++;
         return { decision: "deny" };
       },
-      authorize_trigger: async () => {
+      authorize_trigger: async (request: any) => {
+        if (request.probe !== probe) return null;
         triggerCalls++;
         return { decision: "deny" };
       },
-      authorize_api: async () => {
+      authorize_api: async (request: any) => {
+        if (request.route !== "dispatch_test_api") return null;
         apiCalls++;
         return { decision: "deny" };
       },
     } as unknown as Plugin;
     getState()!.registerPlugin("counting_hooks_plugin", countingPlugin);
 
-    // view/page/trigger are omitted below on purpose (unknown-cast) - this
-    // test only checks that dispatch is scoped by kind, not any specific
-    // target. The real call sites (View.authorize, Page.authorize,
-    // Trigger.authorize) always populate a real entity.
+    // view/page/trigger requests are otherwise incomplete on purpose
+    // (unknown-cast) - this test only checks that dispatch is scoped by
+    // kind, not any specific target. The real call sites (View.authorize,
+    // Page.authorize, Trigger.authorize) always populate a real entity.
     await getState()!.authorizeView(
-      { action: "get", req } as unknown as AuthorizeAccessViewRequest,
+      { action: "get", req, probe } as unknown as AuthorizeAccessViewRequest,
       req.user
     );
     expect(viewCalls).toBe(1);
@@ -1372,25 +1381,34 @@ describe("authorize_* hook dispatch", () => {
     expect(apiCalls).toBe(0);
 
     await getState()!.authorizePage(
-      { action: "get", req } as unknown as AuthorizeAccessPageRequest,
+      { action: "get", req, probe } as unknown as AuthorizeAccessPageRequest,
       req.user
     );
     expect(pageCalls).toBe(1);
     expect(viewCalls).toBe(1);
 
     await getState()!.authorizeTrigger(
-      { action: "post", req } as unknown as AuthorizeAccessTriggerRequest,
+      {
+        action: "post",
+        req,
+        probe,
+      } as unknown as AuthorizeAccessTriggerRequest,
       req.user
     );
     expect(triggerCalls).toBe(1);
     expect(pageCalls).toBe(1);
     expect(viewCalls).toBe(1);
 
-    await getState()!.authorizeApi(req.user, {
-      route: "dispatch_test_api",
-      action: "get",
-      req,
-    });
+    await getState()!.authorizeApi(
+      req.user,
+      {
+        route: "dispatch_test_api",
+        action: "get",
+        req,
+      },
+      1,
+      1
+    );
     expect(apiCalls).toBe(1);
     expect(triggerCalls).toBe(1);
     expect(pageCalls).toBe(1);
@@ -1414,19 +1432,23 @@ describe("authorize_* hook dispatch", () => {
       },
     } as unknown as Plugin);
 
-    const allowed = await getState()!.authorizeApi(req.user, {
-      route: probeName,
-      action: "get",
-      req,
-    });
+    const allowed = await getState()!.authorizeApi(
+      req.user,
+      {
+        route: probeName,
+        action: "get",
+        req,
+      },
+      100,
+      1
+    );
     expect(allowed).toBe(true);
   });
 
-  it("denies by default and preserves a hook's deny reason", async () => {
+  it("abstains (null) when no hook has an opinion, but preserves an explicit deny's reason", async () => {
     // Uses authorizeTrigger (rather than authorizeApi) since it's one of
     // the methods that surfaces the raw AuthorizeAccessResult (with
-    // .reason), needed to check the deny-reason-preservation behavior
-    // below - the underlying aggregation logic is shared across all kinds.
+    // .reason) - the underlying aggregation logic is shared across all kinds.
     const result = await getState()!.authorizeTrigger(
       {
         action: "get",
@@ -1435,7 +1457,7 @@ describe("authorize_* hook dispatch", () => {
       } as AuthorizeAccessTriggerRequest,
       req.user
     );
-    expect(result.decision).toBe("deny");
+    expect(result).toBe(null);
 
     getState()!.registerPlugin("reason_hook_plugin", {
       sc_plugin_api_version: 1,
@@ -1452,8 +1474,8 @@ describe("authorize_* hook dispatch", () => {
       } as AuthorizeAccessTriggerRequest,
       req.user
     );
-    expect(result2.decision).toBe("deny");
-    expect((result2 as any).reason).toBe("explicitly not allowed");
+    expect(result2?.decision).toBe("deny");
+    expect((result2 as any)?.reason).toBe("explicitly not allowed");
   });
 
   it("skips hooks that abstain by returning null/undefined", async () => {
@@ -1473,11 +1495,16 @@ describe("authorize_* hook dispatch", () => {
       },
     } as unknown as Plugin);
 
-    const allowed = await getState()!.authorizeApi(req.user, {
-      route: probeName,
-      action: "get",
-      req,
-    });
+    const allowed = await getState()!.authorizeApi(
+      req.user,
+      {
+        route: probeName,
+        action: "get",
+        req,
+      },
+      100,
+      1
+    );
     expect(allowed).toBe(true);
   });
 
@@ -1506,57 +1533,199 @@ describe("authorize_* hook dispatch", () => {
       } as AuthorizeAccessViewRequest,
       req.user
     );
-    expect(allowed.decision).toBe("allow");
+    expect(allowed?.decision).toBe("allow");
     expect(wrappedHookRequestCalls).toBe(1);
+  });
+
+  it("a higher-priority deny overrides a lower-priority allow", async () => {
+    const probeName = "authz_test_priority_deny_wins";
+    getState()!.registerPlugin("low_priority_allow_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_api: async (request: AuthorizeAccessApiRequest) => {
+        if (request.route !== probeName) return null;
+        return { decision: "allow" }; // priority defaults to 0
+      },
+    } as unknown as Plugin);
+    getState()!.registerPlugin("high_priority_deny_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_api: async (request: AuthorizeAccessApiRequest) => {
+        if (request.route !== probeName) return null;
+        return { decision: "deny", priority: 10 };
+      },
+    } as unknown as Plugin);
+
+    const allowed = await getState()!.authorizeApi(
+      req.user,
+      { route: probeName, action: "get", req },
+      1,
+      1
+    );
+    expect(allowed).toBe(false);
+  });
+
+  it("a higher-priority allow overrides a lower-priority deny", async () => {
+    const probeName = "authz_test_priority_allow_wins";
+    getState()!.registerPlugin("low_priority_deny_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_api: async (request: AuthorizeAccessApiRequest) => {
+        if (request.route !== probeName) return null;
+        return { decision: "deny" }; // priority defaults to 0
+      },
+    } as unknown as Plugin);
+    getState()!.registerPlugin("high_priority_allow_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_api: async (request: AuthorizeAccessApiRequest) => {
+        if (request.route !== probeName) return null;
+        return { decision: "allow", priority: 10 };
+      },
+    } as unknown as Plugin);
+
+    const allowed = await getState()!.authorizeApi(
+      req.user,
+      { route: probeName, action: "get", req },
+      100,
+      1
+    );
+    expect(allowed).toBe(true);
   });
 });
 
+// req.user is role_id 1, which passes almost any min_role - need a weaker
+// user to test "role check fails" and "role check already passes" scenarios
+const lowPrivReq = { ...req, user: { id: 99, role_id: 40, attributes: {} } };
+
+// authorize() is the one full access decision: a hook's explicit allow/deny
+// always wins over role; only when every hook abstains does min_role decide.
 describe("View.authorize", () => {
-  it("defaults to false with no matching authorize_view hooks", async () => {
-    const v = await View.findOne({ name: "authorlist" });
-    assertIsSet(v);
-    const allowed = await v.authorize(req.user, {
+  it("denies when role fails min_role and no hook has an opinion", async () => {
+    const v = await View.create({
+      viewtemplate: "Show",
+      name: "AuthzTestView",
+      description: "",
+      min_role: 1, // admin-only - lowPrivReq's role fails
+      table_id: Table.findOne("books")!.id,
+      default_render_page: "",
+      slug: { label: "", steps: [] },
+      attributes: {},
+      configuration: { columns: [], layout: { type: "blank", contents: "hi" } },
+    });
+    const allowed = await v.authorize(lowPrivReq.user, {
       action: "get",
-      req,
+      req: lowPrivReq,
       state: {},
     });
     expect(allowed).toBe(false);
   });
 
-  it("grants access when an authorize_view hook allows", async () => {
-    const v = await View.findOne({ name: "authorlist" });
+  it("grants access via a hook despite a failing role", async () => {
+    const v = View.findOne({ name: "AuthzTestView" });
     assertIsSet(v);
     getState()!.registerPlugin("view_allow_hook_plugin", {
       sc_plugin_api_version: 1,
       authorize_view: async (request: AuthorizeAccessViewRequest) => {
-        if (request.view.name !== "authorlist") return null;
+        if (request.view.name !== "AuthzTestView") return null;
         return { decision: "allow" };
       },
     } as unknown as Plugin);
-    const allowed = await v.authorize(req.user, {
+    const allowed = await v.authorize(lowPrivReq.user, {
       action: "get",
-      req,
+      req: lowPrivReq,
       state: {},
     });
     expect(allowed).toBe(true);
   });
 
+  it("denies via a hook despite an already-passing role", async () => {
+    const v = await View.create({
+      viewtemplate: "Show",
+      name: "AuthzTestDenyOverrideView",
+      description: "",
+      min_role: 100, // public - lowPrivReq's role already qualifies
+      table_id: Table.findOne("books")!.id,
+      default_render_page: "",
+      slug: { label: "", steps: [] },
+      attributes: {},
+      configuration: {
+        columns: [],
+        layout: { type: "blank", contents: "SHOULD_NOT_APPEAR" },
+      },
+    });
+    getState()!.registerPlugin("view_deny_override_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_view: async (request: AuthorizeAccessViewRequest) => {
+        if (request.view.name !== "AuthzTestDenyOverrideView") return null;
+        return { decision: "deny", reason: "blocked despite qualifying role" };
+      },
+    } as unknown as Plugin);
+    const allowed = await v.authorize(lowPrivReq.user, {
+      action: "get",
+      req: lowPrivReq,
+      state: {},
+    });
+    expect(allowed).toBe(false);
+  });
+
+  it("falls back to min_role when every hook abstains", async () => {
+    // a fresh view name, untouched by the deny hook registered above
+    const v = await View.create({
+      viewtemplate: "Show",
+      name: "AuthzTestAbstainFallbackView",
+      description: "",
+      min_role: 100,
+      table_id: Table.findOne("books")!.id,
+      default_render_page: "",
+      slug: { label: "", steps: [] },
+      attributes: {},
+      configuration: {
+        columns: [],
+        layout: { type: "blank", contents: "FALLBACK_OK" },
+      },
+    });
+    const allowed = await v.authorize(lowPrivReq.user, {
+      action: "get",
+      req: lowPrivReq,
+      state: {},
+    });
+    expect(allowed).toBe(true);
+  });
+
+  it("uses a user's real role even when their id is 0 (room.ts renders for other viewers as {...user, id: 0})", async () => {
+    const v = await View.create({
+      viewtemplate: "Show",
+      name: "AuthzTestIdZeroUser",
+      description: "",
+      min_role: 40,
+      table_id: Table.findOne("books")!.id,
+      default_render_page: "",
+      slug: { label: "", steps: [] },
+      attributes: {},
+      configuration: {
+        columns: [],
+        layout: { type: "blank", contents: "ID_ZERO_OK" },
+      },
+    });
+    const allowed = await v.authorize(
+      { ...lowPrivReq.user, id: 0 },
+      { action: "get", req: lowPrivReq, state: {} }
+    );
+    expect(allowed).toBe(true);
+  });
+
   it("deprecated authorise_get/authorise_post still delegate to authorize()", async () => {
-    // uses authorshow, not authorlist - an earlier test registered a hook
-    // that always allows "authorlist", which would otherwise mask this check
-    const v = await View.findOne({ name: "authorshow" });
+    const v = View.findOne({ name: "AuthzTestView" });
     assertIsSet(v);
     const allowedGet = await v.authorise_get({
       query: {},
       table_id: v.table_id as number,
-      req,
+      req: lowPrivReq,
     });
-    expect(allowedGet).toBe(false);
+    // view_allow_hook_plugin (registered above) still grants an exception
+    expect(allowedGet).toBe(true);
   });
 });
 
 describe("Page.authorize", () => {
-  it("defaults to false with no matching hooks", async () => {
+  it("denies when role fails min_role and no hook has an opinion", async () => {
     const page = await Page.create({
       name: "AuthzTestPage",
       title: "t",
@@ -1564,15 +1733,15 @@ describe("Page.authorize", () => {
       min_role: 1,
       layout: { type: "blank", contents: "hi" },
     });
-    const allowed = await page.authorize(req.user, {
+    const allowed = await page.authorize(lowPrivReq.user, {
       action: "get",
-      req,
+      req: lowPrivReq,
       state: {},
     });
     expect(allowed).toBe(false);
   });
 
-  it("grants access when an authorize_page hook allows", async () => {
+  it("grants access via a hook despite a failing role", async () => {
     const page = Page.findOne({ name: "AuthzTestPage" });
     assertIsSet(page);
     getState()!.registerPlugin("page_allow_hook_plugin", {
@@ -1582,17 +1751,40 @@ describe("Page.authorize", () => {
         return { decision: "allow" };
       },
     } as unknown as Plugin);
-    const allowed = await page.authorize(req.user, {
+    const allowed = await page.authorize(lowPrivReq.user, {
       action: "get",
-      req,
+      req: lowPrivReq,
       state: {},
     });
     expect(allowed).toBe(true);
   });
+
+  it("denies via a hook despite an already-passing role", async () => {
+    const page = await Page.create({
+      name: "AuthzTestDenyOverridePage",
+      title: "t",
+      description: "",
+      min_role: 100, // public - lowPrivReq's role already qualifies
+      layout: { type: "blank", contents: "SHOULD_NOT_APPEAR" },
+    });
+    getState()!.registerPlugin("page_deny_override_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_page: async (request: AuthorizeAccessPageRequest) => {
+        if (request.page.name !== "AuthzTestDenyOverridePage") return null;
+        return { decision: "deny", reason: "blocked despite qualifying role" };
+      },
+    } as unknown as Plugin);
+    const allowed = await page.authorize(lowPrivReq.user, {
+      action: "get",
+      req: lowPrivReq,
+      state: {},
+    });
+    expect(allowed).toBe(false);
+  });
 });
 
 describe("Trigger.authorize", () => {
-  it("defaults to false with no matching hooks", async () => {
+  it("denies when role fails min_role and no hook has an opinion", async () => {
     const trig = await Trigger.create({
       name: "AuthzTestTrigger",
       action: "run_js_code",
@@ -1600,15 +1792,15 @@ describe("Trigger.authorize", () => {
       min_role: 1,
       configuration: { code: "return 1" },
     });
-    const allowed = await trig.authorize(req.user, {
+    const allowed = await trig.authorize(lowPrivReq.user, {
       action: "post",
-      req,
+      req: lowPrivReq,
       body: {},
     });
     expect(allowed).toBe(false);
   });
 
-  it("grants access when an authorize_trigger hook allows", async () => {
+  it("grants access via a hook despite a failing role", async () => {
     const trig = Trigger.findOne({ name: "AuthzTestTrigger" });
     assertIsSet(trig);
     getState()!.registerPlugin("trigger_allow_hook_plugin", {
@@ -1618,11 +1810,171 @@ describe("Trigger.authorize", () => {
         return { decision: "allow" };
       },
     } as unknown as Plugin);
-    const allowed = await trig.authorize(req.user, {
+    const allowed = await trig.authorize(lowPrivReq.user, {
       action: "post",
-      req,
+      req: lowPrivReq,
       body: {},
     });
     expect(allowed).toBe(true);
   });
+
+  it("denies via a hook despite an already-passing role", async () => {
+    const trig = await Trigger.create({
+      name: "AuthzTestDenyOverrideTrigger",
+      action: "run_js_code",
+      when_trigger: "API call",
+      min_role: 100, // public - lowPrivReq's role already qualifies
+      configuration: { code: "return 1" },
+    });
+    getState()!.registerPlugin("trigger_deny_override_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_trigger: async (request: AuthorizeAccessTriggerRequest) => {
+        if (request.trigger.name !== "AuthzTestDenyOverrideTrigger") return null;
+        return { decision: "deny", reason: "blocked despite qualifying role" };
+      },
+    } as unknown as Plugin);
+    const allowed = await trig.authorize(lowPrivReq.user, {
+      action: "post",
+      req: lowPrivReq,
+      body: {},
+    });
+    expect(allowed).toBe(false);
+  });
 });
+
+describe("View.run honors authorize_view, not just min_role", () => {
+  it("returns empty when role fails min_role and no hook grants access", async () => {
+    const view = await View.create({
+      viewtemplate: "Show",
+      name: "AuthzTestRunShow",
+      description: "",
+      min_role: 1,
+      table_id: Table.findOne("books")!.id,
+      default_render_page: "",
+      slug: { label: "", steps: [] },
+      attributes: {},
+      configuration: {
+        columns: [],
+        layout: { type: "blank", contents: "RUN_SHOW_SENTINEL" },
+      },
+    });
+    const html = await view.run({ id: 1 }, { req: lowPrivReq, res: mockReqRes.res } as any);
+    expect(html).toBe("");
+  });
+
+  it("runs when an authorize_view hook grants access despite insufficient role", async () => {
+    getState()!.registerPlugin("view_run_allow_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_view: async (request: AuthorizeAccessViewRequest) => {
+        if (request.view.name !== "AuthzTestRunShow") return null;
+        return { decision: "allow" };
+      },
+    } as unknown as Plugin);
+    const view = View.findOne({ name: "AuthzTestRunShow" });
+    assertIsSet(view);
+    const html = await view.run({ id: 1 }, { req: lowPrivReq, res: mockReqRes.res } as any);
+    expect(html).toContain("RUN_SHOW_SENTINEL");
+  });
+});
+
+// alreadyAuthorizedFor is a reference check (`!==`), safe only because
+// View.findOne/find always return a fresh object - never a cached instance
+// shared between two lookups of the same view. These tests guard that
+// invariant directly, so a future change that breaks it fails loudly here
+// instead of silently reopening the embedding bypass it was added to fix.
+describe("alreadyAuthorizedFor relies on View lookups never being aliased", () => {
+  it("View.findOne returns a distinct object on every call", () => {
+    const a = View.findOne({ name: "AuthzTestRunShow" });
+    const b = View.findOne({ name: "AuthzTestRunShow" });
+    assertIsSet(a);
+    assertIsSet(b);
+    expect(a).not.toBe(b);
+  });
+
+  it("a second lookup of the same view is still independently authorized, even if alreadyAuthorizedFor points at the first", async () => {
+    await View.create({
+      viewtemplate: "Show",
+      name: "AuthzTestAliasingShow",
+      description: "",
+      min_role: 1,
+      table_id: Table.findOne("books")!.id,
+      default_render_page: "",
+      slug: { label: "", steps: [] },
+      attributes: {},
+      configuration: {
+        columns: [],
+        layout: { type: "blank", contents: "ALIASING_SENTINEL" },
+      },
+    });
+    const first = View.findOne({ name: "AuthzTestAliasingShow" });
+    const second = View.findOne({ name: "AuthzTestAliasingShow" });
+    assertIsSet(first);
+    assertIsSet(second);
+    expect(first).not.toBe(second);
+    const html = await second.run(
+      { id: 1 },
+      {
+        req: lowPrivReq,
+        res: mockReqRes.res,
+        alreadyAuthorizedFor: first,
+      } as any
+    );
+    expect(html).toBe("");
+  });
+});
+
+// Page.run() itself does not check min_role/authorize_page - direct visits
+// are gated by the route (server/routes/page.ts), embeds by the embedder
+// (Page.renderEachEmbeddedPageInLayout). See that describe block below.
+describe("Page.run does not gate access itself", () => {
+  it("renders regardless of min_role for a direct call", async () => {
+    const page = await Page.create({
+      name: "AuthzTestRunPage",
+      title: "t",
+      description: "",
+      min_role: 1,
+      layout: { type: "blank", contents: "RUN_PAGE_SENTINEL" },
+    });
+    const contents = await page.run({}, { req: lowPrivReq, res: mockReqRes.res });
+    expect(JSON.stringify(contents)).toContain("RUN_PAGE_SENTINEL");
+  });
+});
+
+describe("Page embeds honor authorize_page, checked by the embedder", () => {
+  it("enforces min_role/authorize_page on an embedded page", async () => {
+    const inner = await Page.create({
+      name: "AuthzTestEmbeddedInnerPage",
+      title: "t",
+      description: "",
+      min_role: 1,
+      layout: { type: "blank", contents: "INNER_PAGE_SENTINEL" },
+    });
+    const outer = await Page.create({
+      name: "AuthzTestEmbeddedOuterPage",
+      title: "t",
+      description: "",
+      min_role: 100, // public - the outer page itself is always reachable
+      layout: { type: "page", page: inner.name },
+    });
+
+    const deniedContents = await outer.run(
+      {},
+      { req: lowPrivReq, res: mockReqRes.res }
+    );
+    expect(JSON.stringify(deniedContents)).not.toContain("INNER_PAGE_SENTINEL");
+
+    getState()!.registerPlugin("embedded_page_allow_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_page: async (request: AuthorizeAccessPageRequest) => {
+        if (request.page.name !== "AuthzTestEmbeddedInnerPage") return null;
+        return { decision: "allow" };
+      },
+    } as unknown as Plugin);
+    const allowedContents = await outer.run(
+      {},
+      { req: lowPrivReq, res: mockReqRes.res }
+    );
+    expect(JSON.stringify(allowedContents)).toContain("INNER_PAGE_SENTINEL");
+  });
+});
+
