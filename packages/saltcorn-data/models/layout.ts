@@ -44,6 +44,9 @@ const traverseSync = (layout: Layout, visitors: Visitors | Function): void => {
       return;
     }
     if (segment.besides) {
+      if (typeof visitors !== "function" && "besides" in visitors) {
+        visitors.besides(segment);
+      }
       for (const seg of segment.besides) go(seg);
       return;
     }

@@ -876,6 +876,13 @@ const get_viewable_fields = (
     (tFieldGenF: (column: any, index: number) => any) =>
     (column: any, index: number) => {
       const tfield = tFieldGenF(column, index);
+      if (tfield && column.cell_css_formula) {
+        const formula = column.cell_css_formula;
+        const cell_class_fn = (row: Row) =>
+          eval_expression(formula, row, req.user, "Cell CSS formula") || null;
+        for (const tf of Array.isArray(tfield) ? tfield : [tfield])
+          if (tf) tf.cell_class_fn = cell_class_fn;
+      }
       if (column.showif) {
         const oldKeyF = tfield.key;
         if (typeof oldKeyF !== "function") return tfield;
@@ -1445,11 +1452,6 @@ const get_viewable_fields = (
                 : undefined,
             header_underline: f.calculated && !f.stored ? true : undefined,
           };
-        if (fvrun && column.cell_css_formula) {
-          const formula = column.cell_css_formula;
-          fvrun.cell_class_fn = (row: Row) =>
-            eval_expression(formula, row, req.user, "Cell CSS formula") || null;
-        }
         if (column.click_to_edit) {
           const updateKey = (fvr: any, column_key?: any) => {
             const oldkey =
@@ -1740,6 +1742,9 @@ const standardLayoutRowVisitor = (
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "title");
       evalMaybeExpr(segment, "class");
+    },
+    besides(segment: any) {
+      evalMaybeExpr(segment, "customClass");
     },
     image(segment: any) {
       evalMaybeExpr(segment, "url");
@@ -2244,6 +2249,13 @@ const getForm = async (
               };
             })
             .filter(Boolean);
+      }
+    },
+    besides(segment: any) {
+      // evaluated in the browser against the form values
+      if (segment.isFormula?.customClass && segment.customClass) {
+        segment.customClassFormulaInputs = segment.customClass;
+        delete segment.customClass;
       }
     },
   });

@@ -1041,6 +1041,14 @@ const render = ({
         .join("");
     } else if (segment.besides) {
       const colsSize = responsiveSizeStyle(segment);
+      // class formula evaluated in the browser, e.g. in edit forms
+      const dynClassAttr = segment.customClassFormulaInputs
+        ? {
+            "data-dyn-class": encodeURIComponent(
+              segment.customClassFormulaInputs
+            ),
+          }
+        : {};
       const defwidth = Math.round(12 / segment.besides.length);
       //legacy, for empty (null) in the columns
       const isOneCard = (segs: any) =>
@@ -1077,6 +1085,7 @@ const render = ({
                 colsSize.className,
               ],
               style: segment.style,
+              ...dynClassAttr,
             },
             segment.besides.map(
               (
@@ -1130,6 +1139,7 @@ const render = ({
                 colsSize.className,
               ],
               style: segment.style,
+              ...dynClassAttr,
             },
             segment.besides.map((t: any, ixb: number) =>
               div(

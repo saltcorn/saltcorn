@@ -1954,6 +1954,11 @@ const picked_fields_to_query = (
     }
     if (column.showif)
       freeVars = new Set([...freeVars, ...freeVariables(column.showif)]);
+    if (column.cell_css_formula)
+      freeVars = new Set([
+        ...freeVars,
+        ...freeVariables(column.cell_css_formula),
+      ]);
   });
   if (layout) {
     traverseSync(layout, {
@@ -1988,6 +1993,12 @@ const picked_fields_to_query = (
           freeVars = new Set([...freeVars, ...freeVariables(v.title)]);
         if (v?.isFormula?.url && typeof v.url === "string")
           freeVars = new Set([...freeVars, ...freeVariables(v.url)]);
+        if (v?.isFormula?.class && typeof v.class === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.class)]);
+      },
+      besides(v) {
+        if (v?.isFormula?.customClass && typeof v.customClass === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.customClass)]);
       },
       tabs(v: any) {
         (v.titles || []).forEach((t: unknown) => {
@@ -2028,6 +2039,8 @@ const picked_fields_to_query = (
     layout?.besides.forEach((s: GenObj) => {
       if (s.showif)
         freeVars = new Set([...freeVars, ...freeVariables(s.showif)]);
+      if (s.cell_css_formula)
+        freeVars = new Set([...freeVars, ...freeVariables(s.cell_css_formula)]);
     });
   }
   add_free_variables_to_joinfields(freeVars, joinFields, fields);
