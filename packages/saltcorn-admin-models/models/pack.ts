@@ -619,6 +619,14 @@ const install_pack = async (
       // local plugins can crah
       try {
         const p = new Plugin(plugin);
+        // enforce the tenant plugin policy here as well as in the injected
+        // loader, so a restore can never install a disallowed plugin
+        const { allowed, reason } = await Plugin.isAllowedForTenant(p);
+        if (!allowed) {
+          Plugin.logBlockedForTenant(p, reason);
+          log(`Skipping module ${p.name}: ${reason}`);
+          continue;
+        }
         await loadAndSaveNewPlugin(p);
       } catch (e) {
         console.error("install pack plugin error:", e);

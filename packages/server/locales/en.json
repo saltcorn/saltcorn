@@ -2128,5 +2128,7 @@
 	"Minimum backups to keep": "Minimum backups to keep",
 	"Never delete backups below this total count, regardless of age": "Never delete backups below this total count, regardless of age",
 	"Drawer label": "Drawer label",
-	"Used in the drawer (mobile) menu by some themes": "Used in the drawer (mobile) menu by some themes"
+	"Used in the drawer (mobile) menu by some themes": "Used in the drawer (mobile) menu by some themes",
+	"The following installed modules are not permitted on this tenant and have not been loaded:": "The following installed modules are not permitted on this tenant and have not been loaded:",
+	"Module %s is not permitted on this tenant": "Module %s is not permitted on this tenant"
 }
