@@ -2500,8 +2500,11 @@ function spin_action_link(e) {
   $e.trigger("spin");
 }
 
-function reset_spinners() {
-  $("[data-innerhtml-prespin]").each(function () {
+function reset_spinners(elems) {
+  const $spinning = elems
+    ? $(elems).filter("[data-innerhtml-prespin]")
+    : $("[data-innerhtml-prespin]");
+  $spinning.each(function () {
     $e = $(this);
     $e.html($e.attr("data-innerhtml-prespin"));
     $e.removeAttr("data-innerhtml-prespin");

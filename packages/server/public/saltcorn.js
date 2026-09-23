@@ -573,7 +573,10 @@ function saveAndContinue(e, k, event) {
   }
 
   const valres = form[0].reportValidity();
-  if (!valres) return;
+  if (!valres) {
+    reset_spinners(e);
+    return;
+  }
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
   removeVirtualMonacoPrefix(form);
@@ -581,6 +584,7 @@ function saveAndContinue(e, k, event) {
   restoreVirtualMonacoPrefix(form);
 
   if (form.prop("data-last-save-success") === form_data) {
+    reset_spinners(e);
     if (k) k(valres);
     return;
   }
@@ -624,6 +628,7 @@ function saveAndContinue(e, k, event) {
       ajax_indicate_error(e, request);
     },
     complete: function (res) {
+      reset_spinners(e);
       if (k) k(res);
     },
   });
