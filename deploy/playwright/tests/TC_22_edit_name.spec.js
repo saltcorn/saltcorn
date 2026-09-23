@@ -194,11 +194,9 @@ test.describe('E2E Test Suite', () => {
     await type?.selectOption("String");
     // Fill the discription
     await functions.fill_Text(pageobject.descriptionSelector, 'Name of Employee');
-    // Click on next button
+    // a plain String field's wizard is 2 steps - a 3rd submit() here waits
+    // out the full timeout for a button that never appears
     await functions.submit();
-    // click on next button
-    await functions.submit();
-    // click on finish button
     await functions.submit();
     await page.click(pageobject.EditlinkLocator);
     // Click on add row button
