@@ -128,6 +128,7 @@ import {
 import stream from "stream";
 import Crash from "@saltcorn/data/models/crash";
 import { get_help_markup } from "../help/index.js";
+import { startJob } from "../auth/restore_jobs.js";
 import npmFetch from "npm-registry-fetch";
 import Tag from "@saltcorn/data/models/tag";
 import PluginInstaller from "@saltcorn/plugins-loader/plugin_installer.js";
@@ -902,6 +903,7 @@ router.get(
     const snapForm = new Form({
       action: "/admin/snapshot-restore-full",
       formStyle: "vert",
+      onSubmit: "submit_snapshot_restore(this, event)",
       fields: [
         {
           name: "file",
@@ -968,25 +970,34 @@ router.post(
   setTenant, // TODO why is this needed?????
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    if (req.files?.file?.tempFilePath) {
-      try {
-        const pack = JSON.parse(
-          fs.readFileSync(req.files?.file?.tempFilePath, "utf-8")
-        );
-        filter_pack(pack, req.body);
-        await db.withTransaction(async () => {
-          await install_pack(pack, undefined, (p: any) =>
-            Plugin.loadAndSaveNewPlugin(p)
-          );
-        });
-        await getState()!.refresh();
-        req.flash("success", req.__("Snapshot restored"));
-      } catch (e: any) {
-        console.error(e);
-        req.flash("error", e.message);
-      }
+    if (!req.files?.file?.tempFilePath) {
+      res.json({ error: req.__("No snapshot file uploaded") });
+      return;
     }
-    res.redirect(`/admin/backup`);
+    let pack;
+    try {
+      pack = JSON.parse(
+        fs.readFileSync(req.files?.file?.tempFilePath, "utf-8")
+      );
+    } catch (e: any) {
+      res.json({ error: e.message });
+      return;
+    }
+    filter_pack(pack, req.body);
+    // runs in the background so a long restore can't time out the request
+    const jobId = startJob(async (onLog) => {
+      await db.withTransaction(async () => {
+        await install_pack(
+          pack,
+          undefined,
+          (p: any) => Plugin.loadAndSaveNewPlugin(p),
+          false,
+          onLog
+        );
+      });
+      await getState()!.refresh();
+    });
+    res.json({ jobId });
   })
 );
 

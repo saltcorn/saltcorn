@@ -345,7 +345,6 @@ const sendRestoreWaitPage = (
         domReady(`
 const jobId = ${JSON.stringify(jobId)};
 let lastMsg = null;
-let settled = false; // true once we know whether the socket is usable
 
 function appendLine(msg) {
   if (!msg || msg === lastMsg) return;
@@ -356,8 +355,7 @@ function appendLine(msg) {
 }
 
 // returns true when the restore is finished (done, failed, or needs a password)
-function handleStatus(data) {
-  if (!data) return false;
+watch_restore_job(jobId, function (data) {
   if (data.status === "done") {
     document.getElementById("restore-waiting").classList.add("d-none");
     const successEl = document.getElementById("restore-success");
@@ -379,58 +377,7 @@ function handleStatus(data) {
     appendLine(data.message);
   }
   return false;
-}
-
-function startPolling() {
-  if (startPolling.started) return;
-  startPolling.started = true;
-  (function poll() {
-    fetch("/auth/restore_status/" + jobId)
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (!handleStatus(data)) setTimeout(poll, 1500);
-      })
-      .catch(function () { setTimeout(poll, 1500); });
-  })();
-}
-
-if (typeof io === "function") {
-  const restoreSocket = get_shared_socket();
-  const fallbackToPolling = function () {
-    if (settled) return;
-    settled = true;
-    startPolling();
-  };
-  const joinRestoreRoom = function () {
-    restoreSocket.emit("join_restore_room", jobId, function (ack) {
-      if (!ack || ack.status !== "ok") {
-        fallbackToPolling();
-        return;
-      }
-      // connected and joined, but does a message actually arrive? a proxy
-      // can let the handshake through while still dropping frames
-      setTimeout(function () {
-        if (!settled) fallbackToPolling();
-      }, 5000);
-    });
-  };
-  // socket never connects at all (e.g. proxy blocks the websocket upgrade)
-  setTimeout(function () {
-    if (!restoreSocket.connected) fallbackToPolling();
-  }, 5000);
-  restoreSocket.on("connect_error", fallbackToPolling);
-  restoreSocket.on("test_conn_msg", function () {
-    settled = true; // confirmed working, stick with the socket
-  });
-  restoreSocket.on("restore_progress", function (data) {
-    settled = true; // any real message proves the socket works
-    handleStatus(data);
-  });
-  if (restoreSocket.connected) joinRestoreRoom();
-  else restoreSocket.on("connect", joinRestoreRoom);
-} else {
-  startPolling();
-}
+});
 `)
       )
   );
