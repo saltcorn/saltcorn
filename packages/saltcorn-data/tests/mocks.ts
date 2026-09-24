@@ -117,6 +117,31 @@ const plugin_with_routes = (): Plugin =>
           };
         },
       },
+      provtab_state: {
+        configuration_workflow: () =>
+          new Workflow({
+            steps: [
+              {
+                name: "step1",
+                form: (_context: any) =>
+                  new Form({
+                    fields: [{ name: "label", label: "Label", type: "String" }],
+                  }),
+              },
+            ],
+          }),
+        fields: async (_cfg: any) => [
+          { name: "key", label: "Key", type: "String", primary_key: true },
+          { name: "val", label: "Val", type: "String" },
+        ],
+        get_table(_cfg: any) {
+          return {
+            getRows: async (_where: any, selopts: any) => [
+              { key: "state_key", val: JSON.stringify(selopts?.state || null) },
+            ],
+          };
+        },
+      },
     },
     types: [
       {
