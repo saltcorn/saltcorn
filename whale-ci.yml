@@ -206,7 +206,7 @@ s3_tests_db:
     POSTGRES_USER: postgres
 
 s3-tests-minio:
-  image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+  image: cgr.dev/chainguard/minio:latest
   service: true
   quiet: true
   ready-on: "API: http://"
