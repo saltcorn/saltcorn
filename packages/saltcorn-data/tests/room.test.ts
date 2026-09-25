@@ -97,3 +97,41 @@ describe("Room view picked by fields other than id", () => {
     expect(vres1).not.toContain("sc-room-more");
   });
 });
+
+describe("Room view picked among rooms the user takes part in", () => {
+  beforeAll(async () => {
+    const rooms = Table.findOne("rooms")!;
+    const participants = Table.findOne("participants")!;
+    // two rooms named "Room C": user 1 only takes part in the second
+    await rooms.insertRow({ name: "Room C" });
+    const mine = await rooms.insertRow({ name: "Room C" });
+    await participants.insertRow({ user: 1, room: mine });
+    // nobody takes part in "Room D"
+    await rooms.insertRow({ name: "Room D" });
+    const cfg = View.findOne({ name: "rooms_view" })!.configuration;
+    await View.create({
+      table_id: rooms.id,
+      name: "rooms_view_no_part",
+      viewtemplate: "Room",
+      configuration: { ...cfg, participant_field: "" },
+      min_role: 80,
+    });
+  });
+  it("skips a matching room the user is not in", async () => {
+    const mine = await Table.findOne("rooms")!.getRows(
+      { name: "Room C" },
+      { orderBy: "id", orderDesc: true, limit: 1 }
+    );
+    const vres = await runRoom("rooms_view", { name: "Room C" });
+    expect(vres).toContain(`init_room("rooms_view", ${mine[0].id})`);
+  });
+  it("says so when no matching room is ours", async () => {
+    expect(await runRoom("rooms_view", { name: "Room D" })).toBe(
+      "You are not a participant in this room"
+    );
+  });
+  it("ignores participation when it is not configured", async () => {
+    const vres = await runRoom("rooms_view_no_part", { name: "Room D" });
+    expect(vres).toContain('init_room("rooms_view_no_part",');
+  });
+});

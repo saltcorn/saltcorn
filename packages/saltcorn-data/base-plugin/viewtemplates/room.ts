@@ -378,7 +378,10 @@ const run = async (
   let more_link = "";
   if (!state.id) {
     // e.g. {group: 1} from a parent view, or ?name=... in a link
-    const rooms = await findRoomQuery(state, row_order_field, row_order_desc);
+    const found = await findRoomQuery(state, row_order_field, row_order_desc);
+    const rooms = found?.rows;
+    if (found?.notParticipant)
+      return __("You are not a participant in this room");
     if (rooms && rooms.length === 0) return __("No row selected");
     if (rooms?.length > 1 && multiple_rows === "Error")
       return __("More than one room matches");
@@ -930,12 +933,14 @@ export default {
   queries: ({
     table_id,
     viewname,
-    configuration: { columns, default_state },
+    configuration: { columns, default_state, participant_field },
     req,
   }: GenObj) => ({
     /**
-     * rooms matching a state without id, first one first (at most 2, to
-     * know if there are more); null if the state has nothing to filter on
+     * rooms matching a state without id, first one first (at most 2, to know
+     * if there are more). Only rooms the user takes part in, if participation
+     * is configured; notParticipant tells rooms matched but none of them are
+     * ours. null if the state has nothing to filter on
      */
     async findRoomQuery(
       state: GenObj,
@@ -949,13 +954,32 @@ export default {
         table,
       });
       if (Object.keys(where).length === 0) return null;
-      return await table.getRows(where, {
+      const selopts = {
         orderBy: orderBy || table.pk_name,
         orderDesc: !!orderDesc,
         limit: 2,
         forUser: req.user,
         forPublic: !req.user,
+      };
+      if (!participant_field) return { rows: await table.getRows(where, selopts) };
+
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
+      const parttable = Table.findOne({ name: part_table_name })!;
+      const partRows = await parttable.getRows({
+        [part_user_field]: req.user ? req.user.id : 0,
       });
+      const myRoomIds = partRows.map((r: GenObj) => r[part_key_to_room]);
+      const rows = myRoomIds.length
+        ? await table.getRows(
+            { ...where, [table.pk_name]: { in: myRoomIds } },
+            selopts
+          )
+        : [];
+      if (rows.length > 0) return { rows };
+      // rooms match but we are in none of them: say so rather than "no row"
+      const anyRoom = await table.getRows(where, { ...selopts, limit: 1 });
+      return { rows: [], notParticipant: anyRoom.length > 0 };
     },
     async getRowQuery(
       state_id: string,
