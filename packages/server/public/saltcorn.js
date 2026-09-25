@@ -726,7 +726,10 @@ function saveAndContinue(e, k, event) {
   }
 
   const valres = form[0].reportValidity();
-  if (!valres) return;
+  if (!valres) {
+    reset_spinners(e);
+    return;
+  }
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
   removeVirtualMonacoPrefix(form);
@@ -734,6 +737,7 @@ function saveAndContinue(e, k, event) {
   restoreVirtualMonacoPrefix(form);
 
   if (form.prop("data-last-save-success") === form_data) {
+    reset_spinners(e);
     if (k) k(valres);
     return;
   }
@@ -777,6 +781,7 @@ function saveAndContinue(e, k, event) {
       ajax_indicate_error(e, request);
     },
     complete: function (res) {
+      reset_spinners(e);
       if (k) k(res);
     },
   });
@@ -1015,7 +1020,7 @@ function checkNetworkError(e) {
   }
 }
 
-function ajax_post_btn(e, reload_on_done, reload_delay) {
+function ajax_post_btn(e, reload_on_done, reload_delay, csrf) {
   let form_data = "";
   let url;
   if (typeof e === "string") url = e;
@@ -1028,7 +1033,7 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
   $.ajax(url, {
     type: "POST",
     headers: {
-      "CSRF-Token": _sc_globalCsrf,
+      "CSRF-Token": csrf || _sc_globalCsrf,
       "Page-Load-Tag": _sc_pageloadtag,
     },
     data: form_data,
@@ -1045,6 +1050,22 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
     },
   });
 
+  return false;
+}
+
+// Native (non-ajax) POST-and-navigate via a <form> built fresh in JS
+function native_post_btn(href, method, csrf) {
+  var f = document.createElement("form");
+  f.method = method || "post";
+  f.action = href;
+  f.style.display = "none";
+  var csrfInput = document.createElement("input");
+  csrfInput.type = "hidden";
+  csrfInput.name = "_csrf";
+  csrfInput.value = csrf || _sc_globalCsrf;
+  f.appendChild(csrfInput);
+  document.body.appendChild(f);
+  f.submit();
   return false;
 }
 

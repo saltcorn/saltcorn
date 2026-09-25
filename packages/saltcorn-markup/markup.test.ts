@@ -18,6 +18,7 @@ import { Req } from "@saltcorn/types/base_types";
 
 const {
   post_btn,
+  post_btn_noform,
   post_delete_btn,
   post_dropdown_item,
   settingsDropdown,
@@ -727,20 +728,34 @@ describe("index", () => {
       );
       expect(result).toContain("</form>");
     });
+  });
 
-    it("renders a basic post button", () => {
-      const result = post_btn("/submit", "Submit", "csrfToken123", {
+  describe("post_btn_noform", () => {
+    it("renders a post button with no <form>", () => {
+      const result = post_btn_noform("/submit", "Submit", "csrfToken123", {
         btnClass: "btn-primary",
       });
 
-      expect(result).toContain('<form action="/submit" method="post">');
+      expect(result).toContain("onclick=\"native_post_btn('/submit', 'post', 'csrfToken123')\"");
       expect(result).toContain(
-        '<input type="hidden" name="_csrf" value="csrfToken123">'
+        '<button type="button" onclick="native_post_btn(\'/submit\', \'post\', \'csrfToken123\')" class=" btn  btn-primary d-inline-block">Submit</button>'
       );
+      expect(result).not.toContain("<form");
+    });
+
+    it("runs a javascript: href directly rather than posting to it", () => {
+      const result = post_btn_noform(
+        "javascript:page_post_action('/page/x/action/y')",
+        "Run",
+        "csrfToken123",
+        { btnClass: "btn-primary" }
+      );
+
       expect(result).toContain(
-        '<button type="submit" class=" btn  btn-primary d-inline-block">Submit</button>'
+        'onclick="page_post_action(\'/page/x/action/y\')"'
       );
-      expect(result).toContain("</form>");
+      expect(result).not.toContain("native_post_btn");
+      expect(result).not.toContain("<form");
     });
   });
 

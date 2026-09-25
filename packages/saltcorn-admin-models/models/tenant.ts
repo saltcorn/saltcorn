@@ -233,7 +233,7 @@ const upgrade_all_tenants_plugins = async (
     arg0: Plugin,
     arg1: boolean,
     arg2: boolean
-  ) => Promise<{ version: string }>
+  ) => Promise<{ version: string } | undefined>
 ): Promise<void> => {
   const tenantList = [db.connectObj.default_schema, ...(await getAllTenants())];
   const latest_versions: any = {};
@@ -243,6 +243,11 @@ const upgrade_all_tenants_plugins = async (
       try {
         const myplugins = await Plugin.find({ source: "npm" });
         for (const plugin of myplugins) {
+          const { allowed, reason } = await Plugin.isAllowedForTenant(plugin);
+          if (!allowed) {
+            Plugin.logBlockedForTenant(plugin, reason);
+            continue;
+          }
           if (latest_versions[plugin.location]) {
             if (plugin.version !== latest_versions[plugin.location]) {
               await plugin.logUpgrade(latest_versions[plugin.location]);
@@ -252,7 +257,9 @@ const upgrade_all_tenants_plugins = async (
           } else {
             const prevVersion = plugin.version;
             plugin.version = "latest";
-            const { version } = await loadPlugin(plugin, true, true);
+            const loaded = await loadPlugin(plugin, true, true);
+            if (!loaded) continue;
+            const { version } = loaded;
             getState()!.log(
               5,
               `Plugin ${plugin.location} latest version ${version} (previously ${prevVersion})`

@@ -144,6 +144,93 @@ describe("Tenant cannot install unsafe plugins", () => {
         expect(result).toBeUndefined();
       });
     });
+    it("tenant plugin policy classifies plugins", async () => {
+      await db.runWithTenant("test101", async () => {
+        const check = async (p) =>
+          (await Plugin.isAllowedForTenant(new Plugin(p))).allowed;
+        expect(
+          await check({
+            name: "html",
+            source: "npm",
+            location: "@saltcorn/html",
+          })
+        ).toBe(true);
+        expect(
+          await check({
+            name: "base",
+            source: "npm",
+            location: "@saltcorn/base-plugin",
+          })
+        ).toBe(true);
+        expect(
+          await check({
+            name: "sql-list",
+            source: "npm",
+            location: "@saltcorn/sql-list",
+          })
+        ).toBe(false);
+        expect(
+          await check({
+            name: "some-local-plugin",
+            source: "local",
+            location: "/tmp/some-local-plugin",
+          })
+        ).toBe(false);
+      });
+      expect(
+        (
+          await Plugin.isAllowedForTenant(
+            new Plugin({
+              name: "sql-list",
+              source: "npm",
+              location: "@saltcorn/sql-list",
+            })
+          )
+        ).allowed
+      ).toBe(true);
+    });
+    it("restore does not install unsafe plugins even with an unchecked loader", async () => {
+      await db.runWithTenant("test101", async () => {
+        // simulates a restore whose injected loader does no policy checks
+        const uncheckedLoader = async (p) => {
+          await p.upsert();
+        };
+        await install_pack(
+          plugin_pack({
+            name: "sql-list",
+            source: "npm",
+            location: "@saltcorn/sql-list",
+          }),
+          undefined,
+          uncheckedLoader,
+          true
+        );
+        const dbPlugin = await Plugin.findOne({ name: "sql-list" });
+        expect(dbPlugin).toBe(null);
+      });
+    });
+    it("does not load legacy unsafe plugins on tenant", async () => {
+      await db.runWithTenant("test101", async () => {
+        // legacy tenant with an unsafe plugin row already in the database
+        await db.insert("_sc_plugins", {
+          name: "sql-list",
+          source: "npm",
+          location: "@saltcorn/sql-list",
+          version: "latest",
+          configuration: null,
+        });
+        const result = await Plugin.loadPlugin(
+          (await Plugin.findOne({ name: "sql-list" }))
+        );
+        expect(result).toBeUndefined();
+        await Plugin.loadAllPlugins();
+        expect(getState().plugins["sql-list"]).toBeUndefined();
+        await expect(
+          Plugin.requirePlugin(await Plugin.findOne({ name: "sql-list" }))
+        ).rejects.toThrow();
+        await db.deleteWhere("_sc_plugins", { name: "sql-list" });
+      });
+    });
     it("can install unsafe plugins on tenant when permitted", async () => {
       await getState().setConfig("tenants_unsafe_plugins", true);
       await db.runWithTenant("test101", async () => {

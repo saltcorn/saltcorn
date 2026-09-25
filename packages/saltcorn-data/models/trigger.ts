@@ -388,6 +388,30 @@ class Trigger implements AbstractTrigger {
         }
         if (extraArgs) extraArgs.user = extraArgs.user || user;
         else if (user) extraArgs = { user };
+        if (trigger.configuration?._after_commit) {
+          // Defer past COMMIT, and detached: resultCollector is consumed by
+          // then, so nothing can use what it returns and waiting would only
+          // delay the caller. Errors reach the crash log and nowhere else.
+          const args = extraArgs;
+          await db.afterCommit(async () => {
+            void (async () => {
+              try {
+                await trigger.run!(row, args);
+              } catch (e: any) {
+                Crash.create(e, {
+                  url: "/",
+                  headers: {
+                    when_trigger,
+                    table: table?.name,
+                    trigger: trigger.name,
+                    after_commit: true,
+                  },
+                });
+              }
+            })();
+          });
+          continue;
+        }
         const res = await trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
         if (res && resultCollector) mergeActionResults(resultCollector, res);
       } catch (e: any) {
@@ -669,6 +693,7 @@ class Trigger implements AbstractTrigger {
       "Daily",
       "Hourly",
       "Often",
+      "Cron",
       "API call",
       "PageLoad",
       "Login",
@@ -718,8 +743,9 @@ class Trigger implements AbstractTrigger {
   }
 
   /**
-   * Checks plugin `authorize_trigger` hooks. Combine with the caller's own
-   * role/min_role check, e.g. `role <= trigger.min_role || (await trigger.authorize(...))`.
+   * Full access decision: checks plugin `authorize_trigger` hooks and
+   * combines with min_role. A hook's explicit allow/deny always wins;
+   * only when every hook abstains does min_role decide.
    * @param user - the acting user (or undefined/public)
    * @param opts.action - "get" or "post"
    * @param opts.req - the request object, forwarded to hooks
@@ -746,7 +772,10 @@ class Trigger implements AbstractTrigger {
       },
       user
     );
-    return result.decision === "allow";
+    if (result?.decision === "deny") return false;
+    if (result?.decision === "allow") return true;
+    const role = user?.role_id ?? 100;
+    return role <= (this.min_role ?? 100);
   }
 
   static get abbreviated_actions() {

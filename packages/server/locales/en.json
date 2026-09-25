@@ -1691,6 +1691,8 @@
 	"Toggle header filters": "Toggle header filters",
 	"Row color formula": "Row color formula",
 	"Formula for row background color. Ex.: <code>age>65 ?'#aaffaa': null</code>": "Formula for row background color. Ex.: <code>age>65 ?'#aaffaa': null</code>",
+	"Row class formula": "Row class formula",
+	"Formula for CSS classes on each row. Ex.: <code>`row-with-status-${status}`</code>": "Formula for CSS classes on each row. Ex.: <code>`row-with-status-${status}`</code>",
 	"Table layout": "Table layout",
 	"CSV BOM": "CSV BOM",
 	"Include the Byte-Order Mark in downloaded CSV files": "Include the Byte-Order Mark in downloaded CSV files",
@@ -2128,5 +2130,7 @@
 	"Minimum backups to keep": "Minimum backups to keep",
 	"Never delete backups below this total count, regardless of age": "Never delete backups below this total count, regardless of age",
 	"Drawer label": "Drawer label",
-	"Used in the drawer (mobile) menu by some themes": "Used in the drawer (mobile) menu by some themes"
+	"Used in the drawer (mobile) menu by some themes": "Used in the drawer (mobile) menu by some themes",
+	"The following installed modules are not permitted on this tenant and have not been loaded:": "The following installed modules are not permitted on this tenant and have not been loaded:",
+	"Module %s is not permitted on this tenant": "Module %s is not permitted on this tenant"
 }

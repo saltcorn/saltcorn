@@ -417,8 +417,10 @@ class View implements AbstractView {
   }
 
   /**
-   * Checks plugin `authorize_view` hooks, proxied to the server on mobile
-   * for remote tables, so hooks never need to handle remote/local.
+   * Full access decision: checks plugin `authorize_view` hooks and combines
+   * with min_role. A hook's explicit allow/deny always wins; only when
+   * every hook abstains does min_role decide. Proxied to the server on
+   * mobile for remote tables, so hooks never need to handle remote/local.
    * @param user - the acting user (or undefined/public)
    * @param opts.action - "get" or "post"
    * @param opts.req - the request object, forwarded to hooks
@@ -442,16 +444,32 @@ class View implements AbstractView {
   ): Promise<boolean> {
     let remote = opts.remote;
     if (remote === undefined) remote = this.isRemoteTable();
-    const queries: any = this.queries(remote, opts.req);
-    const hookResult: AuthorizeAccessResult =
-      await queries.authorizeAccessQuery(
-        opts.action,
-        user,
-        opts.route,
-        opts.state,
-        opts.body
-      );
-    return hookResult?.decision === "allow";
+    const role = user?.role_id ?? 100;
+    // local-only fast path - a remote table's hooks live on the server, not here
+    if (!remote && !getState()!.hasAuthorizeHooks("view"))
+      return role <= this.min_role;
+    const hookResult: AuthorizeAccessResult | null = remote
+      ? await this.remoteAuthorize(
+          opts.action,
+          opts.route,
+          opts.state,
+          opts.body,
+          opts.req
+        )
+      : await getState()!.authorizeView(
+          {
+            action: opts.action,
+            view: this,
+            route: opts.route,
+            state: opts.state,
+            body: opts.body,
+            req: opts.req,
+          },
+          user
+        );
+    if (hookResult?.decision === "deny") return false;
+    if (hookResult?.decision === "allow") return true;
+    return role <= this.min_role;
   }
 
   /**
@@ -540,9 +558,17 @@ class View implements AbstractView {
     if (isWeb(extraArgs.req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return "";
     const table_id = this.exttable_name || this.table_id;
-    const role = extraArgs.req?.user?.role_id || 100;
     const state = nsState.getState()!;
-    if (role > this.min_role) return "";
+    if (
+      extraArgs.alreadyAuthorizedFor !== this &&
+      !(await this.authorize(extraArgs.req?.user, {
+        action: "get",
+        req: extraArgs.req,
+        state: query,
+        remote,
+      }))
+    )
+      return "";
     try {
       const viewState = removeEmptyStringsKeepNull(query);
       state.log(
@@ -564,80 +590,92 @@ class View implements AbstractView {
     }
   }
 
+  /**
+   * POSTs to this view's remote server.
+   * @returns the parsed response body
+   */
+  private async remotePost(path: string, body: any, req?: Req): Promise<any> {
+    const state = getState()!;
+    const url = `${state.getConfig("base_url")}${path}`;
+    const headers: any = {
+      "X-Requested-With": "XMLHttpRequest",
+      "X-Saltcorn-Client": "mobile-app",
+      "Content-Type": "application/json",
+    };
+    if (state.mobileConfig?.csrfToken)
+      headers["CSRF-Token"] = state.mobileConfig.csrfToken;
+    // set only in Node test runs - Node's fetch has no cookie jar
+    if (state.mobileConfig?.cookie) headers["Cookie"] = state.mobileConfig.cookie;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const error: any = new Error(
+          `Request failed with status code ${res.status}`
+        );
+        error.response = { status: res.status };
+        throw error;
+      }
+      const data = await res.json();
+      for (const { type, msg } of data.alerts) req?.flash(type, msg);
+      return data;
+    } catch (error: any) {
+      state.log(1, `Remote call error for view ${this.name} (${path}): ${error.message}`);
+      if (error.response?.status === 401) error.message = req?.__("Not authorized");
+      else error.message = `Unable to call POST ${url}:\n${error.message}`;
+      throw error;
+    }
+  }
+
+  /**
+   * Proxies an authorize_view hook check to this view's remote server.
+   * An access decision, not a viewtemplate query - kept out of queries() below.
+   * The server decides against its own session user, not a value we'd send here.
+   */
+  private async remoteAuthorize(
+    action: "get" | "post",
+    route: string | undefined,
+    qstate: GenObj | undefined,
+    qbody: GenObj | undefined,
+    req?: Req
+  ): Promise<AuthorizeAccessResult | null> {
+    const data = await this.remotePost(
+      `/api/viewAuthorize/${this.name}`,
+      { action, route, state: qstate, body: qbody },
+      req
+    );
+    return data.success;
+  }
+
   queries(remote?: boolean, req?: Req, res?: any) {
     const queryObj: GenObj = this?.viewtemplateObj?.queries
       ? this.viewtemplateObj!.queries({ ...this, req, res })
       : {};
-    // Gives authorize_view hooks the same remote-proxy dispatch as any query.
-    queryObj.authorizeAccessQuery = async (
-      action: "get" | "post",
-      userArg: any,
-      route?: string,
-      qstate?: GenObj,
-      qbody?: GenObj
-    ): Promise<AuthorizeAccessResult> => {
-      return await getState()!.authorizeView(
-        { action, view: this, route, state: qstate, body: qbody, req: req! },
-        userArg
-      );
-    };
     if (remote) {
       const state = getState()!;
-      const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000"; //TODO default from req
       const queries: any = {};
       const table = tableMod.findOne({ id: this.table_id });
       const fields = table?.getFields() || [];
       Object.entries(queryObj).forEach(([k, v]) => {
-        // authorizeAccessQuery is a security decision, not data - never cache it,
-        // so it can't replay a stale allow/deny after the underlying state changes.
-        const cacheable = k !== "authorizeAccessQuery";
         queries[k] = async (...args: any[]) => {
           const argsStr = `${JSON.stringify(args)}${this.name}`;
           const hashedArgs = hashString(argsStr);
-          if (cacheable && state.queriesCache && state.queriesCache[hashedArgs])
+          if (state.queriesCache && state.queriesCache[hashedArgs])
             return state.queriesCache[hashedArgs];
-          const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
-          const headers: any = {
-            "X-Requested-With": "XMLHttpRequest",
-            "X-Saltcorn-Client": "mobile-app",
-            "Content-Type": "application/json",
-          };
-          if (state.mobileConfig?.csrfToken)
-            headers["CSRF-Token"] = state.mobileConfig.csrfToken;
-          // Only set in Node test runs (remote_query_helper.ts) - Node's
-          // fetch has no cookie jar, so the session cookie is replayed by hand.
-          if (state.mobileConfig?.cookie)
-            headers["Cookie"] = state.mobileConfig.cookie;
-          try {
-            const res = await fetch(url, {
-              method: "POST",
-              headers,
-              credentials: "include",
-              body: JSON.stringify({ args }),
-            });
-            if (!res.ok) {
-              const error: any = new Error(
-                `Request failed with status code ${res.status}`
-              );
-              error.response = { status: res.status };
-              throw error;
-            }
-            const data = await res.json();
-            for (const { type, msg } of data.alerts) req?.flash(type, msg);
-            const result = Array.isArray(data.success)
-              ? prepMobileRows(data.success, fields)
-              : data.success;
-            if (cacheable && state.queriesCache)
-              state.queriesCache[hashedArgs] = result;
-            return result;
-          } catch (error: any) {
-            state.log(1, `Query error: ${k}in ${this.name}: ${error.message}`);
-            if (error.response?.status === 401)
-              error.message = req?.__("Not authorized");
-            else
-              error.message = `Unable to call POST ${url}:\n${error.message}`;
-            throw error;
-          }
+          const data = await this.remotePost(
+            `/api/viewQuery/${this.name}/${k}`,
+            { args },
+            req
+          );
+          const result = Array.isArray(data.success)
+            ? prepMobileRows(data.success, fields)
+            : data.success;
+          if (state.queriesCache) state.queriesCache[hashedArgs] = result;
+          return result;
         };
       });
 
@@ -681,12 +719,32 @@ class View implements AbstractView {
     if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
-        // return contents
-        return (await db_page.run(query, { res, req, ...extra })) as any;
+        // db_page's own access was never checked by the view-level check above
+        if (
+          !(await db_page.authorize(req.user, {
+            action: "get",
+            req,
+            state: query,
+          }))
+        ) {
+          if (!req.user)
+            return {
+              goto: `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`,
+            };
+          req.flash("danger", req.__("Not authorized"));
+          return { goto: "/" };
+        }
+        const pageResult = await db_page.run(query, { res, req, ...extra });
+        if (pageResult === null) return ""; // res already redirected by an on_page_load action
+        return pageResult as any;
       }
     }
     const state = view.combine_state_and_default_state(query);
-    const resp = await view.run(state, { res, req, ...extra }, remote);
+    const resp = await view.run(
+      state,
+      { res, req, ...extra },
+      remote
+    );
     //console.log(req.headers);
 
     const isModal = req.headers?.saltcornmodalrequest;
@@ -713,9 +771,17 @@ class View implements AbstractView {
   ): Promise<string[] | Array<{ html: string; row: any }>> {
     if (isWeb(extraArgs.req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return [];
-    const role = extraArgs.req?.user?.role_id || 100;
     const state = nsState.getState()!;
-    if (role > this.min_role) return [];
+    if (
+      extraArgs.alreadyAuthorizedFor !== this &&
+      !(await this.authorize(extraArgs.req?.user, {
+        action: "get",
+        req: extraArgs.req,
+        state: query,
+        remote,
+      }))
+    )
+      return [];
     state.log(
       5,
       `runMany view ${this.name} with state ${JSON.stringify(query)}`
@@ -790,8 +856,16 @@ class View implements AbstractView {
     if (!state.mobileConfig) {
       remote = false;
     }
-    const role = extraArgs.req.user?.role_id || 100;
-    if (role > this.min_role) return "";
+    if (
+      extraArgs.alreadyAuthorizedFor !== this &&
+      !(await this.authorize(extraArgs.req?.user, {
+        action: "post",
+        req: extraArgs.req,
+        body,
+        remote,
+      }))
+    )
+      return "";
     try {
       if (isWeb(extraArgs.req)) this.check_viewtemplate();
       else if (!this.viewtemplateObj) return;
@@ -1019,8 +1093,10 @@ class View implements AbstractView {
 
   /**
    * saltcorn-mobile-app helper.
-   * Check if the table of a view is local or server-side
-   * @returns true if server-side table
+   * True when this process has no local data access and must proxy
+   * queries to the server (mobile, online). False on the server, and
+   * false on mobile when offline. Not a per-table check despite the name.
+   * @returns whether this view's queries must go over the network
    */
   isRemoteTable(): boolean {
     if (isNode()) return false;

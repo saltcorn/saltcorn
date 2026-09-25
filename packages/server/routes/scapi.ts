@@ -50,7 +50,12 @@ router.use(rejectTenantDrift);
  * @param {string} route identifies which sc api endpoint is being checked
  * @returns {Promise<boolean>}
  */
-async function accessAllowedRead(req: Req, user: any, route: string) {
+async function accessAllowedRead(
+  req: Req,
+  user: any,
+  route: string,
+  action: "get" | "post" = "get"
+) {
   const role =
     req.user && req.user!.id
       ? req.user!.role_id
@@ -58,12 +63,16 @@ async function accessAllowedRead(req: Req, user: any, route: string) {
         ? user.role_id
         : 100;
 
-  if (role === 1) return true;
-  return await getState()!.authorizeApi(user || req.user, {
-    route: `scapi/${route}`,
-    action: "get",
-    req,
-  });
+  return await getState()!.authorizeApi(
+    user || req.user,
+    {
+      route: `scapi/${route}`,
+      action,
+      req,
+    },
+    role,
+    1 // these routes are admin-only by default; a hook can grant an exception
+  );
 }
 
 // todo add paging
@@ -344,7 +353,7 @@ router.post(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (await accessAllowedRead(req, user, "reload_post")) {
+        if (await accessAllowedRead(req, user, "reload_post", "post")) {
           const { tenant, new_tenant } = req.body;
           if (new_tenant) {
             add_tenant(new_tenant);
@@ -376,7 +385,6 @@ router.post(
       async function (err: any, user: any, info: any) {
         const { viewname, route } = req.params;
         req.user = user;
-        const role = user?.id ? user.role_id : 100;
         const state = getState()!;
         state.log(
           3,
@@ -392,7 +400,6 @@ router.post(
             .json({ error: req.__(`No such view: %s`, text(viewname)) });
           state.log(2, `View ${viewname} not found`);
         } else if (
-          role > view.min_role &&
           !(await view.authorize(user, {
             action: "post",
             route,

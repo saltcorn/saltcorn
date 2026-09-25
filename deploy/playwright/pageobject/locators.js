@@ -113,7 +113,7 @@ class PageLocators {
     this.createuserbutton = 'button[type="submit"]:has-text("Create")';
     this.searchbar = 'input[type=search]';
     this.userdropdown = '#content > div.dropdown-menu.dropdown-menu-end.show';
-    this.deleteuser = '#content > div.dropdown-menu.dropdown-menu-end.show > a:nth-child(11)';
+    this.deleteuser = '#content > div.dropdown-menu.dropdown-menu-end.show a[onclick*="you want to delete"]';
     this.helloWorldElement = 'div.d-inline:has-text("Hello world")';
     this.optionBio = 'select.form-control.form-select';
     this.mytable = 'a:has-text("My_Table")';
@@ -376,6 +376,9 @@ class PageLocators {
     this.showeditLink = 'a.btn.btn-primary:has(i.far.fa-edit)'
     this.secondrowcolumn = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
     this.secondrowcolumn1 = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas'
+    this.embedViewSource = 'div[title="Embed a view"]';
+    this.viewSelector = '.view-selector';
+    this.actionSelector = '.action-selector';
     this.optioninput = 'input[name="options"]';
     this.column5 = '.d-flex.justify-content-between.h-100 >> text=Column 5';
     this.headerlabel = 'input.form-control[value=""]';

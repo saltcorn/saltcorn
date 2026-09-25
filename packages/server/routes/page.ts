@@ -52,8 +52,11 @@ const findPageOrGroup = (
 const runPage = async (page: Page, req: Req, res: Res, tic: Date) => {
   const role = req.user && req.user!.id ? req.user!.role_id : 100;
   if (
-    role <= page.min_role ||
-    (await page.authorize(req.user, { action: "get", req, state: req.query }))
+    await page.authorize(req.user, {
+      action: "get",
+      req,
+      state: req.query,
+    })
   ) {
     const contents = await page.run(req.query, { res, req });
     if (!contents) return;
@@ -260,16 +263,14 @@ router.post(
     }
 
     const { pagename, rndid } = req.params;
-    const role = req.user && req.user!.id ? req.user!.role_id : 100;
     const db_page = (await Page.findOne({ name: pagename }))!;
     if (
       db_page &&
-      (role <= db_page.min_role ||
-        (await db_page.authorize(req.user, {
-          action: "post",
-          req,
-          body: req.body,
-        })))
+      (await db_page.authorize(req.user, {
+        action: "post",
+        req,
+        body: req.body,
+      }))
     ) {
       let col: any;
       traverseSync(db_page.layout, {

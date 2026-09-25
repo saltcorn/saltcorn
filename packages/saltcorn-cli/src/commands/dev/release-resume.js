@@ -22,6 +22,11 @@ const runCmd = (cmd, args, options) => {
 
 /**
  * ReleaseResumeCommand Class
+ *
+ * Resumes a `dev:release` that failed after all dependency packages were
+ * published, i.e. at the cli install/publish step. Safe to run repeatedly
+ * from that point: it re-applies the temporary root package.json change,
+ * waits for the registry, then publishes the cli and restores workspaces.
  * @extends oclif.Command
  * @category saltcorn-cli
  */
@@ -31,9 +36,10 @@ class ReleaseResumeCommand extends Command {
    */
   async run() {
     const {
-      args: { version },
+      args: { version, tag: tagArg },
       flags,
     } = await this.parse(ReleaseResumeCommand);
+    const tag = tagArg || flags.tag || "next";
     const pkgs = {
       "@saltcorn/db-common": { dir: "db-common", publish: true },
       "@saltcorn/common-code": { dir: "common-code", publish: true },
@@ -43,6 +49,7 @@ class ReleaseResumeCommand extends Command {
       "@saltcorn/postgres": { dir: "postgres", publish: true },
       "@saltcorn/types": { dir: "saltcorn-types", publish: true },
       "@saltcorn/builder": { dir: "saltcorn-builder", publish: true },
+      "@saltcorn/workflow-editor": { dir: "workflow-editor", publish: true },
       "@saltcorn/filemanager": { dir: "filemanager", publish: true },
       "@saltcorn/data": { dir: "saltcorn-data", publish: true },
       "@saltcorn/admin-models": {
@@ -84,43 +91,60 @@ class ReleaseResumeCommand extends Command {
         JSON.stringify(json, null, 2)
       );
     };
-    const compileTsFiles = () => {
-      runCmd("npm", ["install", "--legacy-peer-deps"], {
-        stdio: "inherit",
-        cwd: ".",
-      });
-      runCmd("npm", ["run", "tsc"], {
-        stdio: "inherit",
-        cwd: ".",
-      });
-    };
-    const publish = async (dir, tags0) => {
-      const tags = !tags0 ? [] : Array.isArray(tags0) ? tags0 : [tags0];
-      if (flags.tag) tags.push(flags.tag);
-      const firstTag = tags[0];
+    const publish = async (dir, tag) => {
       runCmd(
         "npm",
-        [
-          "publish",
-          "--access=public",
-          ...(firstTag ? ["--tag", firstTag] : []),
-        ],
+        ["publish", "--access=public", ...(tag ? ["--tag", tag] : [])],
         {
           stdio: "inherit",
           cwd: `packages/${dir}/`,
         }
       );
-      tags.shift();
-      for (const tag of tags) {
-        await sleep(7000);
-        runCmd("npm", ["dist-tag", "add", `@saltcorn/cli@${version}`, tag], {
-          stdio: "inherit",
-          cwd: `packages/${dir}/`,
+    };
+    // the registry can take a while before newly published versions resolve
+    const waitForRegistry = async () => {
+      const toCheck = Object.entries(pkgs)
+        .filter(([, p]) => p.publish)
+        .map(([name]) => name);
+      for (let attempt = 1; attempt <= 60; attempt++) {
+        const missing = toCheck.filter((name) => {
+          const res = spawnSync(
+            "npm",
+            ["view", `${name}@${version}`, "version"],
+            {
+              encoding: "utf8",
+            }
+          );
+          return res.status !== 0 || res.stdout.trim() !== version;
         });
+        if (missing.length === 0) return;
+        console.log(
+          `Waiting for registry (attempt ${attempt}), not yet available: ${missing.join(
+            ", "
+          )}`
+        );
+        await sleep(30000);
       }
+      throw new Error("Timed out waiting for packages to appear on npm");
     };
 
     const rootPackageJson = require(`../../../../../package.json`);
+    const { workspaces, ...rootWithoutWorkspaces } = rootPackageJson;
+
+    // re-establish the state dev:release is in when it reaches the cli step:
+    // cli package.json updated and workspaces removed from the root, so the
+    // cli installs the published @saltcorn packages rather than local links
+    updatePkgJson("saltcorn-cli");
+    fs.writeFileSync(
+      `package.json`,
+      JSON.stringify(rootWithoutWorkspaces, null, 2)
+    );
+
+    await waitForRegistry();
+    runCmd("npm", ["cache", "clean", "--force"], {
+      stdio: "inherit",
+      cwd: `.`,
+    });
 
     runCmd("npm", ["install", "--legacy-peer-deps"], {
       stdio: "inherit",
@@ -147,34 +171,30 @@ class ReleaseResumeCommand extends Command {
       stdio: "inherit",
       cwd: ".",
     });
-    // do not run 'audit fix' on full point releases, only on -beta.x, -rc.x etc
-    /*if (version.includes("-"))
-      runCmd("npm", ["audit", "fix"], {
-        stdio: "inherit",
-        cwd: `packages/saltcorn-cli/`,
-      });*/
-    await publish("saltcorn-cli", "next");
+    await publish("saltcorn-cli", tag);
     fs.writeFileSync(
       `package.json`,
       JSON.stringify(
-        { ...rootPackageJson, workspaces: ["./packages/*"] },
+        {
+          ...rootWithoutWorkspaces,
+          workspaces: workspaces || ["./packages/*"],
+        },
         null,
         2
       )
-    ); // update Dockerfile
-    const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
-    fs.writeFileSync(
+    );
+    // update Dockerfile
+    for (const dockerfileName of [
       `Dockerfile.release`,
-      dockerfile.replace(/cli@.* --unsafe/, `cli@${version} --unsafe`)
-    );
-    const dockerfileWithMobile = fs.readFileSync(
       `Dockerfile.mobile.release`,
-      "utf8"
-    );
-    fs.writeFileSync(
-      `Dockerfile.mobile.release`,
-      dockerfileWithMobile.replace(/cli@.* --unsafe/, `cli@${version} --unsafe`)
-    );
+      `Dockerfile.isolated.release`,
+    ]) {
+      const dockerfile = fs.readFileSync(dockerfileName, "utf8");
+      fs.writeFileSync(
+        dockerfileName,
+        dockerfile.replace(/cli@.* --omit=dev/, `cli@${version} --omit=dev`)
+      );
+    }
     //git commit tag and push
     runCmd("git", ["commit", "-am", "v" + version], {
       stdio: "inherit",
@@ -197,7 +217,7 @@ class ReleaseResumeCommand extends Command {
 /**
  * @type {string}
  */
-ReleaseResumeCommand.description = `Release a new saltcorn version`;
+ReleaseResumeCommand.description = `Resume a failed release at the cli publish step`;
 
 /**
  * @type {object}
@@ -207,12 +227,16 @@ ReleaseResumeCommand.args = {
     required: true,
     description: "New version number",
   }),
+  tag: Args.string({
+    required: false,
+    description: "NPM tag to give this release (default: next)",
+  }),
 };
 
 ReleaseResumeCommand.flags = {
   tag: Flags.string({
     char: "t",
-    description: "NPM tag",
+    description: "NPM tag (alternative to the tag argument)",
   }),
 };
 module.exports = ReleaseResumeCommand;

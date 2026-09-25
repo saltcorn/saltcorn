@@ -174,10 +174,9 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.addFieldButtonLocator);
     // Fill the lable name
     await functions.fill_Text(pageobject.labelTextboxlocator, 'Name');
-    // Click on next button
+    // a plain String field's wizard is 2 steps - a 3rd submit() here waits
+    // out the full timeout for a button that never appears
     await functions.submit();
-    await functions.submit();
-    // click on finish button
     await functions.submit();
     await page.click(pageobject.EditlinkLocator);
     // Click on add row button

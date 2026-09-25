@@ -184,6 +184,7 @@ namespace TableExports {
     responsiveCollapse?: boolean;
     collapse_breakpoint_px?: number;
     row_color_function?: Function;
+    row_class_function?: Function;
     level_indicator?: boolean;
   };
 }
@@ -246,6 +247,14 @@ const mkTable = (
         rowColor = undefined;
       }
     }
+    let rowClass: string | undefined;
+    if (opts.row_class_function) {
+      try {
+        rowClass = opts.row_class_function?.(v) || undefined;
+      } catch {
+        rowClass = undefined;
+      }
+    }
     const cellWrapper = opts.rowAnchorLink
       ? (val: any) => {
           const href = opts.onRowSelect(v);
@@ -253,10 +262,14 @@ const mkTable = (
           return a({ class: "anchor-row-link", href }, val || "&nbsp;");
         }
       : (val: any) => val;
+    const clickAttrs = mkClickHandler(opts, v);
     return tr(
       {
         ...(v[pk_name] ? { "data-row-id": v[pk_name] } : {}),
-        ...mkClickHandler(opts, v),
+        ...clickAttrs,
+        ...(rowClass
+          ? { class: [clickAttrs.class, rowClass].filter(Boolean).join(" ") }
+          : {}),
         ...(rowColor ? { style: { backgroundColor: rowColor } } : {}),
       },
       hdrs.map((hdr: HeadersParams, hdr_ix) => {

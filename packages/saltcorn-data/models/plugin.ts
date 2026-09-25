@@ -155,13 +155,17 @@ class Plugin implements AbstractPlugin {
    * @returns {Promise<void>}
    */
   async upgrade_version(
-    requirePlugin: (arg0: Plugin, arg1: boolean) => Plugin,
+    requirePlugin: (
+      arg0: Plugin,
+      arg1: boolean
+    ) => Promise<{ version?: string } | undefined>,
     newVersion?: string
   ): Promise<void> {
     if (this.source === "npm") {
       const old_version = this.version;
       this.version = newVersion || "latest";
-      const { version } = await requirePlugin(this, true);
+      const res = await requirePlugin(this, true);
+      const version = res?.version;
       if (version && version !== old_version) {
         await this.logUpgrade(String(version), String(old_version));
         this.version = version;
@@ -349,6 +353,75 @@ class Plugin implements AbstractPlugin {
     return ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"].includes(name);
   }
 
+  /**
+   * Check whether a plugin may be installed or loaded on the current tenant.
+   * The root tenant may use any plugin. Subdomain tenants may only use:
+   * - the fixed plugins (base-plugin, sbadmin2);
+   * - git/github plugins only if the root config tenants_install_git is set;
+   * - npm plugins marked safe in the store, or any plugin if the root
+   *   config tenants_unsafe_plugins is set.
+   * This is the single policy check shared by the install, restore, load
+   * and upgrade paths.
+   * @param plugin - plugin to check
+   * @param allowUnsafe - allow unsafe npm plugins even without tenants_unsafe_plugins
+   * @returns `{ allowed: true }` or `{ allowed: false, reason }`
+   */
+  static async isAllowedForTenant(
+    plugin: { name: string; location: string; source: PluginSourceType },
+    allowUnsafe?: boolean
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    if (isRoot()) return { allowed: true };
+    if (plugin.source === "npm" && Plugin.is_fixed_plugin(plugin.location))
+      return { allowed: true };
+    const tenants_install_git = getRootState().getConfig(
+      "tenants_install_git",
+      false
+    );
+    if (
+      !tenants_install_git &&
+      (plugin.source === "git" || plugin.source === "github")
+    )
+      return {
+        allowed: false,
+        reason: "git/github modules are not permitted on tenants",
+      };
+    const tenants_unsafe_plugins = getRootState().getConfig(
+      "tenants_unsafe_plugins",
+      false
+    );
+    if (tenants_unsafe_plugins) return { allowed: true };
+    if (plugin.source !== "npm")
+      return {
+        allowed: false,
+        reason: "only store modules are permitted on tenants",
+      };
+    if (allowUnsafe) return { allowed: true };
+    const instore = await db.runWithTenant(
+      db.connectObj.default_schema,
+      async () => await Plugin.store_plugins_available()
+    );
+    const isSafe = instore.some(
+      (p: Plugin) => p.location === plugin.location && !p.unsafe
+    );
+    if (!isSafe)
+      return {
+        allowed: false,
+        reason: "unsafe or unknown modules are not permitted on tenants",
+      };
+    return { allowed: true };
+  }
+
+  /**
+   * Log that a plugin was skipped on the current tenant by the tenant plugin policy
+   * @param plugin - skipped plugin
+   * @param reason - reason from {@link isAllowedForTenant}
+   */
+  static logBlockedForTenant(plugin: { name: string }, reason?: string): void {
+    const msg = `Skipping module ${plugin.name} on tenant ${db.getTenantSchema()}: ${reason}`;
+    console.error(`\nWARNING: ${msg}`);
+    getState()?.log(2, msg);
+  }
+
   // ── plugin loading / installation ──────────────────────────────────────
 
   /**
@@ -444,12 +517,9 @@ class Plugin implements AbstractPlugin {
     forceFetch?: boolean,
     reloadModule = false
   ): Promise<any> {
-    if (
-      !isRoot() &&
-      !getRootState().getConfig("tenants_install_git", false) &&
-      (plugin.source === "git" || plugin.source === "github")
-    ) {
-      console.error("\nWARNING: Skipping git/github plugin ", plugin.name);
+    const { allowed, reason } = await Plugin.isAllowedForTenant(plugin);
+    if (!allowed) {
+      Plugin.logBlockedForTenant(plugin, reason);
       return;
     }
     if (plugin.source === "npm" && !Plugin.is_fixed_plugin(plugin.location)) {
@@ -537,6 +607,9 @@ class Plugin implements AbstractPlugin {
     plugin: Plugin,
     force?: boolean
   ): Promise<PluginLoaderResult> {
+    const { allowed, reason } = await Plugin.isAllowedForTenant(plugin);
+    if (!allowed)
+      throw new Error(`Module ${plugin.name} cannot be loaded: ${reason}`);
     const airgap = getState()!.getConfig("airgap", false);
     if (airgap && !Plugin.is_fixed_plugin(plugin.location))
       Plugin.ensureAirgapedVersion(
@@ -596,43 +669,13 @@ class Plugin implements AbstractPlugin {
     allowUnsafeOnTenantsWithoutConfigSetting?: boolean,
     overwriteDependencies?: Record<string, string>
   ): Promise<string[] | undefined> {
-    const tenants_unsafe_plugins = getRootState().getConfig(
-      "tenants_unsafe_plugins",
-      false
+    const { allowed, reason } = await Plugin.isAllowedForTenant(
+      plugin,
+      allowUnsafeOnTenantsWithoutConfigSetting
     );
-    const tenants_install_git = getRootState().getConfig(
-      "tenants_install_git",
-      false
-    );
-    if (
-      !isRoot() &&
-      !tenants_install_git &&
-      (plugin.source === "git" || plugin.source === "github")
-    ) {
-      console.error("\nWARNING: Skipping git/github plugin ", plugin.name);
+    if (!allowed) {
+      Plugin.logBlockedForTenant(plugin, reason);
       return;
-    }
-    if (!isRoot() && !tenants_unsafe_plugins) {
-      if (plugin.source !== "npm") {
-        console.error("\nWARNING: Skipping unsafe plugin ", plugin.name);
-        return;
-      }
-      await db.runWithTenant(
-        db.connectObj.default_schema,
-        async () => await Plugin.store_plugins_available()
-      );
-
-      const instore = getRootState().getConfig("available_plugins", []);
-      const safes = instore
-        .filter((p: any) => !p.unsafe)
-        .map((p: any) => p.location);
-      if (
-        !safes.includes(plugin.location) &&
-        !allowUnsafeOnTenantsWithoutConfigSetting
-      ) {
-        console.error("\nWARNING: Skipping unsafe plugin ", plugin.name);
-        return;
-      }
     }
     const airgap = getState()!.getConfig("airgap", false);
     if (plugin.source === "npm" && !airgap)

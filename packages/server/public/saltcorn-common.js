@@ -130,9 +130,17 @@ function rep_del(e) {
 
 function reindex(element, oldix, newix) {
   $(element)
-    .find("input,textarea")
+    .find("input")
     .each(function () {
       $(this).attr("value", $(this).val());
+    });
+  $(element)
+    .find("textarea")
+    .each(function () {
+      // textarea's value is not attribute-backed, unlike input - the
+      // live value has to go into the child text node so it survives
+      // the html()/reparse below
+      $(this).text($(this).val());
     });
   $(element)
     .find("select")
@@ -229,6 +237,26 @@ function apply_showif() {
       }
     } catch (e) {
       console.error(e);
+    }
+  });
+  $("[data-dyn-class]").each(function (ix, element) {
+    const e = $(element);
+    try {
+      const rec = get_form_record(e);
+      const result = new Function(
+        "row",
+        `{${Object.keys(rec).filter(valid_js_var_name).join(",")}}`,
+        "return " + decodeURIComponent(e.attr("data-dyn-class"))
+      )(rec, rec);
+      // only remove classes this formula added, never the static ones
+      e.removeClass(e.data("dyn-class-added") || []);
+      const added = (typeof result === "string" ? result.split(/\s+/) : [])
+        .filter(Boolean)
+        .filter((c) => !e.hasClass(c));
+      e.addClass(added);
+      e.data("dyn-class-added", added);
+    } catch (err) {
+      if (window._sc_loglevel > 4) console.error(err);
     }
   });
   $("[data-dyn-href]").each(function (ix, element) {
@@ -2472,8 +2500,11 @@ function spin_action_link(e) {
   $e.trigger("spin");
 }
 
-function reset_spinners() {
-  $("[data-innerhtml-prespin]").each(function () {
+function reset_spinners(elems) {
+  const $spinning = elems
+    ? $(elems).filter("[data-innerhtml-prespin]")
+    : $("[data-innerhtml-prespin]");
+  $spinning.each(function () {
     $e = $(this);
     $e.html($e.attr("data-innerhtml-prespin"));
     $e.removeAttr("data-innerhtml-prespin");

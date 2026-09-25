@@ -93,8 +93,11 @@ router.get(
 
     view.rewrite_query_from_slug(query, req.params.slug);
     if (
-      role > view.min_role &&
-      !(await view.authorize(req.user, { action: "get", req, state: query }))
+      !(await view.authorize(req.user, {
+        action: "get",
+        req,
+        state: query,
+      }))
     ) {
       if (!req.user) {
         res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
@@ -107,7 +110,10 @@ router.get(
     }
     const isModal = req.headers?.saltcornmodalrequest;
 
-    const contents0 = await view.run_possibly_on_page(query, req, res);
+    const contents0 = await view.run_possibly_on_page(query, req, res, false, {
+      alreadyAuthorizedFor: view,
+    });
+    if (res.headersSent) return; // an on_page_load action already redirected res directly
     const __ = (s: string) =>
       state.i18n.__({ phrase: s, locale: req.getLocale() }) || s;
     let title:
@@ -173,9 +179,9 @@ router.get(
         req.user,
         { req }
       );
-    if (typeof contents0 === "object" && "goto" in contents0)
+    if (contents0 && typeof contents0 === "object" && "goto" in contents0) {
       res.redirect((contents0 as any).goto);
-    else {
+    } else {
       const contents =
         typeof contents0 === "string"
           ? div(
@@ -328,7 +334,6 @@ router.post(
   setTenant,
   error_catcher(async (req: Req, res: Res) => {
     const { viewname } = req.params;
-    const role = req.user && req.user!.id ? req.user!.role_id : 100;
     const query = { ...req.query };
     const state = getState()!;
     state.log(
@@ -347,7 +352,6 @@ router.post(
     view.rewrite_query_from_slug(query, req.params.slug);
 
     if (
-      role > view.min_role &&
       !(await view.authorize(req.user, {
         action: "post",
         req,
@@ -365,7 +369,11 @@ router.post(
         } does not supply a POST handler`
       );
     } else {
-      await view.runPost(query, req.body || {}, { res, req });
+      await view.runPost(query, req.body || {}, {
+        res,
+        req,
+        alreadyAuthorizedFor: view,
+      });
     }
   })
 );

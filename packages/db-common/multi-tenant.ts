@@ -13,6 +13,7 @@ type RequestContext = {
   client?: any;
   req?: any;
   inTransaction?: boolean;
+  afterCommit?: Array<() => Promise<void>>;
 };
 
 export const tenantNamespace: AsyncLocalStorage<RequestContext> =

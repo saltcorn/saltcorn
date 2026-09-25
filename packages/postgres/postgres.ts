@@ -764,6 +764,31 @@ export const setRequestUserContext = async (client: any, isLocal = false) => {
      - you can use state.refresh_*(true) for update on own worker only
 
 */
+/**
+ * Run work after COMMIT, so slow or unrollbackable effects (sending email,
+ * calling a remote service) don't hold the transaction's connection open.
+ * Dropped on rollback; errors are logged, not thrown. Runs inline if there is
+ * no transaction, or no async context (runWithTenant) to defer against.
+ *
+ * @param f work to run after COMMIT
+ */
+export const afterCommit = async (f: () => Promise<void>): Promise<void> => {
+  const reqCon = getRequestContext();
+  if (!reqCon?.inTransaction) return await f();
+  if (!reqCon.afterCommit) reqCon.afterCommit = [];
+  reqCon.afterCommit.push(f);
+};
+
+const runAfterCommit = async (queue?: Array<() => Promise<void>>) => {
+  for (const f of queue || []) {
+    try {
+      await f();
+    } catch (e) {
+      console.error("Error in afterCommit callback", e);
+    }
+  }
+};
+
 export const withTransaction = async (
   f: (rollback: () => Promise<void>) => Promise<any>,
   onError?: (e: Error) => any
@@ -777,6 +802,7 @@ export const withTransaction = async (
   sql_log("BEGIN;");
   await client.query("BEGIN;");
   let aborted = false;
+  let committed = false;
   const rollback = async () => {
     aborted = true;
     sql_log("ROLLBACK;");
@@ -789,6 +815,7 @@ export const withTransaction = async (
     if (!aborted) {
       sql_log("COMMIT;");
       await client.query("COMMIT;");
+      committed = true;
     }
     return result;
   } catch (error) {
@@ -799,11 +826,15 @@ export const withTransaction = async (
     if (onError) return onError(error as Error);
     else throw error;
   } finally {
+    const queued = reqCon?.afterCommit;
     if (reqCon) {
       reqCon.client = null;
       reqCon.inTransaction = false;
+      reqCon.afterCommit = undefined;
     }
     client.release();
+    // only once the client is back in the pool, and never after a rollback
+    if (committed) await runAfterCommit(queued);
   }
 };
 

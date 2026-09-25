@@ -598,7 +598,11 @@ const store_actions_dropdown = (req: Req) => {
  * @param {object} req
  * @returns {object}
  */
-const plugin_store_html = (items: any[], req: Req) => {
+const plugin_store_html = (
+  items: any[],
+  req: Req,
+  blocked: { name: string; reason?: string }[] = []
+) => {
   return {
     above: [
       {
@@ -608,6 +612,27 @@ const plugin_store_html = (items: any[], req: Req) => {
           { text: req.__("Module store") },
         ],
       },
+      ...(blocked.length
+        ? [
+            {
+              type: "card",
+              class: "mt-0",
+              contents: div(
+                { class: "alert alert-warning mb-0" },
+                p(
+                  req.__(
+                    "The following installed modules are not permitted on this tenant and have not been loaded:"
+                  )
+                ),
+                ul(
+                  blocked.map((b) =>
+                    li(text(b.name), b.reason ? `: ${text(b.reason)}` : "")
+                  )
+                )
+              ),
+            },
+          ]
+        : []),
       {
         type: "card",
         class: "mt-0",
@@ -631,6 +656,22 @@ const plugin_store_html = (items: any[], req: Req) => {
       },
     ],
   };
+};
+
+/**
+ * Installed plugins that the tenant plugin policy prevents from loading
+ * on the current tenant
+ */
+const blocked_installed_plugins = async (): Promise<
+  { name: string; reason?: string }[]
+> => {
+  if (db.getTenantSchema() === db.connectObj.default_schema) return [];
+  const blocked = [];
+  for (const plugin of await Plugin.find({})) {
+    const { allowed, reason } = await Plugin.isAllowedForTenant(plugin);
+    if (!allowed) blocked.push({ name: plugin.name, reason });
+  }
+  return blocked;
 };
 
 const flash_relogin = (req: Req, exposedConfigs: string[]) => {
@@ -657,7 +698,7 @@ router.get(
     const relevant_items = filter_items(items, req.query);
     res.sendWrap(
       req.__("Module store"),
-      plugin_store_html(relevant_items, req)
+      plugin_store_html(relevant_items, req, await blocked_installed_plugins())
     );
   })
 );
@@ -1303,6 +1344,16 @@ router.get(
       res.redirect("/plugins");
       return;
     }
+    const { allowed, reason } = await Plugin.isAllowedForTenant(plugin_db);
+    if (!allowed) {
+      req.flash(
+        "warning",
+        req.__("Module %s is not permitted on this tenant", text(name)) +
+          (reason ? `: ${text(reason)}` : "")
+      );
+      res.redirect("/plugins");
+      return;
+    }
     const mod = await Plugin.requirePlugin(plugin_db);
     const store_items = await get_store_items(req);
     const store_item = store_items.find((item: any) => item.name === name)!;
@@ -1585,6 +1636,7 @@ router.post(
           plugin,
           schema === db.connectObj.default_schema || plugin.source === "github"
         );
+        await getState()!.refresh_views(); // picks up the plugin's headers without a restart
         req.flash("success", req.__(`Module %s installed`, plugin.name));
         for (const msg of msgs || []) req.flash("warning", msg);
         res.redirect(`/plugins`);

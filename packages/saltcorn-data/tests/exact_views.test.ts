@@ -481,12 +481,16 @@ describe("Show view", () => {
     };
     await test_show({
       ...showbooks1,
-      response: `<div class="row"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-start" style="min-height: 0px;    "><form action="/delete/books/1?redirect=%2F" method="post" class="d-inline"><input type="hidden" name="_csrf" value=""><button type="submit" class=" btn  btn-primary  d-inline-block">Delete</button></form></div><div class="text-start" style="min-height: 0px;    ">VERY LONG</div>`,
+      response: !remoteQueries
+        ? `<div class="row"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-start" style="min-height: 0px;    "><span class="d-inline"><button type="button" onclick="native_post_btn('/delete/books/1?redirect=%2F', 'post', '')" class=" btn  btn-primary  d-inline-block">Delete</button></span></div><div class="text-start" style="min-height: 0px;    ">VERY LONG</div>`
+        : `<div class="row"><div class="col-2">Author</div><div class="col-10">Herman Melville</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">967</div></div><br /><div class="text-start" style="min-height: 0px;    "><span class="d-inline"><button type="button" onclick="local_post_btn('post/delete/books/1?redirect=%2F')" class=" btn  btn-primary  d-inline-block">Delete</button></span></div><div class="text-start" style="min-height: 0px;    ">VERY LONG</div>`,
     });
     await test_show({
       ...showbooks1,
       id: 2,
-      response: `<div class="row"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-start" style="min-height: 0px;    "><form action="/delete/books/2?redirect=%2F" method="post" class="d-inline"><input type="hidden" name="_csrf" value=""><button type="submit" class=" btn  btn-primary  d-inline-block">Delete</button></form></div>`,
+      response: !remoteQueries
+        ? `<div class="row"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-start" style="min-height: 0px;    "><span class="d-inline"><button type="button" onclick="native_post_btn('/delete/books/2?redirect=%2F', 'post', '')" class=" btn  btn-primary  d-inline-block">Delete</button></span></div>`
+        : `<div class="row"><div class="col-2">Author</div><div class="col-10">Leo Tolstoy</div></div><br /><div class="row"><div class="col-2">Pages</div><div class="col-10">728</div></div><br /><div class="text-start" style="min-height: 0px;    "><span class="d-inline"><button type="button" onclick="local_post_btn('post/delete/books/2?redirect=%2F')" class=" btn  btn-primary  d-inline-block">Delete</button></span></div>`,
     });
   });
   it("should render double join embedded exactly", async () => {
@@ -1171,7 +1175,7 @@ describe("Page", () => {
             view: "authorlist",
             state: "shared",
             contents:
-              '<div class="table-responsive"><table class="table table-sm table-valign-middle "><thead><tr><th><span onclick="sortby(\'author\', false, this)" class="link-style">Author</span></th><th>authorshow</th><th></th><th><span onclick="sortby(\'count_patients_favbook_name_undefined\', false, \'28b3d\', this)" class="link-style">Count patients</span></th></tr></thead><tbody><tr><td>Herman Melville</td><td><a href="/view/authorshow?id=1">authorshow</a></td><td><form action="/delete/books/1?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr><tr><td>Leo Tolstoy</td><td><a href="/view/authorshow?id=2">authorshow</a></td><td><form action="/delete/books/2?redirect=/view/authorlist" method="post">\n  <input type="hidden" name="_csrf" value="">\n<button type="button" onclick="ajax_post_btn(this, true, undefined)" class=" btn btn-sm btn-primary">Delete</button></form></td><td>1</td></tr></tbody></table></div>',
+              '<div class="table-responsive"><table class="table table-sm table-valign-middle "><thead><tr><th><span onclick="sortby(\'author\', false, this)" class="link-style">Author</span></th><th>authorshow</th><th></th><th><span onclick="sortby(\'count_patients_favbook_name_undefined\', false, \'28b3d\', this)" class="link-style">Count patients</span></th></tr></thead><tbody><tr><td>Herman Melville</td><td><a href="/view/authorshow?id=1">authorshow</a></td><td><button type="button" onclick="ajax_post_btn(\'/delete/books/1?redirect=/view/authorlist\', true, undefined, \'\')" class=" btn btn-sm btn-primary">Delete</button></td><td>1</td></tr><tr><td>Leo Tolstoy</td><td><a href="/view/authorshow?id=2">authorshow</a></td><td><button type="button" onclick="ajax_post_btn(\'/delete/books/2?redirect=/view/authorlist\', true, undefined, \'\')" class=" btn btn-sm btn-primary">Delete</button></td><td>1</td></tr></tbody></table></div>',
           },
           {
             name: "18a8cc",
