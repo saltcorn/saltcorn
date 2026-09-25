@@ -60,6 +60,20 @@ const emptyPack = () => ({
   tags: [],
 });
 
+// catches what console.error prints while fn runs, so failing jobs
+// don't clutter the test output
+const captureErrors = async (fn) => {
+  const orig = console.error;
+  const logged = [];
+  console.error = (...args) => logged.push(args);
+  try {
+    await fn();
+  } finally {
+    console.error = orig;
+  }
+  return logged;
+};
+
 const postSnapshot = (app, loginCookie, content, fields = {}) => {
   let req = request(app)
     .post("/admin/snapshot-restore-full")
@@ -80,23 +94,29 @@ describe("startJob", () => {
     expect(await waitForJobFile(jobId)).toEqual({ status: "done" });
   });
   it("reports an error when the job throws", async () => {
-    const jobId = startJob(async () => {
-      throw new Error("it broke");
+    const logged = await captureErrors(async () => {
+      const jobId = startJob(async () => {
+        throw new Error("it broke");
+      });
+      expect(await waitForJobFile(jobId)).toEqual({
+        status: "error",
+        message: "it broke",
+      });
     });
-    expect(await waitForJobFile(jobId)).toEqual({
-      status: "error",
-      message: "it broke",
-    });
+    expect(logged[0][0].message).toBe("it broke");
   });
   it("reports password_required when the job needs a password", async () => {
-    const jobId = startJob(async () => {
-      const e = new Error("password");
-      e.requiresPassword = true;
-      throw e;
+    const logged = await captureErrors(async () => {
+      const jobId = startJob(async () => {
+        const e = new Error("password");
+        e.requiresPassword = true;
+        throw e;
+      });
+      expect(await waitForJobFile(jobId)).toEqual({
+        status: "password_required",
+      });
     });
-    expect(await waitForJobFile(jobId)).toEqual({
-      status: "password_required",
-    });
+    expect(logged[0][0].requiresPassword).toBe(true);
   });
   it("reuses a given job id", async () => {
     const givenId = uuidv4();
@@ -215,13 +235,19 @@ describe("snapshot restore POST", () => {
       ...emptyPack(),
       library: [{ name: "snaplib_rollback", icon: "", layout: {} }],
     };
-    const res = await postSnapshot(app, loginCookie, JSON.stringify(pack));
-    expect(res.body.jobId).toBeTruthy();
-
-    const status = await waitForJob(app, res.body.jobId);
+    let status;
+    const logged = await captureErrors(async () => {
+      const res = await postSnapshot(app, loginCookie, JSON.stringify(pack));
+      expect(res.body.jobId).toBeTruthy();
+      status = await waitForJob(app, res.body.jobId);
+    });
     expect(status.status).toBe("error");
     expect(status.message).toBeTruthy();
-    const lib = await Library.findOne({ name: "snaplib_rollback" });
-    expect(lib).toBeFalsy();
+    expect(logged[0][0].message).toBe(status.message);
+    // sqlite's withTransaction doesn't really roll back
+    if (!db.isSQLite) {
+      const lib = await Library.findOne({ name: "snaplib_rollback" });
+      expect(lib).toBeFalsy();
+    }
   });
 });
