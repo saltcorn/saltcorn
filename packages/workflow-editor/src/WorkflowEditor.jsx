@@ -140,7 +140,7 @@ const StepNode = ({ data }) => {
 
   return (
     <div
-      className="wf-node"
+      className={`wf-node${data.highlighted ? " wf-node--highlighted" : ""}`}
       onClick={handleClick}
       role="button"
       tabIndex={0}
@@ -281,6 +281,25 @@ const findLoopBodyStepIds = (steps) => {
   return loopBodyIds;
 };
 
+const resolveNextStepNames = (rawNextStep, allStepNames, idByName) => {
+  if (!rawNextStep) return [];
+  const trimmed = String(rawNextStep).trim();
+  if (idByName[trimmed]) return [trimmed];
+  const hits = new Set();
+  allStepNames.forEach((name) => {
+    if (!name) return;
+    try {
+      const re = new RegExp(
+        `\\b${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`
+      );
+      if (re.test(trimmed)) hits.add(name);
+    } catch (e) {
+      if (trimmed.includes(name)) hits.add(name);
+    }
+  });
+  return [...hits];
+};
+
 const buildGraph = (
   steps,
   strings,
@@ -308,30 +327,8 @@ const buildGraph = (
   );
   const shouldIndentLoopBodies = steps.length > 0 && !hasAnyWorkflowPosition;
 
-  const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-  const extractNextStepNames = (rawNextStep) => {
-    if (!rawNextStep) return [];
-    const trimmed = String(rawNextStep).trim();
-
-    // Simple case: next_step is directly a step name
-    if (idByName[trimmed]) return [trimmed];
-
-    // Expression case: find all step names referenced in the expression
-    const expr = trimmed;
-    const hits = new Set();
-    allStepNames.forEach((name) => {
-      if (!name) return;
-      try {
-        const re = new RegExp(`\\b${escapeRegExp(name)}\\b`);
-        if (re.test(expr)) hits.add(name);
-      } catch (e) {
-        // Fallback: simple substring match if regex construction fails
-        if (expr.includes(name)) hits.add(name);
-      }
-    });
-    return [...hits];
-  };
+  const extractNextStepNames = (rawNextStep) =>
+    resolveNextStepNames(rawNextStep, allStepNames, idByName);
 
   const initial = steps.find((s) => s.initial_step);
   const loopBackLinks = findLoopBackLinks(steps);
@@ -725,6 +722,10 @@ const StepDrawer = ({
   onCopy,
   drawerWidth,
   onResizeStart,
+  navCanGoBack,
+  navNextSteps,
+  onNavBack,
+  onNavToStep,
 }) => {
   const isOpen = !!modal;
   const stopDrawerKeyPropagation = useCallback((e) => {
@@ -766,6 +767,33 @@ const StepDrawer = ({
               aria-label="Close"
             />
           </div>
+          {(navCanGoBack || navNextSteps?.length > 0) && (
+            <div className="wf-drawer__nav">
+              {navCanGoBack && (
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={onNavBack}
+                  title="Back to previous step"
+                >
+                  ← Back
+                </button>
+              )}
+              {navNextSteps?.map((ns) => (
+                <button
+                  key={ns.id}
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => onNavToStep(ns.id)}
+                  title={
+                    ns.isLoopBody
+                      ? "Navigate to loop body"
+                      : "Navigate to next step"
+                  }
+                >
+                  {ns.isLoopBody ? `↺ ${ns.name}` : `${ns.name} →`}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="wf-drawer__body">
             <div
               ref={innerRef}
@@ -856,6 +884,9 @@ const WorkflowEditor = ({ data }) => {
   const [shellHeight, setShellHeight] = useState(null);
   const lastHeightRef = useRef(null);
   const heightDebounceRef = useRef(null);
+  const [navHistory, setNavHistory] = useState([]);
+  const [highlightedNodeId, setHighlightedNodeId] = useState(null);
+  const highlightTimerRef = useRef(null);
 
   const drawerStorageKey = useMemo(
     () => `wf-drawer:${data?.trigger?.id || "default"}`,
@@ -1456,7 +1487,13 @@ const WorkflowEditor = ({ data }) => {
   );
 
   const openStepForm = useCallback(
-    async ({ stepId, initial_step, after_step } = {}) => {
+    async ({
+      stepId,
+      initial_step,
+      after_step,
+      _skipHistoryReset = false,
+    } = {}) => {
+      if (stepId && !_skipHistoryReset) setNavHistory([String(stepId)]);
       try {
         setError("");
         const descriptor = {
@@ -2046,6 +2083,7 @@ const WorkflowEditor = ({ data }) => {
             body: formData,
           });
         }
+        setNavHistory([]);
         setModal(null);
         setError("");
         clearDrawerState();
@@ -2063,6 +2101,19 @@ const WorkflowEditor = ({ data }) => {
       strings.confirmDeleteMany,
     ]
   );
+
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.type === "step"
+          ? {
+              ...n,
+              data: { ...n.data, highlighted: n.id === highlightedNodeId },
+            }
+          : n
+      )
+    );
+  }, [highlightedNodeId, setNodes]);
 
   useEffect(() => {
     setNodes((nds) =>
@@ -2087,7 +2138,10 @@ const WorkflowEditor = ({ data }) => {
                 ...n,
                 data: {
                   ...n.data,
-                  onEdit: (id) => openStepForm({ stepId: id }),
+                  onEdit: (id) => {
+                    openStepForm({ stepId: id });
+                    setTimeout(() => focusNode(id), 300);
+                  },
                   onAddAfter,
                   onSetStart,
                   onClearNext,
@@ -2097,6 +2151,7 @@ const WorkflowEditor = ({ data }) => {
       )
     );
   }, [
+    focusNode,
     onAddAfter,
     onClearNext,
     onDelete,
@@ -2187,10 +2242,67 @@ const WorkflowEditor = ({ data }) => {
   useEffect(() => () => stopResize(), [stopResize]);
 
   const closeModal = useCallback(() => {
+    setNavHistory([]);
     setModal(null);
     setError("");
     clearDrawerState();
   }, [clearDrawerState]);
+
+  const focusNode = useCallback((stepId) => {
+    if (!rfInstanceRef.current || !stepId) return;
+    rfInstanceRef.current.fitView({
+      nodes: [{ id: String(stepId) }],
+      duration: 400,
+      padding: 0.3,
+      maxZoom: 1.2,
+    });
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    setHighlightedNodeId(String(stepId));
+    highlightTimerRef.current = setTimeout(() => {
+      setHighlightedNodeId(null);
+      highlightTimerRef.current = null;
+    }, 3000);
+  }, []);
+
+  const navToStep = useCallback(
+    async (stepId) => {
+      setNavHistory((prev) => [...prev, String(stepId)]);
+      await openStepForm({ stepId, _skipHistoryReset: true });
+      focusNode(stepId);
+    },
+    [openStepForm, focusNode]
+  );
+
+  const navBack = useCallback(async () => {
+    if (navHistory.length <= 1) return;
+    const newHistory = navHistory.slice(0, -1);
+    const prevId = newHistory[newHistory.length - 1];
+    setNavHistory(newHistory);
+    await openStepForm({ stepId: prevId, _skipHistoryReset: true });
+    focusNode(prevId);
+  }, [navHistory, openStepForm, focusNode]);
+
+  const navNextSteps = useMemo(() => {
+    if (!modal?.stepId) return [];
+    const step = steps.find((s) => String(s.id) === String(modal.stepId));
+    if (!step) return [];
+    const allStepNames = steps.map((s) => s.name).filter(Boolean);
+    const nextNames = resolveNextStepNames(
+      step.next_step,
+      allStepNames,
+      idByName
+    );
+    const result = nextNames
+      .map((name) => ({ id: idByName[name], name }))
+      .filter((x) => x.id);
+    if (step.action_name === "ForLoop") {
+      const loopBodyName = step.configuration?.loop_body_initial_step;
+      const loopBodyId = loopBodyName && idByName[loopBodyName];
+      if (loopBodyId)
+        result.push({ id: loopBodyId, name: loopBodyName, isLoopBody: true });
+    }
+    return result;
+  }, [modal?.stepId, steps, idByName]);
 
   useLayoutEffect(() => {
     const shellEl = shellRef.current;
@@ -2350,6 +2462,10 @@ const WorkflowEditor = ({ data }) => {
           onCopy={onCopy}
           drawerWidth={drawerWidth}
           onResizeStart={startResize}
+          navCanGoBack={navHistory.length > 1}
+          navNextSteps={navNextSteps}
+          onNavBack={navBack}
+          onNavToStep={navToStep}
         />
       </div>
     </>
