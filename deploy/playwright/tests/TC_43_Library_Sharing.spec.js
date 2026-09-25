@@ -534,7 +534,7 @@ test.describe("E2E Test Suite - Library sharing", () => {
     // Components and Library are a two-tab accordion - only the active
     // one is even mounted, so switch back to Components before the Text
     // draggable (which lives there) can be dragged from again
-    await page.click(pageobject.Library);
+    await page.click(pageobject.Components);
     await page.waitForSelector(pageobject.textSource, {
       state: "visible",
       timeout: 10000,
@@ -611,7 +611,7 @@ test.describe("E2E Test Suite - Library sharing", () => {
     // Components and Library are a two-tab accordion - only the active
     // one is even mounted, so switch back to Components before the Text
     // draggable (which lives there) can be dragged from again
-    await page.click(pageobject.Library);
+    await page.click(pageobject.Components);
     await page.waitForSelector(pageobject.textSource, {
       state: "visible",
       timeout: 10000,
