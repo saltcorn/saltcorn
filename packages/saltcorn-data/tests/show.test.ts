@@ -28,6 +28,7 @@ import {
   renderEditInEditConfig,
 } from "./remote_query_helper.js";
 import PlainDate from "@saltcorn/plain-date";
+import { GenObj } from "@saltcorn/types/common_types";
 
 let remoteQueries = false;
 
@@ -808,5 +809,82 @@ describe("embedded view loops", () => {
     expect(vres).toContain("node3");
     expect(vres).toContain("node2");
     expect(vres).toContain("node1");
+  });
+});
+
+describe("Show view picked by fields other than id", () => {
+  const contentLayout = {
+    type: "field",
+    field_name: "content",
+    fieldview: "as_text",
+  };
+  const mkMsgShow = async (name: string, extra: GenObj) =>
+    await mkViewWithCfg({
+      name,
+      table_id: Table.findOne("messages")!.id,
+      configuration: {
+        columns: [{ type: "Field", field_name: "content", fieldview: "as_text" }],
+        layout: contentLayout,
+        ...extra,
+      },
+    });
+  const run = async (viewname: string, state: GenObj) => {
+    const view = View.findOne({ name: viewname });
+    assertIsSet(view);
+    return await view.run(state, mockReqRes);
+  };
+  beforeAll(async () => {
+    // fixture: messages 1 and 2 are both in room 1, room 2 has none
+    await mkMsgShow("msg_show_first", {});
+    await mkMsgShow("msg_show_desc", { row_order_desc: true });
+    await mkMsgShow("msg_show_error", { multiple_rows: "Error" });
+    await mkMsgShow("msg_show_more", {
+      multiple_rows: "First with link to more",
+      more_rows_view: "list_messages",
+    });
+    await mkViewWithCfg({
+      name: "room_show_with_last_msg",
+      table_id: Table.findOne("rooms")!.id,
+      configuration: {
+        columns: [],
+        layout: {
+          type: "view",
+          view: "msg_show_desc",
+          relation: ".rooms.messages$room",
+          state: "shared",
+          name: "last_msg",
+        },
+      },
+    });
+  });
+  it("takes the first match by primary key", async () => {
+    const vres = await run("msg_show_first", { room: 1 });
+    expect(vres).toContain("first message content for room A");
+    expect(vres).not.toContain("sc-show-more");
+  });
+  it("takes the first match descending", async () => {
+    const vres = await run("msg_show_desc", { room: 1 });
+    expect(vres).toContain("second message content for room A");
+  });
+  it("says when nothing matches", async () => {
+    expect(await run("msg_show_first", { room: 2 })).toBe("No row selected");
+  });
+  it("errors on several matches if configured", async () => {
+    expect(await run("msg_show_error", { room: 1 })).toBe(
+      "More than one row matches"
+    );
+    const vres = await run("msg_show_error", { id: 2 });
+    expect(vres).toContain("second message content for room A");
+  });
+  it("links to more matches if configured", async () => {
+    const vres = await run("msg_show_more", { room: 1 });
+    expect(vres).toContain("first message content for room A");
+    expect(vres).toContain('href="/view/list_messages?room=1"');
+    const vres1 = await run("msg_show_more", { id: 1 });
+    expect(vres1).not.toContain("sc-show-more");
+  });
+  it("orders a Show embedded from a child table", async () => {
+    const vres = await run("room_show_with_last_msg", { id: 1 });
+    expect(vres).toContain("second message content for room A");
   });
 });

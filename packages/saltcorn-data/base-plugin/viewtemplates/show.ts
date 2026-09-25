@@ -288,6 +288,66 @@ const configuration_workflow = (req: Req) =>
           };
         },
       },
+      {
+        name: req.__("Options"),
+        form: async (context: GenObj) => {
+          const table = Table.findOne(
+            context.table_id || context.exttable_name
+          )!;
+          const order_field_options = table
+            .getFields()
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => f.name);
+          const more_view_options = (
+            await View.find_table_views_where(
+              context.table_id || context.exttable_name,
+              ({ state_fields, viewrow, viewtemplate }: GenObj) =>
+                viewtemplate.view_quantity === "Many" &&
+                viewrow.name !== context.viewname &&
+                state_fields.every((sf: GenObj) => !sf.required)
+            )
+          ).map((v) => v.name);
+          return new Form({
+            fields: [
+              {
+                name: "multiple_rows",
+                label: req.__("If several rows match"),
+                type: "String",
+                sublabel: req.__(
+                  "When the row is picked by fields other than id, e.g. embedded in a view of a parent table"
+                ),
+                attributes: {
+                  options: ["First", "Error", "First with link to more"],
+                },
+              },
+              {
+                name: "row_order_field",
+                label: req.__("First row by"),
+                type: "String",
+                sublabel: req.__("Defaults to the primary key"),
+                attributes: {
+                  options: order_field_options,
+                },
+              },
+              {
+                name: "row_order_desc",
+                label: req.__("Descending"),
+                type: "Bool",
+              },
+              {
+                name: "more_rows_view",
+                label: req.__("View for more rows"),
+                type: "String",
+                sublabel: req.__("Opened by the link, with the same filter"),
+                attributes: {
+                  options: more_view_options,
+                },
+                showIf: { multiple_rows: "First with link to more" },
+              },
+            ] as any,
+          });
+        },
+      },
     ],
   });
 
@@ -310,11 +370,15 @@ const run = async (
     layout,
     page_title,
     page_title_formula,
+    multiple_rows,
+    more_rows_view,
   }: {
     columns: Column[];
     layout: Layout;
     page_title?: string;
     page_title_formula?: boolean;
+    multiple_rows?: string;
+    more_rows_view?: string;
   },
   state: GenObj,
   extra: { req: Req; res: Res; isPreview?: boolean; [key: string]: any },
@@ -353,6 +417,20 @@ const run = async (
     });
 
   if (rows.length == 0) return extra.req.__("No row selected");
+  if (rows.length > 1 && multiple_rows === "Error")
+    return extra.req.__("More than one row matches");
+  const more_link =
+    rows.length > 1 &&
+    multiple_rows === "First with link to more" &&
+    more_rows_view
+      ? a(
+          {
+            class: "sc-show-more",
+            href: `/view/${encodeURIComponent(more_rows_view)}${stateToQueryString(state)}`,
+          },
+          extra.req.__("More")
+        )
+      : "";
   if (tbl!.name === "users") {
     const base = get_base_url(extra.req);
     fields.push(
@@ -408,7 +486,8 @@ const run = async (
     page_title_preamble = `<!--SCPT:${text_attr(the_title)}-->`;
   }
 
-  if (!extra.req.generate_email) return page_title_preamble + rendered;
+  if (!extra.req.generate_email)
+    return page_title_preamble + rendered + more_link;
   else {
     return rendered;
   }
@@ -908,7 +987,7 @@ export default {
     table_id,
     exttable_name,
     name, // viewname
-    configuration: { columns, layout },
+    configuration: { columns, layout, row_order_field, row_order_desc },
     req,
     res,
   }: GenObj) => ({
@@ -959,6 +1038,9 @@ export default {
         where: qstate,
         joinFields,
         aggregations,
+        // the "first" row when the state matches several
+        orderBy: row_order_field || tbl!.pk_name,
+        orderDesc: !!row_order_desc,
         limit: 5,
         starFields: tbl!.name === "users",
         forPublic: !req.user,
