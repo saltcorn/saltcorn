@@ -268,7 +268,12 @@ class PageFunctions {
   }
 
   async navigate_To_Events() {
-    await this.page.waitForSelector(this.locators.Events, { timeout: 5000 });
+    // the Settings menu may already be open, clicking it again would close it.
+    // wait for any open/close animation to finish before checking
+    await this.page.waitForFunction(() => !document.querySelector('.collapsing'));
+    if (!(await this.page.isVisible(this.locators.Events)))
+      await this.navigate_To_Settings();
+    await this.page.waitForSelector(this.locators.Events, { state: 'visible', timeout: 5000 });
     await this.page.click(this.locators.Events);
   }
 
@@ -1680,7 +1685,12 @@ class PageFunctions {
   }
 
   async navigate_To_Events() {
-    await this.page.waitForSelector(this.locators.Events, { timeout: 5000 });
+    // the Settings menu may already be open, clicking it again would close it.
+    // wait for any open/close animation to finish before checking
+    await this.page.waitForFunction(() => !document.querySelector('.collapsing'));
+    if (!(await this.page.isVisible(this.locators.Events)))
+      await this.navigate_To_Settings();
+    await this.page.waitForSelector(this.locators.Events, { state: 'visible', timeout: 5000 });
     await this.page.click(this.locators.Events);
   }
 
