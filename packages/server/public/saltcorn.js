@@ -580,8 +580,9 @@ function watch_restore_job(jobId, handleStatus) {
     settled = true; // any real message proves the socket works
     onStatus(data);
   });
+  // rejoin after a reconnect too, socket.io forgets rooms on reconnect
+  restoreSocket.on("connect", joinRestoreRoom);
   if (restoreSocket.connected) joinRestoreRoom();
-  else restoreSocket.on("connect", joinRestoreRoom);
 }
 
 // Starts a full snapshot restore in the background and shows its progress

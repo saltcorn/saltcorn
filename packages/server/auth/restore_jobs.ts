@@ -96,10 +96,12 @@ type JobRunner = (onLog: (msg: string) => void) => Promise<void>;
  */
 const startJob = (run: JobRunner, jobId: string = uuidv4()): string => {
   const ten = db.getTenantSchema();
-  // one write after the other, so a late progress write can't replace "done"
+  // the last queued status file write
   let writes: Promise<void> = Promise.resolve();
   const emit = (data: RestoreProgress) => {
     getState()!.emitRestoreProgress(ten, jobId, data);
+    // wait for the previous write before starting this one, otherwise
+    // a slow "progress" write could finish after "done" and overwrite it
     writes = writes.then(() => writeStatusFile(jobId, data));
   };
   let lastMsg = "";
