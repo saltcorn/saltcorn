@@ -40,7 +40,7 @@ const waitForJob = async (app, jobId) => {
 // waits for the status file directly, for jobs started without the app
 const waitForJobFile = async (jobId) => {
   for (let i = 0; i < 100; i++) {
-    const status = getRestoreJobStatus(jobId);
+    const status = await getRestoreJobStatus(jobId);
     if (status && ["done", "error", "password_required"].includes(status.status))
       return status;
     await sleep(50);
@@ -115,7 +115,13 @@ describe("restore job status files", () => {
     const jobId = startJob(
       () => new Promise((resolve) => (finishJob = resolve))
     );
-    expect(getRestoreJobStatus(jobId).status).toBe("progress");
+    // the first write is async, give it a moment
+    let status = null;
+    for (let i = 0; i < 50 && !status; i++) {
+      status = await getRestoreJobStatus(jobId);
+      if (!status) await sleep(20);
+    }
+    expect(status.status).toBe("progress");
     expect(fs.existsSync(join(statusDir(), `sc-restore-${jobId}.json`))).toBe(
       true
     );
@@ -134,6 +140,8 @@ describe("restore job status files", () => {
 
     const jobId = startJob(async () => {});
     await waitForJobFile(jobId);
+    // cleanup runs in the background, give it a moment
+    for (let i = 0; i < 50 && fs.existsSync(oldFile); i++) await sleep(20);
     expect(fs.existsSync(oldFile)).toBe(false);
     expect(fs.existsSync(newFile)).toBe(true);
   });

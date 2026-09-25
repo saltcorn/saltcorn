@@ -855,7 +855,7 @@ router.post(
 router.get(
   "/restore_status/:jobId",
   error_catcher(async (req: Req, res: Res) => {
-    const status = getRestoreJobStatus(req.params.jobId);
+    const status = await getRestoreJobStatus(req.params.jobId);
     res.json(status || { status: "error", message: req.__("Unknown job") });
   })
 );

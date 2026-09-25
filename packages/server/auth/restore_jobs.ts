@@ -39,32 +39,45 @@ const statusDir = () =>
 const statusFile = (jobId: string) =>
   join(statusDir(), `sc-restore-${jobId}.json`);
 
-const writeStatusFile = (jobId: string, data: RestoreProgress) => {
+// written to a temp file and renamed, so a reader (maybe on another
+// node) never sees a half-written file
+const writeStatusFile = async (jobId: string, data: RestoreProgress) => {
+  const fp = statusFile(jobId);
+  const tmp = `${fp}.${process.pid}.tmp`;
   try {
-    fs.mkdirSync(statusDir(), { recursive: true });
-    fs.writeFileSync(statusFile(jobId), JSON.stringify(data));
+    await fs.promises.mkdir(statusDir(), { recursive: true });
+    await fs.promises.writeFile(tmp, JSON.stringify(data));
+    await fs.promises.rename(tmp, fp);
   } catch (e) {
     console.error("restore job: unable to write status file", e);
   }
 };
 
-const removeOldStatusFiles = () => {
+const removeOldStatusFiles = async () => {
+  const now = Date.now();
+  let fnms: string[];
   try {
-    const now = Date.now();
-    for (const fnm of fs.readdirSync(statusDir())) {
-      const fp = join(statusDir(), fnm);
-      if (now - fs.statSync(fp).mtimeMs > STATUS_FILE_MAX_AGE_MS)
-        fs.unlinkSync(fp);
-    }
+    fnms = await fs.promises.readdir(statusDir());
   } catch {
-    // no dir yet, or a file went away meanwhile
+    return; // no dir yet
+  }
+  for (const fnm of fnms) {
+    const fp = join(statusDir(), fnm);
+    try {
+      const { mtimeMs } = await fs.promises.stat(fp);
+      if (now - mtimeMs > STATUS_FILE_MAX_AGE_MS) await fs.promises.unlink(fp);
+    } catch {
+      // went away meanwhile
+    }
   }
 };
 
-const getRestoreJobStatus = (jobId: string): RestoreProgress | null => {
+const getRestoreJobStatus = async (
+  jobId: string
+): Promise<RestoreProgress | null> => {
   if (!JOB_ID_RE.test(jobId)) return null;
   try {
-    return JSON.parse(fs.readFileSync(statusFile(jobId)).toString());
+    return JSON.parse(await fs.promises.readFile(statusFile(jobId), "utf8"));
   } catch {
     return null;
   }
@@ -83,9 +96,11 @@ type JobRunner = (onLog: (msg: string) => void) => Promise<void>;
  */
 const startJob = (run: JobRunner, jobId: string = uuidv4()): string => {
   const ten = db.getTenantSchema();
+  // one write after the other, so a late progress write can't replace "done"
+  let writes: Promise<void> = Promise.resolve();
   const emit = (data: RestoreProgress) => {
     getState()!.emitRestoreProgress(ten, jobId, data);
-    writeStatusFile(jobId, data);
+    writes = writes.then(() => writeStatusFile(jobId, data));
   };
   let lastMsg = "";
   const onLog = (msg: string) => {
@@ -93,11 +108,11 @@ const startJob = (run: JobRunner, jobId: string = uuidv4()): string => {
     emit({ status: "progress", message: msg, ts: Date.now() });
   };
 
-  removeOldStatusFiles();
+  removeOldStatusFiles().catch(() => {});
   // written right away, so an early poll doesn't see an unknown job
   onLog("");
   const heartbeat = setInterval(() => onLog(lastMsg), HEARTBEAT_MS);
-  heartbeat.unref?.();
+  heartbeat.unref();
 
   run(onLog)
     .then(() => {
