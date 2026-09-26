@@ -624,9 +624,8 @@ class PageLocators {
     this.saltcornImageLink = '.navbar-brand.mt-1.ms-3.mb-2';
     this.dragElement = 'div.d-inline-flex.wrap-builder-elem[draggable="true"]';
     this.cardBoxClick = 'div.card.shadow.builder >> div.card-header';
-    // every collapsed builder settings section has this class, so match by text
-    this.Library = 'div.bg-secondary.ps-1.text-white.w-100.mt-1:has-text("Library")';
-    this.Components = 'div.bg-secondary.ps-1.text-white.w-100.mt-1:has-text("Components")';
+    this.Library = 'div.ps-1.text-white.w-100.mt-1:text-is("Library")';
+    this.Components = 'div.ps-1.text-white.w-100.mt-1:text-is("Components")';
     this.plusAddButton = '#library-add-btn';
     this.nameField = 'input.form-control';
     this.selectIcon = '.rfipbtn__current .rfipbtn__icon--empty';
