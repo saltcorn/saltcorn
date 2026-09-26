@@ -199,6 +199,44 @@ describe("Pack Endpoints", () => {
       )
       .expect(toInclude("You can copy the pack contents below"));
   });
+  it("should offer the download option on the create form", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/packs/create/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Download as JSON file"));
+  });
+  it("should create pack as a downloadable file", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .post("/packs/create/")
+      .set("Cookie", loginCookie)
+      .send("table.books=on&view.authorlist=on&download_as_file=on")
+      .expect(200);
+    expect(res.headers["content-type"]).toContain("application/json");
+    expect(res.headers["content-disposition"]).toContain("saltcorn-pack.json");
+    // The point of the flag: the body is the pack itself, not a page with the
+    // pack inside it to be selected out of a <pre>.
+    const pack = JSON.parse(res.text);
+    expect(pack.tables.map((t) => t.name)).toContain("books");
+    expect(pack.views.map((v) => v.name)).toContain("authorlist");
+  });
+  it("should not download when the flag is not set", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .post("/packs/create/")
+      .set("Cookie", loginCookie)
+      .send("table.books=on&download_as_file=false")
+      .expect(200);
+    expect(res.headers["content-disposition"]).toBeUndefined();
+    expect(res.text).toContain("You can copy the pack contents below");
+  });
 
   it("should show get install", async () => {
     const loginCookie = await getAdminLoginCookie();
