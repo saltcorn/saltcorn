@@ -493,6 +493,160 @@ function closeModal() {
   $("#scmodal").modal("toggle");
 }
 
+// Follows a background restore job (backup or snapshot) and hands each
+// status to handleStatus, which returns true once the job is finished.
+// Uses the websocket, falls back to polling if that doesn't work.
+function watch_restore_job(jobId, handleStatus) {
+  let settled = false; // true once we know whether the socket is usable
+  let finished = false;
+  // a running job sends a heartbeat every 20s, so a long silence
+  // means it died (e.g. its worker crashed)
+  const silenceLimitMs = 90 * 1000;
+  let lastData = null;
+  let silenceTimer = null;
+  const resetSilenceTimer = function () {
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(function () {
+      onStatus({
+        status: "error",
+        message: "No response from the server, the restore may have stopped",
+      });
+    }, silenceLimitMs);
+  };
+  const onStatus = function (data) {
+    if (finished || !data) return true;
+    // polling returns the same status again until something changes
+    const json = JSON.stringify(data);
+    if (json !== lastData) {
+      lastData = json;
+      resetSilenceTimer();
+    }
+    finished = !!handleStatus(data);
+    if (finished) clearTimeout(silenceTimer);
+    return finished;
+  };
+  resetSilenceTimer();
+
+  function startPolling() {
+    if (startPolling.started) return;
+    startPolling.started = true;
+    (function poll() {
+      if (finished) return;
+      fetch("/auth/restore_status/" + jobId)
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (data) {
+          if (!onStatus(data)) setTimeout(poll, 1500);
+        })
+        .catch(function () {
+          setTimeout(poll, 1500);
+        });
+    })();
+  }
+
+  if (typeof io !== "function") {
+    startPolling();
+    return;
+  }
+  const restoreSocket = get_shared_socket();
+  const fallbackToPolling = function () {
+    if (settled) return;
+    settled = true;
+    startPolling();
+  };
+  const joinRestoreRoom = function () {
+    restoreSocket.emit("join_restore_room", jobId, function (ack) {
+      if (!ack || ack.status !== "ok") {
+        fallbackToPolling();
+        return;
+      }
+      // connected and joined, but does a message actually arrive? a proxy
+      // can let the handshake through while still dropping frames
+      setTimeout(function () {
+        if (!settled) fallbackToPolling();
+      }, 5000);
+    });
+  };
+  // socket never connects at all (e.g. proxy blocks the websocket upgrade)
+  setTimeout(function () {
+    if (!restoreSocket.connected) fallbackToPolling();
+  }, 5000);
+  restoreSocket.on("connect_error", fallbackToPolling);
+  restoreSocket.on("test_conn_msg", function () {
+    settled = true; // confirmed working, stick with the socket
+  });
+  restoreSocket.on("restore_progress", function (data) {
+    settled = true; // any real message proves the socket works
+    onStatus(data);
+  });
+  // rejoin after a reconnect too, socket.io forgets rooms on reconnect
+  restoreSocket.on("connect", joinRestoreRoom);
+  if (restoreSocket.connected) joinRestoreRoom();
+}
+
+// Starts a full snapshot restore in the background and shows its progress
+// in the modal instead of the form
+function submit_snapshot_restore(form, e) {
+  e.preventDefault();
+  const $form = $(form);
+  const $progress = $(`<div class="text-center">
+    <div class="restore-waiting">
+      <p>Restoring snapshot, please wait…</p>
+      <div class="spinner-border" role="status"></div>
+    </div>
+    <div class="restore-result alert d-none mt-3" role="alert"></div>
+    <pre class="restore-status text-start mt-3"
+      style="max-height: 40vh; overflow-y: auto;"></pre>
+  </div>`);
+  $form.addClass("d-none").after($progress);
+
+  const statusEl = $progress.find(".restore-status")[0];
+  let lastMsg = null;
+  const appendLine = (msg) => {
+    if (!msg || msg === lastMsg) return;
+    lastMsg = msg;
+    statusEl.textContent += (statusEl.textContent ? "\n" : "") + msg;
+    statusEl.scrollTop = statusEl.scrollHeight;
+  };
+  const finish = (ok, msg) => {
+    $progress.find(".restore-waiting").addClass("d-none");
+    $progress
+      .find(".restore-result")
+      .addClass(ok ? "alert-success" : "alert-danger")
+      .removeClass("d-none")
+      .text(msg);
+    if (ok) setTimeout(() => location.reload(), 2000);
+  };
+
+  fetch(form.action, {
+    method: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+      "X-Requested-With": "XMLHttpRequest",
+    },
+    body: new FormData(form),
+  })
+    .then((r) => r.json())
+    .then((res) => {
+      if (!res.jobId) {
+        finish(false, res.error || "Restore failed");
+        return;
+      }
+      watch_restore_job(res.jobId, (data) => {
+        if (data.status === "done") {
+          finish(true, "Snapshot restored");
+          return true;
+        } else if (data.status === "error") {
+          finish(false, data.message || "Restore failed");
+          return true;
+        } else if (data.status === "progress") appendLine(data.message);
+        return false;
+      });
+    })
+    .catch((err) => finish(false, err?.message || "Restore failed"));
+}
+
 function selectVersionError(res, btnId) {
   notifyAlert({
     type: "danger",

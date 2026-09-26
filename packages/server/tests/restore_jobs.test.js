@@ -17,12 +17,12 @@ describe("JOB_ID_RE", () => {
 });
 
 describe("getRestoreJobStatus", () => {
-  it("returns null for a path traversal payload instead of touching disk", () => {
-    expect(getRestoreJobStatus("../../../../etc/passwd")).toBe(null);
+  it("returns null for a path traversal payload instead of touching disk", async () => {
+    expect(await getRestoreJobStatus("../../../../etc/passwd")).toBe(null);
   });
-  it("returns null for an unknown but well-shaped job id", () => {
-    expect(getRestoreJobStatus("00000000-0000-0000-0000-000000000000")).toBe(
-      null
-    );
+  it("returns null for an unknown but well-shaped job id", async () => {
+    expect(
+      await getRestoreJobStatus("00000000-0000-0000-0000-000000000000")
+    ).toBe(null);
   });
 });

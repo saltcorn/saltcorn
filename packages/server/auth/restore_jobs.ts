@@ -15,7 +15,7 @@ import _am_backup from "@saltcorn/admin-models/models/backup";
 const { restore } = _am_backup;
 
 type RestoreProgress =
-  | { status: "progress"; message: string }
+  | { status: "progress"; message: string; ts?: number }
   | { status: "done" }
   | { status: "error"; message: string }
   | { status: "password_required" };
@@ -24,33 +24,119 @@ type RestoreProgress =
 // so validate the shape to block path traversal (e.g. "../../etc/foo")
 const JOB_ID_RE = /^[0-9a-f-]{36}$/i;
 
-// Fallback for clients whose websocket isn't working. Multi-node setups
-// already need a shared drive, so a tmp file works fine here too.
-const statusFile = (jobId: string) =>
-  join(os.tmpdir(), `sc-restore-${jobId}.json`);
+// a running job re-sends its last message this often, so the client
+// can tell a slow step from a job that died with its worker
+const HEARTBEAT_MS = 20 * 1000;
 
-const writeStatusFile = (jobId: string, data: RestoreProgress) => {
+// status files older than this are removed when a new job starts
+const STATUS_FILE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+// Fallback for clients whose websocket isn't working. Kept in the file
+// store, not the OS tmp dir, so every node of a multi-node setup sees it.
+const statusDir = () =>
+  join(db.connectObj.file_store || os.tmpdir(), ".saltcorn-tmp", "restore-jobs");
+
+const statusFile = (jobId: string) =>
+  join(statusDir(), `sc-restore-${jobId}.json`);
+
+// written to a temp file and renamed, so a reader (maybe on another
+// node) never sees a half-written file
+const writeStatusFile = async (jobId: string, data: RestoreProgress) => {
+  const fp = statusFile(jobId);
+  const tmp = `${fp}.${process.pid}.tmp`;
   try {
-    fs.writeFileSync(statusFile(jobId), JSON.stringify(data));
+    await fs.promises.mkdir(statusDir(), { recursive: true });
+    await fs.promises.writeFile(tmp, JSON.stringify(data));
+    await fs.promises.rename(tmp, fp);
   } catch (e) {
     console.error("restore job: unable to write status file", e);
   }
 };
 
-const getRestoreJobStatus = (jobId: string): RestoreProgress | null => {
+const removeOldStatusFiles = async () => {
+  const now = Date.now();
+  let fnms: string[];
+  try {
+    fnms = await fs.promises.readdir(statusDir());
+  } catch {
+    return; // no dir yet
+  }
+  for (const fnm of fnms) {
+    const fp = join(statusDir(), fnm);
+    try {
+      const { mtimeMs } = await fs.promises.stat(fp);
+      if (now - mtimeMs > STATUS_FILE_MAX_AGE_MS) await fs.promises.unlink(fp);
+    } catch {
+      // went away meanwhile
+    }
+  }
+};
+
+const getRestoreJobStatus = async (
+  jobId: string
+): Promise<RestoreProgress | null> => {
   if (!JOB_ID_RE.test(jobId)) return null;
   try {
-    return JSON.parse(fs.readFileSync(statusFile(jobId)).toString());
+    return JSON.parse(await fs.promises.readFile(statusFile(jobId), "utf8"));
   } catch {
     return null;
   }
 };
 
+type JobRunner = (onLog: (msg: string) => void) => Promise<void>;
+
 /**
- * Starts a backup restore in the background and returns a job id right
- * away. Progress updates are pushed live to the browser over socket.io,
+ * Runs a job in the background and returns a job id right away.
+ * Progress updates are pushed live to the browser over socket.io,
  * and also written to a tmp file so a client can poll for them if its
  * websocket isn't working.
+ * @param run does the work, calls onLog for progress, throws on failure
+ * @param jobId reuse an existing job id, otherwise a fresh one is minted
+ * @returns job id
+ */
+const startJob = (run: JobRunner, jobId: string = uuidv4()): string => {
+  const ten = db.getTenantSchema();
+  // the last queued status file write
+  let writes: Promise<void> = Promise.resolve();
+  const emit = (data: RestoreProgress) => {
+    getState()!.emitRestoreProgress(ten, jobId, data);
+    // wait for the previous write before starting this one, otherwise
+    // a slow "progress" write could finish after "done" and overwrite it
+    writes = writes.then(() => writeStatusFile(jobId, data));
+  };
+  let lastMsg = "";
+  const onLog = (msg: string) => {
+    lastMsg = msg;
+    emit({ status: "progress", message: msg, ts: Date.now() });
+  };
+
+  removeOldStatusFiles().catch(() => {});
+  // written right away, so an early poll doesn't see an unknown job
+  onLog("");
+  const heartbeat = setInterval(() => onLog(lastMsg), HEARTBEAT_MS);
+  heartbeat.unref();
+
+  run(onLog)
+    .then(() => {
+      clearInterval(heartbeat);
+      emit({ status: "done" });
+    })
+    .catch((error: any) => {
+      clearInterval(heartbeat);
+      console.error(error);
+      if (error?.requiresPassword) emit({ status: "password_required" });
+      else
+        emit({
+          status: "error",
+          message: error?.message || String(error),
+        });
+    });
+
+  return jobId;
+};
+
+/**
+ * Starts a backup restore in the background, see startJob.
  * @param fnm path to the (already uploaded) backup zip
  * @param restoreFirstUser
  * @param password
@@ -63,47 +149,26 @@ const startRestoreJob = (
   restoreFirstUser: boolean,
   password?: string,
   jobId: string = uuidv4()
-): string => {
-  const ten = db.getTenantSchema();
-  const emit = (data: RestoreProgress) => {
-    getState()!.emitRestoreProgress(ten, jobId, data);
-    writeStatusFile(jobId, data);
-  };
-  const onLog = (msg: string) => emit({ status: "progress", message: msg });
+): string =>
+  startJob(async (onLog) => {
+    let err;
+    try {
+      err = await restore(
+        fnm,
+        (p: Plugin) => Plugin.loadAndSaveNewPlugin(p),
+        restoreFirstUser,
+        password,
+        onLog
+      );
+    } catch (error: any) {
+      // keep fnm on disk, needed for the password retry
+      if (!error?.requiresPassword) fs.unlink(fnm, () => {});
+      throw error;
+    }
+    fs.unlink(fnm, () => {});
+    if (err) throw new Error(err);
+    await getState()!.refresh_plugins();
+    Trigger.emitEvent("Startup");
+  }, jobId);
 
-  restore(
-    fnm,
-    (p: Plugin) => Plugin.loadAndSaveNewPlugin(p),
-    restoreFirstUser,
-    password,
-    onLog
-  )
-    .then(async (err) => {
-      fs.unlink(fnm, () => {});
-      if (err) {
-        console.error(err);
-        emit({ status: "error", message: err });
-        return;
-      }
-      await getState()!.refresh_plugins();
-      Trigger.emitEvent("Startup");
-      emit({ status: "done" });
-    })
-    .catch((error: any) => {
-      console.error(error);
-      if (error?.requiresPassword) {
-        // keep fnm on disk, needed for the password retry
-        emit({ status: "password_required" });
-        return;
-      }
-      fs.unlink(fnm, () => {});
-      emit({
-        status: "error",
-        message: error?.message || String(error),
-      });
-    });
-
-  return jobId;
-};
-
-export { startRestoreJob, getRestoreJobStatus, JOB_ID_RE };
+export { startJob, startRestoreJob, getRestoreJobStatus, JOB_ID_RE };
