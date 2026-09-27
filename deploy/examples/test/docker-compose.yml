@@ -1,5 +1,3 @@
-version: "3.7"
-
 services:
   saltcorn-app:
     image: saltcorn/saltcorn
@@ -18,6 +16,9 @@ services:
       - PGUSER=${PGUSER}
       - PGDATABASE=${PGDATABASE}
       - PGPASSWORD=${PGPASSWORD}
+      - SALTCORN_MULTI_TENANT=false
+    volumes:
+      - ./public:/root/.local/share/saltcorn/public  # save the uploaded files and backups on a mount point
     labels: # If using traefik to reverse proxy into saltcorn
       - traefik.http.routers.saltcorn-app.rule=Host(`saltcorn.${DOMAIN}`)
       - traefik.http.routers.saltcorn-app.entrypoints=secure
@@ -26,13 +27,13 @@ services:
       - traefik.enable=true
     
   saltcorn-db:
-    image: postgres:13-alpine
+    image: postgres:18-alpine
     container_name: saltcorn-db
     restart: always
     networks:
       - saltcorn
     volumes:
-      - ./data:/var/lib/postgresql/data #save the db to a mount point if you wish, otherwise will use docker container management
+      - ./data:/var/lib/postgresql #save the db to a mount point if you wish, otherwise will use docker container management
       - ./docker-entrypoint-initdb.sql:/docker-entrypoint-initdb.d/init.sql # This is the init script for the database
     environment:
       - POSTGRES_USER=${PGUSER} # initdb.sql script will only work for user "postgres"
