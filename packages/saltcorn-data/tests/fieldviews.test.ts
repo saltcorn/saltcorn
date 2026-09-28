@@ -139,6 +139,60 @@ describe("to_locale_string fieldview", () => {
   });
 });
 
+describe("progress_bar fieldview", () => {
+  const getIntFV = (): any => {
+    const state: any = getState()!;
+    return state.types["Integer"].fieldviews.progress_bar;
+  };
+  const req = { user: null };
+
+  it("renders radial label inside the element", () => {
+    const fv = getIntFV();
+    const html = fv.run(100, req, {
+      min: "0",
+      max: "100",
+      radial: true,
+      show_label: true,
+    });
+    expect(html).toContain("progress-bar-radial-100");
+    expect(html).toContain(">100%</div>");
+    expect(html).not.toContain("<style>");
+  });
+
+  it("does not leak labels between bars with the same percentage", () => {
+    const fv = getIntFV();
+    const pct = fv.run(100, req, {
+      min: "0",
+      max: "100",
+      radial: true,
+      show_label: true,
+    });
+    const count = fv.run(3, req, {
+      max_min_formula: true,
+      min_formula: "0",
+      max_formula: "3",
+      radial: true,
+      show_label: true,
+    });
+    // both are 100% full, each keeps its own label
+    expect(pct).toContain(">100%</div>");
+    expect(count).toContain(">3</div>");
+    expect(pct + count).not.toContain("::before");
+  });
+
+  it("omits the label when show_label is false", () => {
+    const fv = getIntFV();
+    const html = fv.run(50, req, {
+      min: "0",
+      max: "100",
+      radial: true,
+      show_label: false,
+    });
+    expect(html).toContain("progress-bar-radial-50");
+    expect(html).not.toContain("50%<");
+  });
+});
+
 describe("select fieldview", () => {
   it("should render without where", async () => {
     const patients = Table.findOne({ name: "patients" })!;
