@@ -1102,8 +1102,8 @@
   "Reset password link sent to %s": "Der Link zum Zurücksetzen des Passworts wurde an %s gesendet.",
   "We request that you change your password on %s. You can set your new password through this link: ": "Wir bitten Sie, Ihr Passwort auf %s zu ändern. Sie können Ihr neues Passwort über diesen Link festlegen:",
   "Welcome to %s": "Willkommen bei %s",
-  "We have created an account for you on %s. You can set your new password through this link: ": "Wir haben ein Konto für Sie auf %s erstellt. Sie können Ihr neues Passwort über diesen Link festlegen:",
-  "Use this link to access the application once you have set your password: %s": "Verwenden Sie diesen Link, um auf die Anwendung zuzugreifen, sobald Sie Ihr Passwort festgelegt haben: %s",
+  "We have created an account for you on %s. You can set your new password through this link: ": "für Sie wurde ein Konto eingerichtet auf der Umgebung: %s. Bitte legen Sie zunächst Ihr Passwort fest:",
+  "Use this link to access the application once you have set your password: %s": "Danach erreichen Sie die Anwendung jederzeit unter: %s",
   "Tag: %s": "Tag: %s",
   "Tag entry": "Tag-Eintrag",
   "Clear": "Löschen",
@@ -2137,6 +2137,6 @@
   "Used in the drawer (mobile) menu by some themes": "Wird von einigen Themes im mobilen Drawer-Menü verwendet",
   "The following installed modules are not permitted on this tenant and have not been loaded:": "Die folgenden installierten Module sind für diesen Mandanten nicht zulässig und wurden nicht geladen:",
   "Module %s is not permitted on this tenant": "Das Modul %s ist für diesen Mandanten nicht zugelassen.",
-  "Set my password": "Mein Passwort festlegen",
+  "Set my password": "Passwort festlegen",
   "Your account will not be usable until you access the link above and set a password.": "Ihr Konto kann erst verwendet werden, nachdem Sie den obigen Link aufgerufen und ein Passwort festgelegt haben."
 }
