@@ -29,6 +29,8 @@ import { VM } from "vm2";
 /** Local copy: importing it from utils would make utils and this circular. */
 const VALID_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 const RESERVED = new Set([
+  "arguments",
+  "await",
   "break",
   "case",
   "catch",
@@ -41,6 +43,7 @@ const RESERVED = new Set([
   "do",
   "else",
   "enum",
+  "eval",
   "export",
   "extends",
   "false",
@@ -51,6 +54,7 @@ const RESERVED = new Set([
   "import",
   "in",
   "instanceof",
+  "let",
   "new",
   "null",
   "return",
@@ -65,6 +69,7 @@ const RESERVED = new Set([
   "void",
   "while",
   "with",
+  "yield",
 ]);
 
 /**
