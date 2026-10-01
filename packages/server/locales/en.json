@@ -2132,5 +2132,7 @@
 	"Drawer label": "Drawer label",
 	"Used in the drawer (mobile) menu by some themes": "Used in the drawer (mobile) menu by some themes",
 	"The following installed modules are not permitted on this tenant and have not been loaded:": "The following installed modules are not permitted on this tenant and have not been loaded:",
-	"Module %s is not permitted on this tenant": "Module %s is not permitted on this tenant"
+	"Module %s is not permitted on this tenant": "Module %s is not permitted on this tenant",
+	"Set my password": "Set my password",
+	"Your account will not be usable until you access the link above and set a password.": "Your account will not be usable until you access the link above and set a password."
 }

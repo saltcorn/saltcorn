@@ -82,7 +82,9 @@ ${finalTxt}
     html: `${req.__("Hi %s", user.email)},<br /><br />    
   ${initial}<br />
 <br />
-<a href="${link}">${req.__("Change my password")}</a><br />
+<a href="${link}">${options?.creating
+    ? req.__("Set my password")
+    : req.__("Change my password")}</a><br />
 <br />
 ${
   !options?.creating && !options?.from_admin
@@ -91,7 +93,9 @@ ${
     : ""
 }
 <br />
-${req.__(
+${options?.creating ?req.__(
+  "Your account will not be usable until you access the link above and set a password."
+): req.__(
   "Your password will not change until you access the link above and set a new one."
 )}<br />
 ${final ? `<br />${final}<br />` : ""}
