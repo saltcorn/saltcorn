@@ -382,7 +382,7 @@ describeMail("password reset email", () => {
     const msg = await waitForMail("newcomer@foo.com", {
       match: (m) => (m.text || "").includes("auth/reset?token="),
     });
-    expect(msg.html).toContain("Change my password");
+    expect(msg.html).toContain("Set my password");
   });
 });
 
