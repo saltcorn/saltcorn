@@ -47,7 +47,6 @@ const {
   section,
   pre,
   code,
-  style,
   time,
 } = tagsPkg;
 const { is } = contractisPkg;
@@ -265,8 +264,11 @@ const progress_bar = (type: string) => ({
           : (attrs?.decimal_places
               ? v.toFixed(attrs?.decimal_places)
               : Math.round(v)) + (attrs.max == "100" ? `%` : "");
-      return (
-        div({
+      // label is rendered as element content, not as a page-global
+      // ::before rule keyed on pcnt, which collides between bars on the
+      // same page that share a percentage but show different values
+      return div(
+        {
           class: [
             "progress-bar progress-bar-radial",
             `progress-bar-radial-${pcnt}`,
@@ -281,12 +283,8 @@ const progress_bar = (type: string) => ({
                 attrs.bg_color || "#777777"
               } 0);`,
           },
-        }) +
-        (attrs.show_label === false
-          ? ""
-          : style(
-              `.progress-bar-radial-${pcnt}::before { content: "${valShow}"; }`
-            ))
+        },
+        attrs.show_label === false ? "" : valShow
       );
     } else
       return div(
