@@ -493,14 +493,6 @@ const renderRows = async (
     views[name] = view;
     return view;
   };
-  await set_load_actions_join_fieldviews({
-    table,
-    layout,
-    fields,
-    req: extra.req,
-    res: extra.res,
-  });
-
   const owner_field = await table.owner_fieldname();
   const subviewExtra = { ...extra };
   if (extra.req?.generate_email) {
@@ -509,6 +501,15 @@ const renderRows = async (
   }
   return await asyncMap(rows, async (row: Row) => {
     const myLayout = rows.length > 1 ? structuredClone(layout) : layout;
+    await set_load_actions_join_fieldviews({
+      table,
+      layout: myLayout,
+      fields,
+      req: extra.req,
+      res: extra.res,
+      row,
+      isPreview: extra.isPreview,
+    });
     traverseSync(myLayout, {
       container(segment: any) {
         if (segment.showIfFormula) {
