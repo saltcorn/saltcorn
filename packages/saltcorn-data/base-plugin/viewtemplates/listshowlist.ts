@@ -258,7 +258,7 @@ const run = async (
   const relTblResp =
     Object.keys(reltbls).length === 1
       ? [h6(Object.keys(reltbls)[0]), reltbls[Object.keys(reltbls)[0]]]
-      : tabs(reltbls);
+      : tabs(reltbls, { deeplink: true });
   if (lresp) {
     if (list_width === 12) return lresp;
     return div(

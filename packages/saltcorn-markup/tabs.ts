@@ -14,16 +14,18 @@ const mkId = (str: string): string => text(str.split(" ").join("_"));
 
 /**
  * @param {object} obj
+ * @param {object} [opts]
+ * @param {boolean} [opts.deeplink] keep the selected tab in the URL hash
  * @returns {object}
  */
-const tabs = (obj: any | any[]) => {
+const tabs = (obj: any | any[], opts: { deeplink?: boolean } = {}) => {
   const entries = Array.isArray(obj) ? obj : Object.entries(obj);
   const lis = entries.map((e, ix) =>
     li(
       { class: "nav-item" },
       a(
         {
-          class: ["nav-link", ix == 0 && "active"],
+          class: ["nav-link", ix == 0 && "active", opts.deeplink && "deeplink"],
           "data-bs-toggle": "tab",
           href: `#${mkId(e[0])}`,
           id: `${mkId(e[0])}-tab`,
