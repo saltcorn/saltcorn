@@ -38,7 +38,10 @@ beforeAll(async () => {
     registryRequests.push(req.url!);
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(
-      JSON.stringify({ versions: { "1.0.0": {}, "1.1.0": {}, "1.3.0": {} } })
+      JSON.stringify({
+        "dist-tags": { latest: "1.3.0", next: "1.4.0-beta.1" },
+        versions: { "1.0.0": {}, "1.1.0": {}, "1.3.0": {}, "1.4.0-beta.1": {} },
+      })
     );
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
