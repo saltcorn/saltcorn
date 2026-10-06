@@ -1976,9 +1976,13 @@ const getTenant = (ten: string) => {
 const getApp__ = (): ((s: string) => string) => {
   const ctx = db.getRequestContext();
   const locale = ctx?.req?.getLocale();
+  const state = getState()!;
   if (locale) {
-    const state = getState()!;
     if (state) return (s) => state.i18n.__({ phrase: s, locale }) || s;
+  }
+  if(state) {
+    const locale = state.getConfig("default_locale", "en");
+    return (s) => state.i18n.__({ phrase: s, locale }) || s;   
   }
   return (s: string) => s;
 };
@@ -1986,7 +1990,11 @@ const getApp__ = (): ((s: string) => string) => {
 //For builtin strings
 const getReq__ = (): ((s: string) => string) => {
   const ctx = db.getRequestContext();
-  return ctx?.req?.__ || ((s: string) => s);
+  if (ctx?.req?.__) return ctx?.req?.__;
+  const state = getState();
+  if (!state) return (s: string) => s;
+  const locale = state.getConfig("default_locale", "en");
+  return (s) => state.i18n.__({ phrase: s, locale }) || s;
 };
 
 const getRootState = () => singleton;
