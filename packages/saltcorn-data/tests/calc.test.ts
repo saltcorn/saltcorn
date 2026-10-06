@@ -522,6 +522,60 @@ describe("calculated", () => {
   });
 });
 
+describe("writing to non-stored calculated fields", () => {
+  it("ignores them in insertRow and updateRow", async () => {
+    const table = await Table.create("clinics_nonstored");
+    await Field.create({ table, label: "name", type: "String" });
+    await Field.create({ table, label: "location", type: "String" });
+    await Field.create({
+      table,
+      label: "full_address",
+      type: "String",
+      calculated: true,
+      expression: "location + ' ' + name",
+    });
+    const id = await table.insertRow({
+      name: "Main",
+      location: "Kigali",
+      full_address: "ignored",
+    });
+    const row = await table.getRow({ id });
+    assertIsSet(row);
+    expect(row.full_address).toBe("Kigali Main");
+    await table.updateRow({ location: "Huye", full_address: "ignored" }, id);
+    const row1 = await table.getRow({ id });
+    assertIsSet(row1);
+    expect(row1.location).toBe("Huye");
+    expect(row1.full_address).toBe("Huye Main");
+    const res = await table.tryUpdateRow({ full_address: "ignored" }, id);
+    expect(res).toEqual({ success: true });
+  });
+  it("does not fail insert with modify_row trigger setting it", async () => {
+    const table = Table.findOne({ name: "clinics_nonstored" });
+    assertIsSet(table);
+    const trigger = await Trigger.create({
+      action: "modify_row",
+      table_id: table.id,
+      when_trigger: "Insert",
+      configuration: {
+        row_expr: "{full_address: location}",
+        where: "Database",
+      },
+    });
+    const resultCollector: any = {};
+    const id = await table.insertRow(
+      { name: "Annex", location: "Musanze" },
+      undefined,
+      resultCollector
+    );
+    expect(resultCollector.error).toBeUndefined();
+    const row = await table.getRow({ id });
+    assertIsSet(row);
+    expect(row.full_address).toBe("Musanze Annex");
+    await trigger.delete();
+  });
+});
+
 describe("calculated field dependencies", () => {
   it("build table", async () => {
     const table = await Table.create("withcalcs11");

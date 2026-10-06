@@ -2089,6 +2089,7 @@ class Table implements AbstractTable {
         if ("set_fields" in valResCollector)
           Object.assign(v, valResCollector.set_fields);
       }
+      this.strip_non_stored_calculated(v);
 
       if (fields.some((f: Field) => f.calculated && f.stored)) {
         //if any freevars are join fields, update row in db first
@@ -2573,6 +2574,20 @@ class Table implements AbstractTable {
     return undefined;
   }
 
+  // non-stored calculated fields have no database column
+  private strip_non_stored_calculated(v_in: Row) {
+    for (const field of this.fields)
+      if (field.calculated && !field.stored && field.name in v_in) {
+        nsState
+          .getState()
+          ?.log(
+            4,
+            `Ignoring value for non-stored calculated field ${field.name} in table ${this.name}`
+          );
+        delete v_in[field.name];
+      }
+  }
+
   private normalise_fkey_values(v_in: Row | Where) {
     for (const field of this.fields)
       if (
@@ -2730,6 +2745,7 @@ class Table implements AbstractTable {
           }
         }
       }
+      this.strip_non_stored_calculated(v_in);
 
       // On mobile (SQLite), PKs with a client-side default (e.g. UUID via the
       // uuid-type plugin's default_js) must be generated before the insert.
