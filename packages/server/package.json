@@ -44,6 +44,7 @@
     "locales/**/*",
     "help/**/*",
     "docs/**/*",
+    "routes/tsdecls/**/*",
     "!dist/tsconfig.ref.tsbuildinfo",
     "!dist/tsconfig.tsbuildinfo"
   ],
