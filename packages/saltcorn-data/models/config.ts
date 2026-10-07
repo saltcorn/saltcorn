@@ -2002,8 +2002,11 @@ const get_latest_npm_version = async (
       const data = await response.json();
       if (!data?.versions || data.versions.length === 0)
         throw new Error("No versions found");
+      // the last published version may be a prerelease (e.g. 1.7.0-beta.2),
+      // so prefer the registry's "latest" dist-tag, which is what
+      // `npm install pkg@latest` installs
       const keys = Object.keys(data.versions);
-      const latest = keys[keys.length - 1];
+      const latest = data["dist-tags"]?.latest || keys[keys.length - 1];
       const stored1 = getState()!.getConfigCopy("latest_npm_version", {});
       await getState()!.setConfig("latest_npm_version", {
         ...stored1,

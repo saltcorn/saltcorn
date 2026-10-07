@@ -1580,7 +1580,7 @@ router.get(
                             href:
                               `javascript:ajax_modal('/admin/install_dialog', ` +
                               `{ onOpen: () => { restore_old_button('${rndid}'); }, ` +
-                              ` onError: (res: any) => { selectVersionError(res, '${rndid}') } });`,
+                              ` onError: (res) => { selectVersionError(res, '${rndid}') } });`,
                           },
                           req.__("Choose version")
                         ),
