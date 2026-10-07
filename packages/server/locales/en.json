@@ -2135,5 +2135,11 @@
 	"The following installed modules are not permitted on this tenant and have not been loaded:": "The following installed modules are not permitted on this tenant and have not been loaded:",
 	"Module %s is not permitted on this tenant": "Module %s is not permitted on this tenant",
 	"Set my password": "Set my password",
-	"Your account will not be usable until you access the link above and set a password.": "Your account will not be usable until you access the link above and set a password."
+	"Your account will not be usable until you access the link above and set a password.": "Your account will not be usable until you access the link above and set a password.",
+	"Create table from file": "Create table from file",
+	"Create from file": "Create from file",
+	"Upload file": "Upload file",
+	"Import %s": "Import %s",
+	"Processing %s file": "Processing %s file",
+	"Create from file upload": "Create from file upload"
 }

@@ -84,9 +84,17 @@ import path from "path";
 import Tag from "@saltcorn/data/models/tag";
 import { initial_config_all_fields } from "@saltcorn/data/plugin-helper";
 import { save_menu_items } from "@saltcorn/data/models/config";
-import { FieldLike, Req, Res } from "@saltcorn/types/base_types";
+import {
+  FieldLike,
+  FileImporterResult,
+  Req,
+  Res,
+} from "@saltcorn/types/base_types";
 import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
-import { instanceOfErrorMsg } from "@saltcorn/types/common_types";
+import {
+  instanceOfErrorMsg,
+  ResultMessage,
+} from "@saltcorn/types/common_types";
 /**
  * @type {object}
  * @const
@@ -415,6 +423,62 @@ router.post(
 );
 
 /**
+ * True when a plugin has registered a file importer
+ */
+const hasImporters = () => Object.keys(getState()!.importers).length > 0;
+
+/**
+ * accept attribute for table file uploads: CSV plus every registered importer
+ */
+const importAccept = () =>
+  [
+    "text/csv",
+    ".csv",
+    ...Object.values(getState()!.importers).flatMap((imp) => [
+      ...imp.extensions,
+      ...(imp.mimetypes || []),
+    ]),
+  ].join(",");
+
+/**
+ * Move an uploaded file into the file store. If an importer handles its
+ * extension, the stored file keeps that extension so later requests (preview,
+ * finish) can find the importer again; otherwise it is read as CSV.
+ * @param file uploaded file from req.files
+ */
+const storeUpload = async (file: any) => {
+  const found = getState()!.importerForFile(file.name);
+  const ext = found ? path.extname(file.name).toLowerCase() : "";
+  const newPath = File.get_new_path() + ext;
+  await file.mv(newPath);
+  return { newPath, found };
+};
+
+/**
+ * Read all rows from a stored upload with the importer for its extension
+ * @param filePath stored file
+ * @param table table being imported into, if any
+ * @param req request
+ */
+const readImportRows = async (
+  filePath: string,
+  table?: Table,
+  req?: Req
+): Promise<FileImporterResult | { error: string }> => {
+  const found = getState()!.importerForFile(filePath);
+  if (!found)
+    return { error: `No importer for file ${path.basename(filePath)}` };
+  try {
+    const result = await found.importer.parse(filePath, { table, req });
+    if (!("error" in result) && !Array.isArray(result?.rows))
+      return { error: `Importer ${found.name} did not return rows` };
+    return result;
+  } catch (e: any) {
+    return { error: `Error reading ${found.name} file: ${e?.message || e}` };
+  }
+};
+
+/**
  * Create Table from CSV file (get)
  * @name get/create-from-csv
  * @function
@@ -425,18 +489,25 @@ router.get(
   "/create-from-csv",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
-    res.sendWrap(req.__(`Create table from CSV file`), {
+    const title = hasImporters()
+      ? req.__(`Create table from file`)
+      : req.__(`Create table from CSV file`);
+    res.sendWrap(title, {
       above: [
         {
           type: "breadcrumbs",
           crumbs: [
             { text: req.__("Tables"), href: "/table" },
-            { text: req.__("Create from CSV") },
+            {
+              text: hasImporters()
+                ? req.__("Create from file")
+                : req.__("Create from CSV"),
+            },
           ],
         },
         {
           type: "card",
-          title: req.__(`Create table from CSV file`),
+          title,
           contents:
             renderForm(
               new Form({
@@ -451,12 +522,11 @@ router.get(
                     required: true,
                     attributes: { spellcheck: false },
                   },
-                  // todo implement file mask filter like , accept: "text/csv"
                   {
                     label: req.__("File"),
                     name: "file",
                     input_type: "file",
-                    attributes: { accept: ".csv" },
+                    attributes: { accept: importAccept() },
                   },
                 ],
               }),
@@ -501,9 +571,18 @@ router.post(
         res.redirect(`/table/create-from-csv`);
         return;
       }
-      const newPath = File.get_new_path();
-      await req.files.file.mv(newPath);
-      const parse_res = await Table.create_from_csv(name, newPath);
+      const { newPath, found } = await storeUpload(req.files.file);
+      let parse_res: ResultMessage;
+      if (found) {
+        const read_res = await readImportRows(newPath, undefined, req);
+        parse_res =
+          "error" in read_res
+            ? read_res
+            : await Table.create_from_rows(name, read_res.rows, {
+                fields: read_res.fields,
+                columns: read_res.columns,
+              });
+      } else parse_res = await Table.create_from_csv(name, newPath);
       await fs.unlink(newPath);
       if (instanceOfErrorMsg(parse_res)) {
         req.flash("error", parse_res.error);
@@ -1505,13 +1584,13 @@ router.get(
               { class: "btn-link", for: "upload_to_table" },
               i({ class: "fas fa-2x fa-upload" }),
               "<br/>",
-              req.__("Upload CSV")
+              hasImporters() ? req.__("Upload file") : req.__("Upload CSV")
             ),
             input({
               id: "upload_to_table",
               name: "file",
               type: "file",
-              accept: "text/csv,.csv",
+              accept: importAccept(),
               onchange: "this.form.submit();",
             })
           )
@@ -1992,7 +2071,9 @@ router.get(
             class: "btn btn-secondary me-3 mt-1",
           },
           i({ class: "fas fa-upload me-1" }),
-          req.__("Create from CSV upload")
+          hasImporters()
+            ? req.__("Create from file upload")
+            : req.__("Create from CSV upload")
         ),
       req.user!.role_id === 1 &&
         db.supports_table_discovery &&
@@ -2517,16 +2598,39 @@ router.post(
   })
 );
 
-const previewCSV = async ({ newPath, table, req, res, full }: any) => {
+/**
+ * Show the import preview for a stored upload: the rows that would be
+ * imported, read with the importer for its extension or as CSV
+ */
+const previewImport = async ({ newPath, table, req, res, full }: any) => {
+  const found = getState()!.importerForFile(newPath);
   let parse_res: any;
   try {
-    parse_res = await table.import_csv_file(newPath, {
-      recalc_stored: true,
-      no_table_write: true,
-    });
+    if (found) {
+      const read_res = await readImportRows(newPath, table, req);
+      if ("error" in read_res) parse_res = read_res;
+      else {
+        parse_res = await table.import_rows(read_res.rows, {
+          recalc_stored: true,
+          no_table_write: true,
+          columns: read_res.columns,
+        });
+        if (read_res.details && !parse_res.error)
+          parse_res.details = [read_res.details, parse_res.details]
+            .filter(Boolean)
+            .join("\n");
+      }
+    } else
+      parse_res = await table.import_csv_file(newPath, {
+        recalc_stored: true,
+        no_table_write: true,
+      });
   } catch (e: any) {
     parse_res = { error: e.message };
   }
+  const importTitle = found
+    ? req.__("Import %s", found.name)
+    : req.__("Import CSV");
   if (parse_res.error) {
     if (parse_res.error) req.flash("error", parse_res.error);
     await fs.unlink(newPath);
@@ -2541,13 +2645,13 @@ const previewCSV = async ({ newPath, table, req, res, full }: any) => {
             { text: req.__("Tables"), href: "/table" },
             { href: `/table/${table.id}`, text: table.name },
             {
-              text: req.__("Import CSV"),
+              text: importTitle,
             },
           ],
         },
         {
           type: "card",
-          title: req.__(`Import CSV`),
+          title: importTitle,
           contents: div(
             {
               "data-csv-filename": path.basename(newPath),
@@ -2580,19 +2684,20 @@ const previewCSV = async ({ newPath, table, req, res, full }: any) => {
                 "Proceed"
               ),
               br(),
-              i({ class: "muted" }, "Method"),
-              select(
-                {
-                  name: "import_method",
-                  class: "form-select from-control mb-2",
-                },
-                option("Auto"),
-                option({ value: "copy" }, "COPY (fast but strict)"),
-                option(
-                  { value: "row-by-row" },
-                  "Row-by-row (Slower but more accepting)"
-                )
-              ),
+              !found && i({ class: "muted" }, "Method"),
+              !found &&
+                select(
+                  {
+                    name: "import_method",
+                    class: "form-select from-control mb-2",
+                  },
+                  option("Auto"),
+                  option({ value: "copy" }, "COPY (fast but strict)"),
+                  option(
+                    { value: "row-by-row" },
+                    "Row-by-row (Slower but more accepting)"
+                  )
+                ),
               div(
                 { class: "form-check" },
                 input({
@@ -2677,10 +2782,8 @@ router.post(
       return;
     }
 
-    const newPath = File.get_new_path();
-    await req.files.file.mv(newPath);
-    //console.log(req.files.file.data)
-    await previewCSV({ newPath, table, res, req });
+    const { newPath } = await storeUpload(req.files.file);
+    await previewImport({ newPath, table, res, req });
   })
 );
 
@@ -2694,7 +2797,7 @@ router.get(
     const { name, filename } = req.params;
     const table = Table.findOne({ name })!;
     const f = (await File.findOne(filename))!;
-    await previewCSV({ newPath: f.location, table, res, req, full: true });
+    await previewImport({ newPath: f.location, table, res, req, full: true });
   })
 );
 
@@ -2709,35 +2812,50 @@ router.post(
     const table = Table.findOne({ name })!;
     const f = (await File.findOne(filename))!;
 
+    const found = getState()!.importerForFile(f.location);
+    const format = found ? found.name : "CSV";
     try {
       const { import_method, import_async } = req.body || {};
 
-      const promise = table
-        .import_csv_file(f.location, {
+      const runImport = async (): Promise<ResultMessage> => {
+        if (!found)
+          return await table.import_csv_file(f.location, {
+            recalc_stored: true,
+            method: import_method || "Auto",
+          });
+        const read_res = await readImportRows(f.location, table, req);
+        if ("error" in read_res) return read_res;
+        return await table.import_rows(read_res.rows, {
           recalc_stored: true,
-          method: import_method || "Auto",
-        })
-        .finally(() => {
-          fs.unlink(f.location);
+          columns: read_res.columns,
         });
+      };
+      const promise = runImport().finally(() => {
+        fs.unlink(f.location);
+      });
       if (import_async) {
         promise
           .then((parse_res: any) => {
             Notification.create({
-              title: "CSV import complete",
+              title: `${format} import complete`,
               body: parse_res.error || parse_res.success,
               user_id: req.user!.id!,
             });
           })
           .catch((e: any) => {
-            console.error("CSV upload error", e);
+            console.error(`${format} upload error`, e);
             Notification.create({
-              title: "Error importing CSV file",
+              title: `Error importing ${format} file`,
               body: e.message,
               user_id: req.user!.id!,
             });
           });
-        req.flash("success", req.__("Processing CSV file"));
+        req.flash(
+          "success",
+          found
+            ? req.__("Processing %s file", format)
+            : req.__("Processing CSV file")
+        );
       } else {
         const parse_res = await promise;
         if (instanceOfErrorMsg(parse_res)) req.flash("error", parse_res.error);

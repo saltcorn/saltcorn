@@ -316,3 +316,111 @@ describe("deletion to table with row ownership", () => {
     expect(await persons.countRows()).toBe(0);
   });
 });
+
+describe("Table file importers", () => {
+  const json_importer_plugin = {
+    sc_plugin_api_version: 1,
+    importers: {
+      JSON: {
+        extensions: [".json"],
+        async parse(filePath, { limit }) {
+          const { readFile } = await import("fs/promises");
+          const data = JSON.parse(await readFile(filePath, "utf8"));
+          if (!Array.isArray(data))
+            return { error: "JSON file must contain an array of objects" };
+          return { rows: limit ? data.slice(0, limit) : data };
+        },
+      },
+    },
+  };
+  beforeAll(() => {
+    getState().registerPlugin("json_importer", json_importer_plugin);
+  });
+  afterAll(() => {
+    delete getState().importers.JSON;
+  });
+  const filenameRe = /data-csv-filename\=\"([A-Za-z0-9 _\-.]*)\"/;
+
+  it("should accept importer file types on upload", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/table/2")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Upload file"))
+      .expect(toInclude("text/csv,.csv,.json"));
+    await request(app)
+      .get("/table/create-from-csv")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Create table from file"))
+      .expect(toInclude("text/csv,.csv,.json"));
+  });
+  it("should preview and import a JSON file into existing table", async () => {
+    const json = JSON.stringify([
+      { author: "Json Author One", pages: 101 },
+      { author: "Json Author Two", pages: 102 },
+    ]);
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    let filename;
+    await request(app)
+      .post("/table/upload_to_table/books")
+      .set("Cookie", loginCookie)
+      .attach("file", Buffer.from(json, "utf-8"), "books.json")
+      .expect(toInclude("Import JSON"))
+      .expect(toInclude(">Preview<"))
+      .expect(toInclude("Found 2 rows for table books"))
+      .expect(toInclude("Json Author Two"))
+      .expect(toNotInclude("import_method"))
+      .expect((res) => {
+        filename = res.text.match(filenameRe)[1];
+      });
+    expect(filename.endsWith(".json")).toBe(true);
+    const books = Table.findOne({ name: "books" });
+    expect(await books.countRows({ author: "Json Author Two" })).toBe(0);
+
+    await request(app)
+      .post(`/table/finish_upload_to_table/books/${filename}`)
+      .set("Cookie", loginCookie)
+      .expect(toRedirect(`/table/${books.id}`));
+    await request(app)
+      .get(`/table/${books.id}`)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Imported 2 rows"));
+    const row = await books.getRow({ author: "Json Author Two" });
+    expect(row.pages).toBe(102);
+  });
+  it("should show importer errors on upload", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const books = Table.findOne({ name: "books" });
+    await request(app)
+      .post("/table/upload_to_table/books")
+      .set("Cookie", loginCookie)
+      .attach("file", Buffer.from("{}", "utf-8"), "bad.json")
+      .expect(toRedirect(`/table/${books.id}`));
+    await request(app)
+      .get(`/table/${books.id}`)
+      .set("Cookie", loginCookie)
+      .expect(toInclude("JSON file must contain an array of objects"));
+  });
+  it("should create table from a JSON file", async () => {
+    const json = JSON.stringify([
+      { item: "Book", cost: 5, vatable: false },
+      { item: "Pencil", cost: 0.5, vatable: true },
+    ]);
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/table/create-from-csv")
+      .set("Cookie", loginCookie)
+      .field("name", "jsonexpenses")
+      .attach("file", Buffer.from(json, "utf-8"), "expenses.json")
+      .expect(302);
+    const table = Table.findOne({ name: "jsonexpenses" });
+    expect(!!table).toBe(true);
+    expect(table.getField("cost").type.name).toBe("Float");
+    expect(table.getField("vatable").type.name).toBe("Bool");
+    expect(await table.countRows()).toBe(2);
+  });
+});
