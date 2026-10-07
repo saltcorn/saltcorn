@@ -1980,9 +1980,10 @@ const getApp__ = (): ((s: string) => string) => {
   if (locale) {
     if (state) return (s) => state.i18n.__({ phrase: s, locale }) || s;
   }
-  if(state) {
+  // i18n uses fs internally, so the default locale fallback is node only
+  if (state && isNode()) {
     const locale = state.getConfig("default_locale", "en");
-    return (s) => state.i18n.__({ phrase: s, locale }) || s;   
+    return (s) => state.i18n.__({ phrase: s, locale }) || s;
   }
   return (s: string) => s;
 };
@@ -1992,7 +1993,7 @@ const getReq__ = (): ((s: string) => string) => {
   const ctx = db.getRequestContext();
   if (ctx?.req?.__) return ctx?.req?.__;
   const state = getState();
-  if (!state) return (s: string) => s;
+  if (!state || !isNode()) return (s: string) => s;
   const locale = state.getConfig("default_locale", "en");
   return (s) => state.i18n.__({ phrase: s, locale }) || s;
 };
