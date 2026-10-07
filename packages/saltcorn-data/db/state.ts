@@ -43,6 +43,8 @@ import {
   Header,
   PluginFunction,
   TableProvider,
+  FileImporter,
+  FileExporter,
   ModelPattern,
   FieldView,
   Action,
@@ -88,7 +90,7 @@ import {
 import I18n from "i18n";
 import momentTz from "moment-timezone";
 const { tz } = momentTz;
-import { join } from "path";
+import { join, extname } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
 const { VM } = vm2Pkg;
@@ -210,6 +212,8 @@ class State {
   auth_methods: Record<string, AuthenticationMethod>;
   plugins: Record<string, Plugin>;
   table_providers: Record<string, TableProvider>;
+  importers: Record<string, FileImporter>;
+  exporters: Record<string, FileExporter>;
   plugin_cfgs: Record<string, any>;
   plugin_locations: any;
   plugin_module_names: any;
@@ -286,6 +290,8 @@ class State {
     this.plugin_module_names = {};
     this.plugin_routes = {};
     this.table_providers = {};
+    this.importers = {};
+    this.exporters = {};
     this.copilot_skills = [];
     this.eventTypes = {};
     this.fonts = standard_fonts;
@@ -1041,6 +1047,22 @@ class State {
   }
 
   /**
+   * Find the registered importer for a file name by its extension
+   * @param filename
+   * @returns the importer name and importer, or undefined
+   */
+  importerForFile(
+    filename: string
+  ): { name: string; importer: FileImporter } | undefined {
+    const ext = extname(filename || "").toLowerCase();
+    if (!ext) return undefined;
+    for (const [name, importer] of Object.entries(this.importers))
+      if (importer.extensions.some((e) => e.toLowerCase() === ext))
+        return { name, importer };
+    return undefined;
+  }
+
+  /**
    * Register plugin
    * @param {string} name
    * @param {object} plugin
@@ -1117,6 +1139,12 @@ class State {
     });
     Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
       this.table_providers[k] = v as TableProvider;
+    });
+    Object.entries(withCfg("importers", {})).forEach(([k, v]) => {
+      this.importers[k] = v as FileImporter;
+    });
+    Object.entries(withCfg("exporters", {})).forEach(([k, v]) => {
+      this.exporters[k] = v as FileExporter;
     });
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
       this.auth_methods[k] = v as AuthenticationMethod;
@@ -1563,6 +1591,8 @@ class State {
     this.fileviews = {};
     this.actions = {};
     this.auth_methods = {};
+    this.importers = {};
+    this.exporters = {};
     this.copilot_skills = [];
     this.layouts = { emergency: emergency_layout as any };
     this.headers = {};
