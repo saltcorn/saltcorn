@@ -3692,9 +3692,95 @@ class Table implements AbstractTable {
     } catch (e) {
       return { error: `Error processing CSV file` };
     }
-    const rowsTr = transposeObjects(rows);
     const table = await Table.create(name);
-    //
+    const fieldsErr = await Table.create_fields_from_sample(table, rows);
+    if (fieldsErr) return fieldsErr;
+    const parse_res = await table.import_csv_file(filePath);
+    if (instanceOfErrorMsg(parse_res)) {
+      await table.delete();
+      return { error: parse_res.error };
+    }
+
+    parse_res.table = table;
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
+
+    return parse_res;
+  }
+
+  /**
+   * Create a table from rows read by a file importer, inferring field types
+   * from the first rows, then import all the rows into it.
+   * @param name table name
+   * @param rows rows keyed by column name
+   * @param options.fields field definitions overriding the inferred ones
+   * @param options.columns column order; defaults to the keys of the rows
+   */
+  static async create_from_rows(
+    name: string,
+    rows: Row[],
+    options?: { fields?: FieldLike[]; columns?: string[] }
+  ): Promise<ResultMessage> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+    if (!rows.length && !options?.columns?.length)
+      return { error: "No rows found in file" };
+
+    const state = nsState.getState()!;
+    let lines_limit = state.getConfig("csv_types_detection_rows", 500);
+    if (!lines_limit || lines_limit < 0) lines_limit = 500; // default
+
+    const table = await Table.create(name);
+    const fieldsErr = await Table.create_fields_from_sample(
+      table,
+      rows.slice(0, lines_limit),
+      {
+        overrides: options?.fields,
+        columns: options?.columns,
+        objects_as_json: true,
+      }
+    );
+    if (fieldsErr) return fieldsErr;
+    const parse_res = await table.import_rows(rows, {
+      columns: options?.columns,
+    });
+    if (instanceOfErrorMsg(parse_res)) {
+      await table.delete();
+      return { error: parse_res.error };
+    }
+
+    parse_res.table = table;
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
+
+    return parse_res;
+  }
+
+  /**
+   * Create a new table's fields by inferring their types from sample rows.
+   * Values may be strings (as read from CSV) or typed values from an importer.
+   * Deletes the table and returns an error if a column cannot be created.
+   * @param table newly created table
+   * @param rows sample rows
+   * @param opts.overrides field definitions that replace the inferred ones, matched by name
+   * @param opts.columns column order; defaults to the keys of the rows
+   * @param opts.objects_as_json infer JSON for object values (not for CSV,
+   *   where csvtojson nests dotted headers into objects)
+   */
+  private static async create_fields_from_sample(
+    table: Table,
+    rows: Row[],
+    opts: {
+      overrides?: FieldLike[];
+      columns?: string[];
+      objects_as_json?: boolean;
+    } = {}
+  ): Promise<{ error: string } | undefined> {
+    const { overrides, columns, objects_as_json } = opts;
+    const state = nsState.getState()!;
+    const rowsTr = transposeObjects(rows);
+    if (columns) for (const c of columns) if (!(c in rowsTr)) rowsTr[c] = [];
+    const colNames = columns || Object.keys(rowsTr);
     const isBools = state
       .getConfig("csv_bool_values", "true false yes no on off y n t f")
       .split(" ");
@@ -3706,20 +3792,28 @@ class Table implements AbstractTable {
         return false;
       }
     };
-    for (const [k, vs] of Object.entries(rowsTr)) {
-      const required = (<any[]>vs).every((v) => v !== "");
-      const nonEmpties = (<any[]>vs).filter((v) => v !== "");
+    const isEmpty = (v: any) => v === "" || v === null || v === undefined;
+    for (const k of colNames) {
+      const vs: any[] = rowsTr[k];
+      const required = vs.every((v) => !isEmpty(v));
+      const nonEmpties = vs.filter((v) => !isEmpty(v));
 
       let type;
       if (
-        nonEmpties.every((v) =>
-          //https://www.postgresql.org/docs/11/datatype-boolean.html
-
-          isBools.includes(v && v.toLowerCase && v.toLowerCase())
+        nonEmpties.every(
+          (v) =>
+            typeof v === "boolean" ||
+            //https://www.postgresql.org/docs/11/datatype-boolean.html
+            (typeof v === "string" && isBools.includes(v.toLowerCase()))
         )
       )
         type = "Bool";
-      else if (nonEmpties.every((v) => !isNaN(v)))
+      else if (
+        nonEmpties.every(
+          (v) =>
+            typeof v === "number" || (typeof v === "string" && !isNaN(v as any))
+        )
+      )
         if (
           nonEmpties.every(
             (v) =>
@@ -3730,30 +3824,53 @@ class Table implements AbstractTable {
         else if (nonEmpties.every((v) => Number.isSafeInteger(+v)))
           type = "String";
         else type = "Float";
-      else if (nonEmpties.every((v: any) => isDate(v))) type = "Date";
-      else if (state.types.UUID && nonEmpties.every((v: any) => isValidUUID(v)))
+      else if (
+        nonEmpties.every(
+          (v: any) =>
+            (v instanceof Date && !isNaN(v as any)) ||
+            (typeof v === "string" && isDate(v as any))
+        )
+      )
+        type = "Date";
+      else if (
+        state.types.UUID &&
+        nonEmpties.every((v: any) => typeof v === "string" && isValidUUID(v))
+      )
         type = "UUID";
       else if (
         state.types.JSON &&
         nonEmpties.every(
           (v: any) =>
-            typeof v === "string" &&
-            (v[0] === "{" || v[0] === "[") &&
-            isValidJSON(v)
+            (objects_as_json &&
+              typeof v === "object" &&
+              !(v instanceof Date)) ||
+            (typeof v === "string" &&
+              (v[0] === "{" || v[0] === "[") &&
+              isValidJSON(v))
         )
       )
         type = "JSON";
       else type = "String";
       const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
 
+      const override: any = overrides?.find(
+        (o: any) => o.name === k || o.name === Field.labelToName(k)
+      );
+      if (override?.type)
+        type =
+          typeof override.type === "string"
+            ? override.type
+            : override.type.name;
+
       //can fail here if: non integer id, duplicate headers, invalid name
 
       const fld = new Field({
-        name: Field.labelToName(k),
+        label,
         required,
+        ...(override || {}),
+        name: Field.labelToName(k),
         type,
         table,
-        label,
       });
       //console.log(fld);
       if (db.sqlsanitize(k.toLowerCase()) === "id") {
@@ -3787,17 +3904,7 @@ class Table implements AbstractTable {
         return { error: `Error in header ${k}: ${(e as ErrorObj).message}` };
       }
     }
-    const parse_res = await table.import_csv_file(filePath);
-    if (instanceOfErrorMsg(parse_res)) {
-      await table.delete();
-      return { error: parse_res.error };
-    }
-
-    parse_res.table = table;
-    //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
-
-    return parse_res;
+    return undefined;
   }
 
   /**
@@ -3928,17 +4035,262 @@ class Table implements AbstractTable {
       console.error(e);
       return { error: `Error processing CSV file header: ${e.message || e}` };
     }
+    const headerMap = this.map_import_headers(headers);
+    if ("error" in headerMap) return headerMap;
+    const { okHeaders, renames, fkey_fields, json_schema_fields } = headerMap;
+    const fieldNames = headers.map((hnm) => {
+      if (okHeaders[hnm]) return okHeaders[hnm].name;
+    });
+    // also id
+    // todo support uuid
+    if (headers.includes(`id`)) okHeaders.id = { type: "Integer" };
+
+    const renamesInv: {
+      [k: string]: string | undefined;
+    } = {};
+    renames.forEach(({ from, to }) => {
+      renamesInv[to] = from;
+    });
+    const colRe = new RegExp(
+      `(${Object.keys(okHeaders)
+        .map((k) => `^${renamesInv[k] || k}$`)
+        .join("|")})`
+    );
+
+    let i = 1;
+    const stats = { rejects: 0, rejectDetails: "" };
+    const client =
+      !db.pools_connections || options?.no_transaction
+        ? db
+        : await db.getClient();
+
+    const fileStats = await stat(filePath);
+    const fileSizeInMegabytes = fileStats.size / (1024 * 1024);
+
+    // start sql transaction
+    if (!options?.no_transaction) await client.query("BEGIN");
+    await db.deferForeignKeys(client);
+
+    const readStream = createReadStream(filePath);
+    const returnedRows: any = [];
+    const ctx = {
+      client,
+      options,
+      renames,
+      fkey_fields,
+      json_schema_fields,
+      imported_pk_set: new Set(),
+      summary_field_cache: {},
+      returnedRows,
+      stats,
+    };
+
+    try {
+      // for files more 1MB
+      if (
+        options?.method === "copy" ||
+        (options?.method !== "row-by-row" &&
+          db.copyFrom &&
+          fileSizeInMegabytes > 1 &&
+          !options?.extra_row_values)
+      ) {
+        let theError;
+
+        const copyres = await db
+          .copyFrom(readStream, this.name, fieldNames, client)
+          .catch((cate: Error) => {
+            theError = cate;
+          });
+        if (theError || (copyres && copyres.error)) {
+          theError = theError || copyres.error;
+          return {
+            error: `Error processing CSV file: ${
+              !theError
+                ? theError
+                : theError.error || theError.message || theError
+            }`,
+          };
+        }
+      } else {
+        await new Promise<void>((resolve, reject) => {
+          csvtojson({
+            includeColumns: colRe,
+            delimiter: options?.delimiter || "auto",
+          })
+            .fromStream(readStream)
+            .subscribe(
+              async (rec: { [key: string]: any }) => {
+                i += 1;
+                if (options?.skip_first_data_row && i === 2) return;
+                try {
+                  await this.import_one_row(rec, i, ctx);
+                } catch (e) {
+                  if (!options?.no_transaction) await client.query("ROLLBACK");
+
+                  if (db.pools_connections && !options?.no_transaction)
+                    await client.release(true);
+                  if (e instanceof Error)
+                    reject({ error: `${e.message} in row ${i}` });
+                }
+              },
+              (err: Error) => {
+                reject({ error: !err ? err : err.message || err });
+              },
+              () => {
+                resolve();
+              }
+            );
+        });
+        readStream.destroy();
+      }
+    } catch (e) {
+      return {
+        error: `Error processing CSV file: ${
+          !e ? e : (e as ErrorObj).error || (e as ErrorObj).message || e
+        }
+${stats.rejectDetails}`,
+      };
+    }
+
+    return await this.finish_import({
+      client,
+      options,
+      i,
+      stats,
+      returnedRows,
+    });
+  }
+
+  /**
+   * Import rows read by a file importer into this table. Columns are matched
+   * to fields as in CSV import (by name or label, `field.key` for JSON
+   * fields). Values may be strings or typed values. With `no_table_write`,
+   * nothing is written and the processed rows are returned for a preview.
+   * @param rows rows keyed by column name
+   * @param options.columns column names; defaults to the keys of the rows
+   */
+  async import_rows(
+    rows: Row[],
+    options?: {
+      recalc_stored?: boolean;
+      no_table_write?: boolean;
+      no_transaction?: boolean;
+      extra_row_values?: Row;
+      overwrite_csv_fields?: boolean;
+      columns?: string[];
+    }
+  ): Promise<ResultMessage> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
+    const headers = options?.columns || Object.keys(transposeObjects(rows));
+    const headerMap = this.map_import_headers(headers);
+    if ("error" in headerMap) return headerMap;
+    const { okHeaders, renames, fkey_fields, json_schema_fields } = headerMap;
+
+    const stats = { rejects: 0, rejectDetails: "" };
+    const client =
+      !db.pools_connections || options?.no_transaction
+        ? db
+        : await db.getClient();
+    if (!options?.no_transaction) await client.query("BEGIN");
+    await db.deferForeignKeys(client);
+
+    const returnedRows: Row[] = [];
+    const ctx = {
+      client,
+      options,
+      renames,
+      fkey_fields,
+      json_schema_fields,
+      imported_pk_set: new Set(),
+      summary_field_cache: {},
+      returnedRows,
+      stats,
+    };
+    let i = 0;
+    for (const row of rows) {
+      i += 1;
+      const rec = this.normalise_import_row(row, okHeaders, json_schema_fields);
+      try {
+        await this.import_one_row(rec, i, ctx);
+      } catch (e) {
+        if (!options?.no_transaction) await client.query("ROLLBACK");
+        if (db.pools_connections && !options?.no_transaction)
+          await client.release(true);
+        return {
+          error: `Error importing rows: ${(e as ErrorObj)?.message || e} in row ${i}
+${stats.rejectDetails}`,
+        };
+      }
+    }
+    // finish_import counts rows as CSV lines, after a header line
+    return await this.finish_import({
+      client,
+      options,
+      i: i + 1,
+      stats,
+      returnedRows,
+    });
+  }
+
+  /**
+   * Prepare a row from a file importer for import_one_row, so it looks like a
+   * row read by csvtojson: keep only matched columns, nest `field.key`
+   * columns into JSON fields, use "" for missing values and convert typed
+   * values for String fields to strings.
+   */
+  private normalise_import_row(
+    row: Row,
+    okHeaders: any,
+    json_schema_fields: Field[]
+  ): Row {
+    const rec: Row = {};
+    for (const jfield of json_schema_fields) {
+      if (!rec[jfield.name]) rec[jfield.name] = {};
+      rec[jfield.name][jfield.attributes.subfield] = "";
+    }
+    for (const [k, v0] of Object.entries(row)) {
+      const fld = okHeaders[k];
+      if (!fld) continue;
+      let v = v0 === null || v0 === undefined ? "" : v0;
+      if (fld.attributes?.subfield && json_schema_fields.includes(fld)) {
+        rec[fld.name][fld.attributes.subfield] = v;
+        continue;
+      }
+      if (fld.type?.name === "String" && typeof v !== "string")
+        v =
+          v instanceof Date
+            ? v.toISOString()
+            : typeof v === "object"
+              ? JSON.stringify(v)
+              : String(v);
+      rec[k] = v;
+    }
+    return rec;
+  }
+
+  /**
+   * Match import column headers to this table's fields, by name, label or
+   * label converted to a name. Headers `field.key` map to keys of JSON fields.
+   * @param headers column headers in the imported file
+   */
+  private map_import_headers(headers: string[]):
+    | { error: string }
+    | {
+        okHeaders: any;
+        renames: Array<{ from: string; to: string }>;
+        fkey_fields: Field[];
+        json_schema_fields: Field[];
+      } {
     const fields = this.fields.filter((f) => !f.calculated);
     const okHeaders: any = {};
-    const pk_name = this.pk_name;
     const renames: Array<{
       from: string;
       to: string;
     }> = [];
     const fkey_fields: Field[] = [];
     const json_schema_fields: Field[] = [];
-
-    const state = nsState.getState()!;
 
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
@@ -3979,262 +4331,201 @@ class Table implements AbstractTable {
       )
         fkey_fields.push(f);
     }
-    const fieldNames = headers.map((hnm) => {
-      if (okHeaders[hnm]) return okHeaders[hnm].name;
-    });
-    // also id
-    // todo support uuid
-    if (headers.includes(`id`)) okHeaders.id = { type: "Integer" };
+    return { okHeaders, renames, fkey_fields, json_schema_fields };
+  }
 
-    const renamesInv: {
-      [k: string]: string | undefined;
-    } = {};
-    renames.forEach(({ from, to }) => {
-      renamesInv[to] = from;
-    });
-    const colRe = new RegExp(
-      `(${Object.keys(okHeaders)
-        .map((k) => `^${renamesInv[k] || k}$`)
-        .join("|")})`
-    );
-
-    let i = 1;
-    let rejects = 0;
-    let rejectDetails = "";
-    const client =
-      !db.pools_connections || options?.no_transaction
-        ? db
-        : await db.getClient();
-
-    const stats = await stat(filePath);
-    const fileSizeInMegabytes = stats.size / (1024 * 1024);
-
-    // start sql transaction
-    if (!options?.no_transaction) await client.query("BEGIN");
-    await db.deferForeignKeys(client);
-
-    const readStream = createReadStream(filePath);
-    const returnedRows: any = [];
-
-    try {
-      // for files more 1MB
-      if (
-        options?.method === "copy" ||
-        (options?.method !== "row-by-row" &&
-          db.copyFrom &&
-          fileSizeInMegabytes > 1 &&
-          !options?.extra_row_values)
-      ) {
-        let theError;
-
-        const copyres = await db
-          .copyFrom(readStream, this.name, fieldNames, client)
-          .catch((cate: Error) => {
-            theError = cate;
-          });
-        if (theError || (copyres && copyres.error)) {
-          theError = theError || copyres.error;
-          return {
-            error: `Error processing CSV file: ${
-              !theError
-                ? theError
-                : theError.error || theError.message || theError
-            }`,
-          };
-        }
-      } else {
-        await new Promise<void>((resolve, reject) => {
-          const imported_pk_set = new Set();
-          const summary_field_cache: any = {};
-          csvtojson({
-            includeColumns: colRe,
-            delimiter: options?.delimiter || "auto",
-          })
-            .fromStream(readStream)
-            .subscribe(
-              async (rec: { [key: string]: any }) => {
-                i += 1;
-                if (options?.skip_first_data_row && i === 2) return;
-                try {
-                  renames.forEach(({ from, to }) => {
-                    rec[to] = rec[from];
-                    delete rec[from];
-                  });
-
-                  if (
-                    options?.extra_row_values &&
-                    options.extra_row_values !== null
-                  ) {
-                    const extras = options.extra_row_values;
-                    const overwrite = options.overwrite_csv_fields !== false; // default true
-                    if (overwrite) {
-                      Object.assign(rec, extras);
-                    } else {
-                      for (const [k, v] of Object.entries(extras)) {
-                        if (
-                          typeof rec[k] === "undefined" ||
-                          rec[k] === "" ||
-                          rec[k] === null
-                        )
-                          rec[k] = v;
-                      }
-                    }
-                  }
-
-                  for (const jfield of json_schema_fields) {
-                    const sf = jfield.attributes.subfield;
-                    const jtype = jfield.attributes.schema.find(
-                      ({ key }: { key: string }) => key === sf
-                    );
-
-                    if (rec[jfield.name][sf] === "")
-                      delete rec[jfield.name][sf];
-                    else if (
-                      jtype?.type === "Integer" ||
-                      jtype?.type === "Float"
-                    ) {
-                      rec[jfield.name][sf] = +rec[jfield.name][sf];
-                      if (isNaN(rec[jfield.name][sf]))
-                        delete rec[jfield.name][sf];
-                    }
-                  }
-
-                  for (const fkfield of fkey_fields) {
-                    const current = rec[fkfield.name];
-                    if (
-                      !(
-                        current === "null" ||
-                        current === "" ||
-                        current === null
-                      ) &&
-                      isNaN(+current)
-                    ) {
-                      //need to look up summary fields
-                      if (summary_field_cache[current])
-                        rec[fkfield.name] = summary_field_cache[current];
-                      else {
-                        const tbl = Table.findOne({
-                          name: fkfield.reftable_name,
-                        });
-                        const row = await tbl?.getRow({
-                          [fkfield.attributes.summary_field]: current,
-                        });
-                        if (tbl && row) {
-                          rec[fkfield.name] = row[tbl.pk_name];
-                          summary_field_cache[current] = row[tbl.pk_name];
-                        }
-                      }
-                      if (isNaN(+rec[fkfield.name])) {
-                        rejectDetails += `Reject row ${i} because in field ${
-                          fkfield.name
-                        } value "${text(
-                          current
-                        )}" not matched by a value in table ${
-                          fkfield.reftable_name
-                        } field ${fkfield.attributes.summary_field}.\n`;
-                        rejects += 1;
-                        return;
-                      }
-                    }
-                  }
-                  const rowOk = this.read_state_strict(rec);
-
-                  if (typeof rowOk !== "string") {
-                    if (typeof rec[this.pk_name] !== "undefined") {
-                      //TODO replace with upsert - optimisation
-                      if (imported_pk_set.has(rec[this.pk_name]))
-                        throw new Error(
-                          "Duplicate primary key values: " + rec[this.pk_name]
-                        );
-                      imported_pk_set.add(rec[this.pk_name]);
-                      const existing = await db.selectMaybeOne(this.name, {
-                        [this.pk_name]: rec[this.pk_name],
-                      });
-                      this.prepare_row_for_writing(rec);
-                      if (options?.no_table_write) {
-                        if (existing) {
-                          Object.entries(existing).forEach(([k, v]) => {
-                            if (typeof rec[k] === "undefined") rec[k] = v;
-                          });
-                        }
-                        returnedRows.push(rec);
-                      } else if (existing)
-                        await db.update(this.name, rec, rec[this.pk_name], {
-                          pk_name,
-                          client,
-                        });
-                      else
-                        try {
-                          // TODO check constraints???
-                          await db.insert(this.name, rec, {
-                            noid: true,
-                            client,
-                            pk_name,
-                          });
-                        } catch (e) {
-                          console.log(e);
-
-                          if (
-                            !((e as ErrorObj)?.message || "").includes(
-                              "current transaction is aborted, commands ignored until end of transaction"
-                            )
-                          )
-                            rejectDetails += `Reject row ${i} because: ${
-                              (e as ErrorObj)?.message
-                            }\n`;
-                          rejects += 1;
-                        }
-                    } else if (options?.no_table_write) {
-                      returnedRows.push(rec);
-                    } else
-                      try {
-                        // TODO check constraints???
-                        delete rec[this.pk_name]; // pk value can be set to undefined
-                        await db.insert(this.name, rec, {
-                          noid: true,
-                          client,
-                          pk_name,
-                        });
-                      } catch (e: any) {
-                        rejectDetails += `Reject row ${i} because: ${
-                          (e as ErrorObj)?.message
-                        }\n`;
-                        rejects += 1;
-                      }
-                  } else {
-                    rejectDetails += `Reject row ${i} because: ${rowOk}\n`;
-                    rejects += 1;
-                  }
-                } catch (e) {
-                  if (!options?.no_transaction) await client.query("ROLLBACK");
-
-                  if (db.pools_connections && !options?.no_transaction)
-                    await client.release(true);
-                  if (e instanceof Error)
-                    reject({ error: `${e.message} in row ${i}` });
-                }
-              },
-              (err: Error) => {
-                reject({ error: !err ? err : err.message || err });
-              },
-              () => {
-                resolve();
-              }
-            );
-        });
-        readStream.destroy();
-      }
-    } catch (e) {
-      return {
-        error: `Error processing CSV file: ${
-          !e ? e : (e as ErrorObj).error || (e as ErrorObj).message || e
-        }
-${rejectDetails}`,
+  /**
+   * Import one row: rename columns, fill extra values, convert JSON subfields,
+   * look up foreign keys by summary field, validate, then insert or update
+   * (or collect it when `no_table_write`). Rejected rows are counted in
+   * `ctx.stats`; throws on errors that abort the import.
+   */
+  private async import_one_row(
+    rec: { [key: string]: any },
+    i: number,
+    ctx: {
+      client: any;
+      options?: {
+        no_table_write?: boolean;
+        extra_row_values?: Row;
+        overwrite_csv_fields?: boolean;
       };
+      renames: Array<{ from: string; to: string }>;
+      fkey_fields: Field[];
+      json_schema_fields: Field[];
+      imported_pk_set: Set<any>;
+      summary_field_cache: any;
+      returnedRows: Row[];
+      stats: { rejects: number; rejectDetails: string };
+    }
+  ): Promise<void> {
+    const {
+      client,
+      options,
+      renames,
+      fkey_fields,
+      json_schema_fields,
+      imported_pk_set,
+      summary_field_cache,
+      returnedRows,
+      stats,
+    } = ctx;
+    const pk_name = this.pk_name;
+    renames.forEach(({ from, to }) => {
+      rec[to] = rec[from];
+      delete rec[from];
+    });
+
+    if (options?.extra_row_values && options.extra_row_values !== null) {
+      const extras = options.extra_row_values;
+      const overwrite = options.overwrite_csv_fields !== false; // default true
+      if (overwrite) {
+        Object.assign(rec, extras);
+      } else {
+        for (const [k, v] of Object.entries(extras)) {
+          if (typeof rec[k] === "undefined" || rec[k] === "" || rec[k] === null)
+            rec[k] = v;
+        }
+      }
     }
 
-    if (rejectDetails)
-      state.log(6, `CSV import rejectDetails: ` + rejectDetails);
+    for (const jfield of json_schema_fields) {
+      const sf = jfield.attributes.subfield;
+      const jtype = jfield.attributes.schema.find(
+        ({ key }: { key: string }) => key === sf
+      );
+
+      if (rec[jfield.name][sf] === "") delete rec[jfield.name][sf];
+      else if (jtype?.type === "Integer" || jtype?.type === "Float") {
+        rec[jfield.name][sf] = +rec[jfield.name][sf];
+        if (isNaN(rec[jfield.name][sf])) delete rec[jfield.name][sf];
+      }
+    }
+
+    for (const fkfield of fkey_fields) {
+      const current = rec[fkfield.name];
+      if (
+        !(current === "null" || current === "" || current === null) &&
+        isNaN(+current)
+      ) {
+        //need to look up summary fields
+        if (summary_field_cache[current])
+          rec[fkfield.name] = summary_field_cache[current];
+        else {
+          const tbl = Table.findOne({
+            name: fkfield.reftable_name,
+          });
+          const row = await tbl?.getRow({
+            [fkfield.attributes.summary_field]: current,
+          });
+          if (tbl && row) {
+            rec[fkfield.name] = row[tbl.pk_name];
+            summary_field_cache[current] = row[tbl.pk_name];
+          }
+        }
+        if (isNaN(+rec[fkfield.name])) {
+          stats.rejectDetails += `Reject row ${i} because in field ${
+            fkfield.name
+          } value "${text(current)}" not matched by a value in table ${
+            fkfield.reftable_name
+          } field ${fkfield.attributes.summary_field}.\n`;
+          stats.rejects += 1;
+          return;
+        }
+      }
+    }
+    const rowOk = this.read_state_strict(rec);
+
+    if (typeof rowOk !== "string") {
+      if (typeof rec[this.pk_name] !== "undefined") {
+        //TODO replace with upsert - optimisation
+        if (imported_pk_set.has(rec[this.pk_name]))
+          throw new Error("Duplicate primary key values: " + rec[this.pk_name]);
+        imported_pk_set.add(rec[this.pk_name]);
+        const existing = await db.selectMaybeOne(this.name, {
+          [this.pk_name]: rec[this.pk_name],
+        });
+        this.prepare_row_for_writing(rec);
+        if (options?.no_table_write) {
+          if (existing) {
+            Object.entries(existing).forEach(([k, v]) => {
+              if (typeof rec[k] === "undefined") rec[k] = v;
+            });
+          }
+          returnedRows.push(rec);
+        } else if (existing)
+          await db.update(this.name, rec, rec[this.pk_name], {
+            pk_name,
+            client,
+          });
+        else
+          try {
+            // TODO check constraints???
+            await db.insert(this.name, rec, {
+              noid: true,
+              client,
+              pk_name,
+            });
+          } catch (e) {
+            console.log(e);
+
+            if (
+              !((e as ErrorObj)?.message || "").includes(
+                "current transaction is aborted, commands ignored until end of transaction"
+              )
+            )
+              stats.rejectDetails += `Reject row ${i} because: ${
+                (e as ErrorObj)?.message
+              }\n`;
+            stats.rejects += 1;
+          }
+      } else if (options?.no_table_write) {
+        returnedRows.push(rec);
+      } else
+        try {
+          // TODO check constraints???
+          delete rec[this.pk_name]; // pk value can be set to undefined
+          await db.insert(this.name, rec, {
+            noid: true,
+            client,
+            pk_name,
+          });
+        } catch (e: any) {
+          stats.rejectDetails += `Reject row ${i} because: ${
+            (e as ErrorObj)?.message
+          }\n`;
+          stats.rejects += 1;
+        }
+    } else {
+      stats.rejectDetails += `Reject row ${i} because: ${rowOk}\n`;
+      stats.rejects += 1;
+    }
+  }
+
+  /**
+   * Commit an import transaction, then reset the id sequence and recalculate
+   * stored fields, and report how many rows were imported or rejected.
+   */
+  private async finish_import({
+    client,
+    options,
+    i,
+    stats,
+    returnedRows,
+  }: {
+    client: any;
+    options?: {
+      no_transaction?: boolean;
+      no_table_write?: boolean;
+      recalc_stored?: boolean;
+    };
+    i: number;
+    stats: { rejects: number; rejectDetails: string };
+    returnedRows: Row[];
+  }): Promise<ResultMessage> {
+    const state = nsState.getState()!;
+    if (stats.rejectDetails)
+      state.log(6, `Import rejectDetails: ` + stats.rejectDetails);
 
     // stop sql transaction
     if (!options?.no_transaction) await client.query("COMMIT");
@@ -4245,9 +4536,9 @@ ${rejectDetails}`,
     if (options?.no_table_write) {
       return {
         success:
-          `Found ${i > 1 ? i - 1 - rejects : ""} rows for table ${this.name}` +
-          (rejects ? `. Rejected ${rejects} rows.` : ""),
-        details: rejectDetails,
+          `Found ${i > 1 ? i - 1 - stats.rejects : ""} rows for table ${this.name}` +
+          (stats.rejects ? `. Rejected ${stats.rejects} rows.` : ""),
+        details: stats.rejectDetails,
         rows: returnedRows,
       };
     }
@@ -4262,11 +4553,11 @@ ${rejectDetails}`,
       await recalculate_for_stored(this);
     }
     return {
-      details: rejectDetails,
+      details: stats.rejectDetails,
       success:
-        `Imported ${i > 1 ? i - 1 - rejects : ""} rows into table ${
+        `Imported ${i > 1 ? i - 1 - stats.rejects : ""} rows into table ${
           this.name
-        }` + (rejects ? `. Rejected ${rejects} rows.` : ""),
+        }` + (stats.rejects ? `. Rejected ${stats.rejects} rows.` : ""),
     };
   }
 
