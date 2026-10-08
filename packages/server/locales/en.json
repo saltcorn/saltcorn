@@ -175,6 +175,7 @@
 	"Configure plugin": "Configure plugin",
 	"Create Pack": "Create Pack",
 	"You can copy the pack contents below to another Saltcorn installation.": "You can copy the pack contents below to another Saltcorn installation.",
+	"Download JSON": "Download JSON",
 	"Install Pack": "Install Pack",
 	"Pack %s installed": "Pack %s installed",
 	"Pack %s uninstalled": "Pack %s uninstalled",

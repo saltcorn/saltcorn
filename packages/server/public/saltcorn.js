@@ -1870,6 +1870,33 @@ function cfu_translate(that) {
   }
 }
 
+// The "Download JSON" button on the created-pack page: saves the pack shown in
+// the <pre> beside it as a file, indented like /entities/download-pack writes
+// it, so a large pack does not have to be selected out of the page (#4270).
+$(document).on("click", "button.download-pack-json", function () {
+  var $btn = $(this);
+  var raw = $btn
+    .closest(".card-body, .card, body")
+    .find("pre.pack-display")
+    .first()
+    .text();
+  var content = raw;
+  try {
+    content = JSON.stringify(JSON.parse(raw), null, 2);
+  } catch (e) {
+    // Not valid JSON for some reason: save what is shown rather than nothing.
+  }
+  var blob = new Blob([content], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = $btn.data("filename") || "saltcorn-pack.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
 $(document).on("click", "span.copy-to-clipboard", function () {
   var $el = $(this);
   var text = $el.text().trim();
