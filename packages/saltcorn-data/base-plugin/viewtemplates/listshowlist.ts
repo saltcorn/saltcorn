@@ -6,6 +6,7 @@
 import tagsPkg from "@saltcorn/markup/tags";
 import markupPkg from "@saltcorn/markup";
 import Table from "../../models/table.js";
+import type Field from "../../models/field.js";
 import Form from "../../models/form.js";
 import View from "../../models/view.js";
 import Workflow from "../../models/workflow.js";
@@ -23,8 +24,7 @@ import type { Where, Row } from "@saltcorn/db-common/internal";
 
 import { InvalidConfiguration, extractPagings } from "../../utils.js";
 
-
-const configuration_workflow = (req: Req) => 
+const configuration_workflow = (req: Req) =>
   new Workflow({
     steps: [
       {
@@ -159,6 +159,40 @@ const get_state_fields = async (
   } else return [id];
 };
 
+const FIELD_PREFIXES = [
+  "_fromdate_",
+  "_todate_",
+  "_fromneqdate_",
+  "_toneqdate_",
+  "_gte_",
+  "_lte_",
+  "_gt_",
+  "_lt_",
+  "_not_",
+];
+
+// state keys aimed at the child table only: fields it has and the parent doesn't
+const childFilterState = (
+  state: GenObj,
+  childTable: Table,
+  parentFields: Field[],
+  relfld: string
+): GenObj => {
+  const childNames = new Set(childTable.getFields().map((f) => f.name));
+  const parentNames = new Set(parentFields.map((f) => f.name));
+  const res: GenObj = {};
+  for (const [k, v] of Object.entries(state)) {
+    const prefix = FIELD_PREFIXES.find((p) => k.startsWith(p));
+    const fname = prefix ? k.slice(prefix.length) : k;
+    if (
+      (childNames.has(fname) && !parentNames.has(fname) && fname !== relfld) ||
+      k === `_fts_${childTable.santized_name}`
+    )
+      res[k] = v;
+  }
+  return res;
+};
+
 const run = async (
   table_id: number,
   viewname: string,
@@ -223,8 +257,15 @@ const run = async (
               );
             else {
               const allPagings = extractPagings(state);
+              const relTable =
+                reltype === "ChildList"
+                  ? Table.findOne({ name: reltblnm })
+                  : null;
+              const filterState = relTable
+                ? childFilterState(state, relTable, fields, relfld)
+                : {};
               const subresp = await subview.run(
-                { [relfld]: id, ...allPagings },
+                { ...filterState, [relfld]: id, ...allPagings },
                 extraArgs as any
               );
               reltbls[tab_name] = subresp;
@@ -258,7 +299,7 @@ const run = async (
   const relTblResp =
     Object.keys(reltbls).length === 1
       ? [h6(Object.keys(reltbls)[0]), reltbls[Object.keys(reltbls)[0]]]
-      : tabs(reltbls);
+      : tabs(reltbls, { deeplink: true });
   if (lresp) {
     if (list_width === 12) return lresp;
     return div(

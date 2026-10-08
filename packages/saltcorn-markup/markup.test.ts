@@ -270,6 +270,35 @@ describe("tabs", () => {
       `<ul class="nav nav-tabs" role="tablist"></ul><div class="tab-content"></div>`
     );
   });
+  it("makes deeplink ids that survive the URL hash", () => {
+    const names = [
+      "events",
+      "Évènements",
+      "Family events",
+      "it's",
+      "日本",
+      "2024 events",
+      "tab4",
+    ];
+    const result = tabs(
+      names.map((nm) => [nm, "x"]),
+      { deeplink: true }
+    );
+    const hrefs = [...result.matchAll(/href="([^"]*)"/g)].map((m) => m[1]);
+    expect(hrefs).toEqual([
+      "#events",
+      "#Evenements",
+      "#Familyevents",
+      "#its",
+      "#tab4",
+      "#tab5",
+      "#tab6",
+    ]);
+    for (const href of hrefs)
+      expect(new URL(`http://host/page/p?id=1${href}`).hash).toBe(href);
+    expect(result).toContain(`class="nav-link active deeplink"`);
+    expect(result).toContain(">Évènements</a>");
+  });
 });
 
 describe("table", () => {
@@ -736,9 +765,11 @@ describe("index", () => {
         btnClass: "btn-primary",
       });
 
-      expect(result).toContain("onclick=\"native_post_btn('/submit', 'post', 'csrfToken123')\"");
       expect(result).toContain(
-        '<button type="button" onclick="native_post_btn(\'/submit\', \'post\', \'csrfToken123\')" class=" btn  btn-primary d-inline-block">Submit</button>'
+        "onclick=\"native_post_btn('/submit', 'post', 'csrfToken123')\""
+      );
+      expect(result).toContain(
+        "<button type=\"button\" onclick=\"native_post_btn('/submit', 'post', 'csrfToken123')\" class=\" btn  btn-primary d-inline-block\">Submit</button>"
       );
       expect(result).not.toContain("<form");
     });
@@ -752,7 +783,7 @@ describe("index", () => {
       );
 
       expect(result).toContain(
-        'onclick="page_post_action(\'/page/x/action/y\')"'
+        "onclick=\"page_post_action('/page/x/action/y')\""
       );
       expect(result).not.toContain("native_post_btn");
       expect(result).not.toContain("<form");
@@ -783,7 +814,7 @@ describe("index", () => {
         csrfToken: () => "csrfToken123",
         __: (str: string) => str,
         "Are you sure?": "Are you sure?",
-      }as unknown as Req;
+      } as unknown as Req;
       const result = post_dropdown_item("/delete", "Delete", req, true);
       expect(result).toContain('<a class="dropdown-item"');
       expect(result).toContain("onclick=\"if(confirm('Are you sure?'))");
