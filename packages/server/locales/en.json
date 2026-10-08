@@ -1473,7 +1473,7 @@
 	"Select tag": "Select tag",
 	"Invalid build directory path": "Invalid build directory path",
 	"Invalid build directory name": "Invalid build directory name",
-	"clean node_modules": "clean node_modules",
+	"Deep clean before install": "Deep clean before install",
 	"After delete": "After delete",
 	"Search only on exact match, not substring match. Useful for large tables": "Search only on exact match, not substring match. Useful for large tables",
 	"Please select an entry point.": "Please select an entry point.",

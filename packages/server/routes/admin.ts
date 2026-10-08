@@ -1861,7 +1861,7 @@ router.get(
                 for: "deep_clean",
                 class: "form-label ms-2",
               },
-              req.__("clean node_modules")
+              req.__("Deep clean before install")
             )
           ),
           div(
@@ -1922,7 +1922,6 @@ const cleanNodeModules = async () => {
     throw new Error(
       `'${topSaltcornDir}' is not a Saltcorn installation directory`
     );
-  await PluginInstaller.cleanPluginsDirectory();
 };
 
 const doInstall = async (
@@ -1957,6 +1956,15 @@ const doInstall = async (
       } catch (e: any) {
         console.error(e);
         res_write(req.__("Error cleaning node_modules: %s\n", e.message));
+      }
+      // remove installed plugins (plugins_folder, git_plugins) so they are
+      // reinstalled for the new version, e.g. when switching ESM <-> CommonJS
+      res_write(req.__("Cleaning installed plugins...\n"));
+      try {
+        await PluginInstaller.cleanPluginsDirectory();
+      } catch (e: any) {
+        console.error(e);
+        res_write(req.__("Error cleaning installed plugins: %s\n", e.message));
       }
     }
     const child = spawn(

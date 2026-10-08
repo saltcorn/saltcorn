@@ -13,7 +13,25 @@
   "type": "module",
   "main": "dist/index.js",
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./cjs/index.cjs",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./postgres": {
+      "types": "./dist/postgres.d.ts",
+      "require": "./cjs/postgres.cjs",
+      "import": "./dist/postgres.js",
+      "default": "./dist/postgres.js"
+    },
+    "./postgres.js": {
+      "types": "./dist/postgres.d.ts",
+      "require": "./cjs/postgres.cjs",
+      "import": "./dist/postgres.js",
+      "default": "./dist/postgres.js"
+    },
+    "./*.js": "./dist/*.js",
     "./*": "./dist/*.js"
   },
   "typesVersions": {
@@ -25,7 +43,8 @@
   },
   "files": [
     "dist/**/*",
-    "!dist/tsconfig.ref.tsbuildinfo"
+    "!dist/tsconfig.ref.tsbuildinfo",
+    "cjs/**/*.cjs"
   ],
   "dependencies": {
     "@saltcorn/db-common": "1.7.0-beta.2",
