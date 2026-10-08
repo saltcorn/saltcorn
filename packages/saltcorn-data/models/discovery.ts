@@ -6,7 +6,7 @@
  */
 
 import * as nsState from "../db/state.js";
-import { Row, sqlsanitize } from "@saltcorn/db-common/internal";
+import { Row, sqlsanitize, mkWhere } from "@saltcorn/db-common/internal";
 import { TablePack } from "@saltcorn/types/model-abstracts/abstract_table";
 import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
 import db from "../db/index.js";
@@ -24,6 +24,20 @@ const lcKeys = (rows: Row[]): Row[] =>
       )
     : rows;
 
+/**
+ * Plugins (e.g. postgres-tables) may pass a plain pg Pool instead of a full
+ * db module, as only `query` was used in 1.6.x. Wrap such a pool with the
+ * db module methods used here; its queries are always PostgreSQL.
+ */
+const asDbModule = (dbModule: any): typeof db =>
+  typeof dbModule?.mkWhere === "function"
+    ? dbModule
+    : ({
+        query: (sql: string, values?: any[]) => dbModule.query(sql, values),
+        mkWhere: (whereObj: any) => mkWhere(whereObj, false),
+        getTenantSchema: () => db.getTenantSchema(),
+      } as any);
+
 // create table discmetable(id serial primary key, name text, age integer not null); ALTER TABLE discmetable OWNER TO tomn;
 /**
  * List of discoverable tables.
@@ -35,8 +49,9 @@ const lcKeys = (rows: Row[]): Row[] =>
 const discoverable_tables = async (
   schema0?: string,
   allTables: boolean = false,
-  dbModule: typeof db = db
+  dbModule0: typeof db = db
 ): Promise<Row[]> => {
+  const dbModule = asDbModule(dbModule0);
   const schema = schema0 || dbModule.getTenantSchema();
   const { where, values } = dbModule.mkWhere({ table_schema: schema });
   const { rows: rows0 } = await dbModule.query(
@@ -159,8 +174,9 @@ const make_field = async (c: Row): Promise<FieldCfg | undefined> => {
 const discover_tables = async (
   tableNames: string[],
   schema0?: string,
-  dbModule: typeof db = db
+  dbModule0: typeof db = db
 ): Promise<{ tables: Array<TablePack> }> => {
+  const dbModule = asDbModule(dbModule0);
   const schema = schema0 || dbModule.getTenantSchema();
   const packTables = new Array<TablePack>();
 

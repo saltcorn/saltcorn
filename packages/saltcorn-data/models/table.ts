@@ -5053,6 +5053,15 @@ ${rejectDetails}`,
           }
         });
       }
+      // lookups (joins to external/provider tables) must run before renaming,
+      // which replaces the key value with an object
+      for (const k of Object.keys(joinFields || {})) {
+        if (!joinFields?.[k].lookupFunction) continue;
+        for (const row of calcRow) {
+          row[k] = await joinFields[k].lookupFunction(row);
+        }
+      }
+
       //rename aggregations and joinfields
       if (
         Object.values(joinFields || {}).some((jf: any) => jf.rename_object) ||
@@ -5060,13 +5069,6 @@ ${rejectDetails}`,
       ) {
         const f = joinfield_renamer(joinFields, aggregations);
         calcRow = calcRow.map(f);
-      }
-
-      for (const k of Object.keys(joinFields || {})) {
-        if (!joinFields?.[k].lookupFunction) continue;
-        for (const row of calcRow) {
-          row[k] = await joinFields[k].lookupFunction(row);
-        }
       }
 
       if (!this.canEnforceRls() && role && role > this.min_role_read) {
