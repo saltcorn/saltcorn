@@ -40,7 +40,15 @@ const {
   uninstall_pack,
   event_log_pack,
 } = _am_pack;
-import { pre, code, p, text, text_attr } from "@saltcorn/markup/tags";
+import {
+  pre,
+  code,
+  p,
+  text,
+  text_attr,
+  button,
+  i,
+} from "@saltcorn/markup/tags";
 import Library from "@saltcorn/data/models/library";
 import Trigger from "@saltcorn/data/models/trigger";
 import Role from "@saltcorn/data/models/role";
@@ -319,6 +327,18 @@ router.post(
               req.__(
                 "You can copy the pack contents below to another Saltcorn installation."
               )
+            ),
+            // Offered after the pack is on screen, not chosen up front on the
+            // form: the reader can look at it first, then copy it or save it
+            // (#4270). saltcorn.js saves exactly the JSON shown below.
+            button(
+              {
+                type: "button",
+                class: "btn btn-outline-primary btn-sm mb-2 download-pack-json",
+                "data-filename": "saltcorn-pack.json",
+              },
+              i({ class: "fas fa-download me-1" }),
+              req.__("Download JSON")
             ),
             pre(
               { class: "pack-display" },

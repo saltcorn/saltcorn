@@ -199,6 +199,33 @@ describe("Pack Endpoints", () => {
       )
       .expect(toInclude("You can copy the pack contents below"));
   });
+  it("should offer the created pack for download beside it (#4270)", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .post("/packs/create/")
+      .set("Cookie", loginCookie)
+      .send("table.books=on&view.authorlist=on")
+      .expect(200);
+    // The page still shows the pack to look at and copy; saving it is a
+    // button beside it, not a choice made on the form before seeing it.
+    expect(res.headers["content-disposition"]).toBeUndefined();
+    expect(res.text).toContain("You can copy the pack contents below");
+    expect(res.text).toContain("download-pack-json");
+    expect(res.text).toContain("Download JSON");
+    expect(res.text).toContain('class="pack-display"');
+  });
+  it("should not put the download choice on the create form", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .get("/packs/create/")
+      .set("Cookie", loginCookie)
+      .expect(200);
+    expect(res.text).not.toContain("download-pack-json");
+  });
 
   it("should show get install", async () => {
     const loginCookie = await getAdminLoginCookie();
