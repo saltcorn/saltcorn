@@ -1559,15 +1559,49 @@ router.get(
             req.__("Configure provider")
           )
         ),
-      div(
-        { class: "mx-auto" },
-        a(
-          { href: `/table/download/${encodeURIComponent(table.name)}` },
-          i({ class: "fas fa-2x fa-download" }),
-          "<br/>",
-          req.__("Download CSV")
-        )
-      ),
+      Object.keys(getState()!.exporters).length
+        ? div(
+            { class: "mx-auto dropdown" },
+            a(
+              {
+                href: "#",
+                id: "downloadMenuButton",
+                class: "dropdown-toggle",
+                "data-bs-toggle": "dropdown",
+                "aria-haspopup": "true",
+                "aria-expanded": "false",
+              },
+              i({ class: "fas fa-2x fa-download" }),
+              "<br/>",
+              req.__("Download")
+            ),
+            div(
+              {
+                class: "dropdown-menu",
+                "aria-labelledby": "downloadMenuButton",
+              },
+              ["CSV", ...Object.keys(getState()!.exporters)].map((format) =>
+                a(
+                  {
+                    class: "dropdown-item",
+                    href: `/table/download/${encodeURIComponent(
+                      table.name
+                    )}?format=${encodeURIComponent(format)}`,
+                  },
+                  format
+                )
+              )
+            )
+          )
+        : div(
+            { class: "mx-auto" },
+            a(
+              { href: `/table/download/${encodeURIComponent(table.name)}` },
+              i({ class: "fas fa-2x fa-download" }),
+              "<br/>",
+              req.__("Download CSV")
+            )
+          ),
       !table.external &&
         !table.provider_name &&
         div(
@@ -2115,7 +2149,8 @@ router.get(
 );
 
 /**
- * Download CSV file
+ * Download table rows as CSV, or in the format of a plugin exporter
+ * given by the format query parameter
  * @name get/download/:name
  * @function
  * @memberof module:routes/tables~tablesRouter
@@ -2139,6 +2174,36 @@ router.get(
       {},
       { orderBy: table.pk_name, forUser: req.user }
     );
+    const format =
+      typeof req.query.format === "string" ? req.query.format : "CSV";
+    if (format !== "CSV") {
+      const exporter = getState()!.exporters[format];
+      if (!exporter) {
+        req.flash("error", req.__("Unknown download format %s", format));
+        res.redirect(`/table/${table.id}`);
+        return;
+      }
+      const columns = [...table.fields]
+        .sort((a: any, b: any) => a.id - b.id)
+        .map((f: any) => f.name);
+      let output;
+      try {
+        output = await exporter.export({ table, rows, columns, req });
+      } catch (e: any) {
+        req.flash("error", `Error exporting ${format}: ${e?.message || e}`);
+        res.redirect(`/table/${table.id}`);
+        return;
+      }
+      res.setHeader("Content-Type", exporter.mimetype);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${name}${exporter.extension}"`
+      );
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Pragma", "no-cache");
+      res.send(output);
+      return;
+    }
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
     res.setHeader("Cache-Control", "no-cache");

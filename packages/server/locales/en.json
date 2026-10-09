@@ -2141,5 +2141,6 @@
 	"Upload file": "Upload file",
 	"Import %s": "Import %s",
 	"Processing %s file": "Processing %s file",
-	"Create from file upload": "Create from file upload"
+	"Create from file upload": "Create from file upload",
+	"Unknown download format %s": "Unknown download format %s"
 }

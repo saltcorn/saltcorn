@@ -332,12 +332,22 @@ describe("Table file importers", () => {
         },
       },
     },
+    exporters: {
+      JSON: {
+        extension: ".json",
+        mimetype: "application/json",
+        async export({ rows, columns }) {
+          return JSON.stringify({ columns, rows });
+        },
+      },
+    },
   };
   beforeAll(() => {
     getState().registerPlugin("json_importer", json_importer_plugin);
   });
   afterAll(() => {
     delete getState().importers.JSON;
+    delete getState().exporters.JSON;
   });
   const filenameRe = /data-csv-filename\=\"([A-Za-z0-9 _\-.]*)\"/;
 
@@ -422,5 +432,50 @@ describe("Table file importers", () => {
     expect(table.getField("cost").type.name).toBe("Float");
     expect(table.getField("vatable").type.name).toBe("Bool");
     expect(await table.countRows()).toBe(2);
+  });
+  it("should show download formats menu", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/table/2")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("downloadMenuButton"))
+      .expect(toInclude("/table/download/books?format=CSV"))
+      .expect(toInclude("/table/download/books?format=JSON"))
+      .expect(toNotInclude("Download CSV"));
+  });
+  it("should download with exporter", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const books = Table.findOne({ name: "books" });
+    const res = await request(app)
+      .get("/table/download/books?format=JSON")
+      .set("Cookie", loginCookie)
+      .expect(200);
+    expect(res.headers["content-type"]).toContain("application/json");
+    expect(res.headers["content-disposition"]).toBe(
+      'attachment; filename="books.json"'
+    );
+    const body = JSON.parse(res.text);
+    expect(body.columns).toContain("author");
+    expect(body.rows.length).toBe(await books.countRows());
+  });
+  it("should still download CSV format", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .get("/table/download/books?format=CSV")
+      .set("Cookie", loginCookie)
+      .expect(200);
+    expect(res.headers["content-type"]).toContain("text/csv");
+  });
+  it("should reject unknown download format", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const books = Table.findOne({ name: "books" });
+    await request(app)
+      .get("/table/download/books?format=XLSX")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect(`/table/${books.id}`));
   });
 });
