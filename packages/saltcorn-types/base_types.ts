@@ -626,6 +626,42 @@ export type TableProvider = {
   get_table: (cfg: GenObj) => Partial<AbstractTable>;
 };
 
+/** Rows parsed from an uploaded file by a FileImporter. */
+export type FileImporterResult = {
+  rows: Array<Row>;
+  /** Column order; defaults to the keys of the first row. */
+  columns?: Array<string>;
+  /** Field definitions overriding the inferred types when creating a new table. */
+  fields?: Array<FieldLike>;
+  /** Extra information shown on the preview screen. */
+  details?: string;
+};
+
+/** Reads a file type into rows, to create a table or import into one. */
+export type FileImporter = {
+  /** Lower-case file extensions including the dot, e.g. [".xlsx"]. */
+  extensions: Array<string>;
+  mimetypes?: Array<string>;
+  /** Parse the file. `limit` is set when only a preview or type sample is needed. */
+  parse: (
+    filePath: string,
+    opts: { limit?: number; table?: AbstractTable; req?: Req }
+  ) => Promise<FileImporterResult | { error: string }>;
+};
+
+/** Writes table rows to a file type, offered on the table download menu. */
+export type FileExporter = {
+  /** File extension including the dot, e.g. ".xlsx". */
+  extension: string;
+  mimetype: string;
+  export: (opts: {
+    table: AbstractTable;
+    rows: Array<Row>;
+    columns: Array<string>;
+    req?: Req;
+  }) => Promise<Buffer | string>;
+};
+
 /** A tool the AI app-building assistant (copilot) can call. */
 export type CopilotSkill = {
   title: string;
@@ -732,6 +768,8 @@ type PluginFacilities = {
   modelpatterns?: Record<string, ModelPattern>;
   authentication?: Record<string, AuthenticationMethod>;
   table_providers?: Record<string, TableProvider>;
+  importers?: Record<string, FileImporter>;
+  exporters?: Record<string, FileExporter>;
   copilot_skills?: Array<CopilotSkill>;
   icons?: Array<string>;
   exchange?: Record<string, Array<unknown>>;
