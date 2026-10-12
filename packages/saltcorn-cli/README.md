@@ -41,6 +41,7 @@ USAGE
 * [`saltcorn create-user`](#saltcorn-create-user)
 * [`saltcorn delete-tenants`](#saltcorn-delete-tenants)
 * [`saltcorn delete-user USER_EMAIL`](#saltcorn-delete-user-user_email)
+* [`saltcorn disable-ssl`](#saltcorn-disable-ssl)
 * [`saltcorn dev:build [COMPONENT]`](#saltcorn-devbuild-component)
 * [`saltcorn dev:localize-plugin PLUGIN [PATH]`](#saltcorn-devlocalize-plugin-plugin-path)
 * [`saltcorn make-migration`](#saltcorn-make-migration)
@@ -402,6 +403,26 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/delete-user.js](https://github.com/saltcorn/saltcorn/blob/v1.7.0-beta.3/packages/saltcorn-cli/src/commands/delete-user.js)_
+
+## `saltcorn disable-ssl`
+
+Disable SSL: turn off Let's Encrypt and remove the custom SSL certificate, so the server starts on plain HTTP. For a server whose SSL configuration keeps the web UI from opening. Restart required.
+
+```
+USAGE
+  $ saltcorn disable-ssl [--keep-custom-certificate]
+
+FLAGS
+  --keep-custom-certificate  Only turn off Let's Encrypt; leave a custom
+                             certificate in place
+
+DESCRIPTION
+  Disable SSL: turn off Let's Encrypt and remove the custom SSL certificate, so
+  the server starts on plain HTTP. For a server whose SSL configuration keeps
+  the web UI from opening. Restart required.
+```
+
+_See code: [src/commands/disable-ssl.js](https://github.com/saltcorn/saltcorn/blob/v1.7.0-beta.3/packages/saltcorn-cli/src/commands/disable-ssl.js)_
 
 ## `saltcorn dev:build [COMPONENT]`
 
