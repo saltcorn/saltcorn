@@ -3467,3 +3467,119 @@ describe("apply_calculated_fields_stored", () => {
     expect(result.score).toBe(9);
   });
 });
+
+describe("Import rows from file importer", () => {
+  it("should import typed rows into existing table", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const impres: any = await table.import_rows([
+      { author: "Typed Author", pages: 301 },
+      { author: 12345, pages: "46", unknown_col: "x" },
+    ]);
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table books",
+      details: "",
+    });
+    const rows = await table.getRows({ author: "Typed Author" });
+    expect(rows.length).toBe(1);
+    expect(rows[0].pages).toBe(301);
+    const rows1 = await table.getRows({ author: "12345" });
+    expect(rows1.length).toBe(1);
+    expect(rows1[0].pages).toBe(46);
+  });
+  it("should match columns by label", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const impres: any = await table.import_rows([
+      { Author: "Label Author", Pages: 88 },
+    ]);
+    expect(impres).toEqual({
+      success: "Imported 1 rows into table books",
+      details: "",
+    });
+    const row = await table.getRow({ author: "Label Author" });
+    expect(row?.pages).toBe(88);
+  });
+  it("should reject invalid rows", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const impres: any = await table.import_rows([
+      { author: "Reject Ok", pages: 12 },
+      { author: "Reject Bad", pages: "many" },
+    ]);
+    expect(impres.success).toBe(
+      "Imported 1 rows into table books. Rejected 1 rows."
+    );
+    expect(impres.details).toContain("Reject row 2");
+    expect(await table.countRows({ author: "Reject Bad" })).toBe(0);
+  });
+  it("should preview without writing", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const before = await table.countRows();
+    const impres: any = await table.import_rows(
+      [{ author: "Preview Only", pages: 7 }],
+      { no_table_write: true }
+    );
+    expect(impres.success).toBe("Found 1 rows for table books");
+    expect(impres.rows).toEqual([{ author: "Preview Only", pages: 7 }]);
+    expect(await table.countRows()).toBe(before);
+  });
+  it("should error on missing required column", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const impres: any = await table.import_rows([{ pages: 7 }]);
+    expect(impres).toEqual({ error: "Required field missing: Author" });
+  });
+  it("should create table from typed rows", async () => {
+    const res: any = await Table.create_from_rows("ImportedTyped", [
+      {
+        name: "Ann",
+        visits: 3,
+        score: 1.5,
+        active: true,
+        joined: new Date("2024-03-01T00:00:00Z"),
+      },
+      {
+        name: "Bob",
+        visits: null,
+        score: 2,
+        active: false,
+        joined: new Date("2024-04-01T00:00:00Z"),
+      },
+    ]);
+    expect(res.success).toBe("Imported 2 rows into table ImportedTyped");
+    const table = Table.findOne({ name: "ImportedTyped" });
+    assertIsSet(table);
+    const typeOf = (nm: string) => (table.getField(nm)?.type as any)?.name;
+    expect(typeOf("name")).toBe("String");
+    expect(typeOf("visits")).toBe("Integer");
+    expect(typeOf("score")).toBe("Float");
+    expect(typeOf("active")).toBe("Bool");
+    expect(typeOf("joined")).toBe("Date");
+    expect(table.getField("name")?.required).toBe(true);
+    expect(table.getField("visits")?.required).toBe(false);
+    const bob = await table.getRow({ name: "Bob" });
+    expect(bob?.active).toBe(false);
+    expect(bob?.visits).toBe(null);
+  });
+  it("should create table with field overrides", async () => {
+    const res: any = await Table.create_from_rows(
+      "ImportedOverride",
+      [{ code: 1 }, { code: 2 }],
+      { fields: [{ name: "code", type: "String", label: "Product code" }] }
+    );
+    expect(res.success).toBe("Imported 2 rows into table ImportedOverride");
+    const table = Table.findOne({ name: "ImportedOverride" });
+    assertIsSet(table);
+    expect((table.getField("code")?.type as any)?.name).toBe("String");
+    expect(table.getField("code")?.label).toBe("Product code");
+    const rows = await table.getRows({}, { orderBy: "code" });
+    expect(rows.map((r) => r.code)).toEqual(["1", "2"]);
+  });
+  it("should not create table from no rows", async () => {
+    const res: any = await Table.create_from_rows("ImportedEmpty", []);
+    expect(res).toEqual({ error: "No rows found in file" });
+    expect(Table.findOne({ name: "ImportedEmpty" })).toBe(null);
+  });
+});
