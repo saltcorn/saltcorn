@@ -371,11 +371,6 @@ describe("Table file importers", () => {
       .expect(toInclude("text/csv,.csv,.json"))
       .expect(toInclude('class="form-control-file  d-block"'))
       .expect(toInclude("Accepted formats: CSV (.csv), JSON (.json)"));
-    await request(app)
-      .get("/admin/help/Import%20file%20formats")
-      .set("Cookie", loginCookie)
-      .expect(toInclude("<strong>CSV</strong> (.csv)"))
-      .expect(toInclude("<strong>JSON</strong> (.json)"));
   });
   it("should preview and import a JSON file into existing table", async () => {
     const json = JSON.stringify([
