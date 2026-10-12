@@ -144,11 +144,10 @@ export class RelationsFinder {
     if (sourceTbl.id === subViewObj.table_id) result.add(startPath);
     parentRelsFinder(sourceTbl, startPath, 0, new Set());
 
-    // 2. OneToOneShow
-    const uniqueFksToSrc = (this.fieldCache[sourceTblName] || []).filter(
-      (f: any) => f.is_unique
-    );
-    for (const relation of uniqueFksToSrc) {
+    // 2. OneToOneShow, also for non-unique keys (the subview picks one row)
+    const fksToSrc = this.fieldCache[sourceTblName] || [];
+    const uniqueFksToSrc = fksToSrc.filter((f: any) => f.is_unique);
+    for (const relation of fksToSrc) {
       const targetTbl = this.tableIdCache[relation.table_id];
       if (!targetTbl)
         throw new Error(`The table ${relation.table_id} does not exist`);
