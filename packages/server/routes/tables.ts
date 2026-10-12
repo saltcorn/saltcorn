@@ -426,6 +426,7 @@ router.post(
  * True when a plugin has registered a file importer
  */
 const hasImporters = () => Object.keys(getState()!.importers).length > 0;
+console.log("Importers", getState()!.importers);
 
 /**
  * accept attribute for table file uploads: CSV plus every registered importer
@@ -439,6 +440,24 @@ const importAccept = () =>
       ...(imp.mimetypes || []),
     ]),
   ].join(",");
+
+/**
+ * Text listing the file formats that can be imported, e.g. for a sublabel:
+ * "Accepted formats: CSV (.csv), GeoJSON (.geojson)". Undefined when no
+ * importer is registered, so CSV-only sites show nothing extra.
+ */
+const importFormatsText = (req: Req) =>
+  hasImporters()
+    ? req.__(
+        "Accepted formats: %s",
+        [
+          "CSV (.csv)",
+          ...Object.entries(getState()!.importers).map(
+            ([name, imp]) => `${name} (${imp.extensions.join(", ")})`
+          ),
+        ].join(", ")
+      )
+    : undefined;
 
 /**
  * Move an uploaded file into the file store. If an importer handles its
@@ -526,6 +545,8 @@ router.get(
                     label: req.__("File"),
                     name: "file",
                     input_type: "file",
+                    class: "d-block",
+                    sublabel: importFormatsText(req),
                     attributes: { accept: importAccept() },
                   },
                 ],
@@ -1615,7 +1636,11 @@ router.get(
             },
             input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
             label(
-              { class: "btn-link", for: "upload_to_table" },
+              {
+                class: "btn-link",
+                for: "upload_to_table",
+                title: importFormatsText(req),
+              },
               i({ class: "fas fa-2x fa-upload" }),
               "<br/>",
               hasImporters() ? req.__("Upload file") : req.__("Upload CSV")

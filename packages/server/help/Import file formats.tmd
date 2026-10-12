@@ -1,0 +1,14 @@
+You can create a table from, or upload rows into a table from, these file types:
+
+* **CSV** (.csv): the first line has the column names.
+{{# for (const [name, imp] of Object.entries(scState.importers)) { }}
+* **{{ name }}** ({{ imp.extensions.join(", ") }}): read by a plugin.
+{{# } }}
+
+When a table is created from a file, the column types are guessed from the
+first rows of the file. Some plugins set the types themselves, for example
+dates and coordinates.
+
+When uploading into an existing table, columns are matched to fields by
+name or label. A preview shows the rows that will be imported before
+anything is saved.

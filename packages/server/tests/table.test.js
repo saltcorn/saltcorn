@@ -143,6 +143,10 @@ describe("Table Endpoints", () => {
       .get("/table/create-from-csv")
       .set("Cookie", loginCookie)
       .expect(toInclude('type="file"'));
+    await request(app)
+      .get("/table/create-from-csv")
+      .set("Cookie", loginCookie)
+      .expect(toNotInclude("Accepted formats"));
   });
   it("should create from csv", async () => {
     const csv = `item,cost,count, vatable
@@ -358,12 +362,20 @@ describe("Table file importers", () => {
       .get("/table/2")
       .set("Cookie", loginCookie)
       .expect(toInclude("Upload file"))
-      .expect(toInclude("text/csv,.csv,.json"));
+      .expect(toInclude("text/csv,.csv,.json"))
+      .expect(toInclude('title="Accepted formats: CSV (.csv), JSON (.json)"'));
     await request(app)
       .get("/table/create-from-csv")
       .set("Cookie", loginCookie)
       .expect(toInclude("Create table from file"))
-      .expect(toInclude("text/csv,.csv,.json"));
+      .expect(toInclude("text/csv,.csv,.json"))
+      .expect(toInclude('class="form-control-file  d-block"'))
+      .expect(toInclude("Accepted formats: CSV (.csv), JSON (.json)"));
+    await request(app)
+      .get("/admin/help/Import%20file%20formats")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("<strong>CSV</strong> (.csv)"))
+      .expect(toInclude("<strong>JSON</strong> (.json)"));
   });
   it("should preview and import a JSON file into existing table", async () => {
     const json = JSON.stringify([
