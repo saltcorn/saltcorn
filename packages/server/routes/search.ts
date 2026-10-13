@@ -10,10 +10,17 @@ import { span, h5, h4, nbsp, p, a, div } from "@saltcorn/markup/tags";
 import { getState } from "@saltcorn/data/db/state";
 import db from "@saltcorn/data/db";
 
-import { isAdmin, error_catcher, isAdminOrHasConfigMinRole } from "./utils.js";
+import {
+  isAdmin,
+  error_catcher,
+  isAdminOrHasConfigMinRole,
+  pageWrapOpts,
+  viewWrapOpts,
+} from "./utils.js";
 import Form from "@saltcorn/data/models/form";
 import Table from "@saltcorn/data/models/table";
 import View from "@saltcorn/data/models/view";
+import Page from "@saltcorn/data/models/page";
 import { renderForm } from "@saltcorn/markup";
 import { pagination } from "@saltcorn/markup/helpers";
 import { send_infoarch_page } from "../markup/admin.js";
@@ -192,7 +199,7 @@ router.post(
  * Search form
  * @returns {Form}
  */
-const searchForm = () =>
+const searchForm = (sourceFields: Record<string, string> = {}) =>
   new Form({
     action: "/search",
     noSubmitButton: true,
@@ -204,7 +211,12 @@ const searchForm = () =>
         label: " ",
         input_type: "search",
       },
+      ...Object.keys(sourceFields).map((name) => ({
+        name,
+        input_type: "hidden" as const,
+      })),
     ],
+    values: { ...sourceFields },
   });
 
 /**
@@ -291,8 +303,9 @@ const runSearch = async ({ q, _page, table }: any, req: Req, res: any) => {
   }
 
   // Prepare search form
-  const form = searchForm();
-  form.validate({ q });
+  const source = searchSource(req);
+  const form = searchForm(source.fields);
+  form.validate({ q, ...source.fields });
 
   const mkResultDisplay = () => {
     switch (search_results_decoration) {
@@ -317,7 +330,7 @@ const runSearch = async ({ q, _page, table }: any, req: Req, res: any) => {
     tablesWithResults.length === 0
       ? [{ type: "card", contents: req.__("Not found") }]
       : mkResultDisplay();
-  res.sendWrap(req.__("Search all tables"), {
+  res.sendWrap(searchPageOpts(req, source), {
     above: [
       {
         type: "card",
@@ -357,6 +370,32 @@ const runSearch = async ({ q, _page, table }: any, req: Req, res: any) => {
     ],
   });
 };
+
+/**
+ * The page or view whose search bar sent the search (from_page/from_view),
+ * so the results use its layout settings (no menu, fluid layout, ...)
+ * @param {object} req
+ * @returns {object} fields to keep on the search form, and layout options
+ */
+const searchSource = (
+  req: Req
+): { fields: Record<string, string>; wrapOpts: object } => {
+  const { from_page, from_view } = req.query || {};
+  const page =
+    typeof from_page === "string" ? Page.findOne({ name: from_page }) : null;
+  if (page)
+    return { fields: { from_page: page.name }, wrapOpts: pageWrapOpts(page) };
+  const view =
+    typeof from_view === "string" ? View.findOne({ name: from_view }) : null;
+  if (view)
+    return { fields: { from_view: view.name }, wrapOpts: viewWrapOpts(view) };
+  return { fields: {}, wrapOpts: {} };
+};
+
+const searchPageOpts = (req: Req, source: ReturnType<typeof searchSource>) => ({
+  title: req.__("Search all tables"),
+  ...source.wrapOpts,
+});
 
 const syntax_help_link = (req: Req) => {
   const use_websearch = getState()!.getConfig("search_use_websearch", false);
@@ -414,8 +453,9 @@ router.get(
         return;
       }
 
-      const form = searchForm();
-      res.sendWrap(req.__("Search all tables"), {
+      const source = searchSource(req);
+      const form = searchForm(source.fields);
+      res.sendWrap(searchPageOpts(req, source), {
         type: "card",
         contents: renderForm(form, false) + syntax_help_link(req),
       });
