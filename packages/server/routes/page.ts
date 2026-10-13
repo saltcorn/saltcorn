@@ -13,6 +13,7 @@ import { getState } from "@saltcorn/data/db/state";
 import {
   error_catcher,
   scan_for_page_title,
+  pageWrapOpts,
   isAdmin,
   sendHtmlFile,
   sendHtmlStringWithGlobals,
@@ -58,8 +59,8 @@ const runPage = async (page: Page, req: Req, res: Res, tic: Date) => {
       state: req.query,
     })
   ) {
-    if (page.attributes?.no_menu && !req.headers?.saltcornmodalrequest)
-      req.no_menu = true;
+    if (!req.headers?.saltcornmodalrequest)
+      req.search_source = { from_page: page.name };
     const contents = await page.run(req.query, { res, req });
     if (!contents) return;
     const title = scan_for_page_title(contents, page.title);
@@ -92,9 +93,7 @@ const runPage = async (page: Page, req: Req, res: Res, tic: Date) => {
         {
           title,
           description: page.description,
-          bodyClass: "page_" + db.sqlsanitize(page.name),
-          no_menu: page.attributes?.no_menu,
-          requestFluidLayout: page.attributes?.request_fluid_layout,
+          ...pageWrapOpts(page),
         },
         add_results_to_contents(
           req.smr

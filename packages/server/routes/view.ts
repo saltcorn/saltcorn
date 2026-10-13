@@ -16,6 +16,7 @@ import {
   isAdmin,
   error_catcher,
   scan_for_page_title,
+  viewWrapOpts,
   setTenant,
   isAdminOrHasConfigMinRole,
 } from "../routes/utils.js";
@@ -109,7 +110,7 @@ router.get(
       return;
     }
     const isModal = req.headers?.saltcornmodalrequest;
-    if (view.attributes?.no_menu && !isModal) req.no_menu = true;
+    if (!isModal) req.search_source = { from_view: view.name };
 
     const contents0 = await view.run_possibly_on_page(query, req, res, false, {
       alreadyAuthorizedFor: view,
@@ -158,9 +159,7 @@ router.get(
       }
       title.description = description;
     }
-    if (view.attributes?.no_menu) {
-      title.no_menu = true;
-    }
+    Object.assign(title, viewWrapOpts(view));
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
     const resultCollector: any = {};

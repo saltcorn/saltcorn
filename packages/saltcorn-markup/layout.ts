@@ -1034,9 +1034,9 @@ const render = ({
           contents: go(segment.contents),
           hints,
         }),
-        req?.no_menu
-          ? input({ type: "hidden", name: "no_menu", value: "1" })
-          : ""
+        Object.entries(req?.search_source || {}).map(([name, value]) =>
+          input({ type: "hidden", name, value: value as string })
+        )
       );
     }
     if (segment.above) {
