@@ -664,9 +664,7 @@ router.get(
               });
               await mermaid.run({
                 querySelector: ".mermaid",
-                ${
-                  mode === "dark" ? "theme: 'dark'," : ""
-                }
+                ${mode === "dark" ? "theme: 'dark'," : ""}
                 postRenderCallback: (id) => {
                   $("#" + id).css("height", "calc(100vh - 250px)");
                   $("#" + id + " > g").each(function(index) {
@@ -3021,7 +3019,7 @@ router.get(
       res.redirect(`/table`);
       return;
     }
-    res.set("Page-Title", req.__("Create basic views"));
+    res.set("Page-Title", encodeURIComponent(req.__("Create basic views")));
     const form = await basicViewForm(table, req);
     form.values.naming_convention = getState()!.getConfig(
       "viewgen_naming_convention"
@@ -3232,7 +3230,7 @@ router.get(
     }
     const existingFields = await table.getFields();
     const existingNames = new Set(existingFields.map((f: any) => f.name));
-    res.set("Page-Title", req.__("Create standard fields"));
+    res.set("Page-Title", encodeURIComponent(req.__("Create standard fields")));
     const form = standardFieldForm(table, req, existingNames);
     res.send(renderForm(form, req.csrfToken()));
   })

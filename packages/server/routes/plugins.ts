@@ -728,7 +728,10 @@ router.get(
         );
         if (!pkgInfo?.versions)
           throw new Error(req.__("Unable to fetch versions"));
-        res.set("Page-Title", req.__("%s versions", text(withoutOrg)));
+        res.set(
+          "Page-Title",
+          encodeURIComponent(req.__("%s versions", text(withoutOrg)))
+        );
         const versions = Object.keys(pkgInfo.versions);
         if (versions.length === 0) throw new Error(req.__("No versions found"));
         const tags = pkgInfo["dist-tags"] || {};
