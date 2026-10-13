@@ -58,6 +58,8 @@ const runPage = async (page: Page, req: Req, res: Res, tic: Date) => {
       state: req.query,
     })
   ) {
+    if (page.attributes?.no_menu && !req.headers?.saltcornmodalrequest)
+      req.no_menu = true;
     const contents = await page.run(req.query, { res, req });
     if (!contents) return;
     const title = scan_for_page_title(contents, page.title);

@@ -192,7 +192,7 @@ router.post(
  * Search form
  * @returns {Form}
  */
-const searchForm = () =>
+const searchForm = (no_menu?: boolean) =>
   new Form({
     action: "/search",
     noSubmitButton: true,
@@ -204,7 +204,9 @@ const searchForm = () =>
         label: " ",
         input_type: "search",
       },
+      ...(no_menu ? [{ name: "no_menu", input_type: "hidden" as const }] : []),
     ],
+    values: no_menu ? { no_menu: "1" } : {},
   });
 
 /**
@@ -291,8 +293,9 @@ const runSearch = async ({ q, _page, table }: any, req: Req, res: any) => {
   }
 
   // Prepare search form
-  const form = searchForm();
-  form.validate({ q });
+  const no_menu = searchNoMenu(req);
+  const form = searchForm(no_menu);
+  form.validate(no_menu ? { q, no_menu: "1" } : { q });
 
   const mkResultDisplay = () => {
     switch (search_results_decoration) {
@@ -358,11 +361,11 @@ const runSearch = async ({ q, _page, table }: any, req: Req, res: any) => {
   });
 };
 
-// No menu when embedded in an iframe, so searching from a no-menu page
-// does not bring back the navbar
+const searchNoMenu = (req: Req) => !!req.query?.no_menu;
+
 const searchPageOpts = (req: Req) => ({
   title: req.__("Search all tables"),
-  no_menu: req.get("sec-fetch-dest") === "iframe",
+  no_menu: searchNoMenu(req),
 });
 
 const syntax_help_link = (req: Req) => {
@@ -421,7 +424,7 @@ router.get(
         return;
       }
 
-      const form = searchForm();
+      const form = searchForm(searchNoMenu(req));
       res.sendWrap(searchPageOpts(req), {
         type: "card",
         contents: renderForm(form, false) + syntax_help_link(req),

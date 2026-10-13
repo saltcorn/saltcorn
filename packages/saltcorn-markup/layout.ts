@@ -31,6 +31,7 @@ const {
   script,
   text_attr,
   form,
+  input,
 } = tags;
 import {
   toast,
@@ -1032,7 +1033,10 @@ const render = ({
           autofocus: segment.autofocus,
           contents: go(segment.contents),
           hints,
-        })
+        }),
+        req?.no_menu
+          ? input({ type: "hidden", name: "no_menu", value: "1" })
+          : ""
       );
     }
     if (segment.above) {

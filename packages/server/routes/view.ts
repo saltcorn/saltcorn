@@ -109,6 +109,7 @@ router.get(
       return;
     }
     const isModal = req.headers?.saltcornmodalrequest;
+    if (view.attributes?.no_menu && !isModal) req.no_menu = true;
 
     const contents0 = await view.run_possibly_on_page(query, req, res, false, {
       alreadyAuthorizedFor: view,
