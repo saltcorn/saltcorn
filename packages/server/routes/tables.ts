@@ -2057,7 +2057,7 @@ router.get(
       { orderBy: table.pk_name, forUser: req.user }
     );
     res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
+    res.attachment(`${name}.csv`);
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Pragma", "no-cache");
     const columns = table.fields
