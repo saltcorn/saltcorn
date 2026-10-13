@@ -317,7 +317,7 @@ const runSearch = async ({ q, _page, table }: any, req: Req, res: any) => {
     tablesWithResults.length === 0
       ? [{ type: "card", contents: req.__("Not found") }]
       : mkResultDisplay();
-  res.sendWrap(req.__("Search all tables"), {
+  res.sendWrap(searchPageOpts(req), {
     above: [
       {
         type: "card",
@@ -357,6 +357,13 @@ const runSearch = async ({ q, _page, table }: any, req: Req, res: any) => {
     ],
   });
 };
+
+// No menu when embedded in an iframe, so searching from a no-menu page
+// does not bring back the navbar
+const searchPageOpts = (req: Req) => ({
+  title: req.__("Search all tables"),
+  no_menu: req.get("sec-fetch-dest") === "iframe",
+});
 
 const syntax_help_link = (req: Req) => {
   const use_websearch = getState()!.getConfig("search_use_websearch", false);
@@ -415,7 +422,7 @@ router.get(
       }
 
       const form = searchForm();
-      res.sendWrap(req.__("Search all tables"), {
+      res.sendWrap(searchPageOpts(req), {
         type: "card",
         contents: renderForm(form, false) + syntax_help_link(req),
       });
