@@ -1865,7 +1865,7 @@ ${value}`;
   $(".lazy-accoordion").on("show.bs.collapse", lazyAccHandler);
   $(".lazy-tabs").on("show.bs.tab", function (e) {
     const link = $(e.target);
-    const container = $(link.attr("href"));
+    const container = $(link.attr("data-bs-target") || link.attr("href"));
     lazyAccHandler({ target: container });
   });
 
@@ -3170,9 +3170,7 @@ function disable_inactive_tab_inputs(id) {
       const isActive = isAccordion
         ? !$(this).hasClass("collapsed")
         : $(this).hasClass("active");
-      const target = isAccordion
-        ? $(this).attr("data-bs-target")
-        : $(this).attr("href");
+      const target = $(this).attr("data-bs-target") || $(this).attr("href");
       if (isActive) {
         //activate previously disabled
         $(target)
