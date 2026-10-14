@@ -55,8 +55,54 @@ describe("renderTabs", () => {
     const result = renderTabs(opts, (content) => content);
 
     expect(result).toMatch(
-      /^<ul role="tablist" id="tab[a-f0-9]+" class="nav nav-tabs"><li class="nav-item" role="presentation"><a class="nav-link active" id="tab[a-f0-9]+link0" data-bs-toggle="tab" href="#Tab1" role="tab" aria-controls="tab[a-f0-9]+tab0" aria-selected="true">Tab 1<\/a><\/li><li class="nav-item" role="presentation"><a class="nav-link" id="tab[a-f0-9]+link1" data-bs-toggle="tab" href="#Tab2" role="tab" aria-controls="tab[a-f0-9]+tab1" aria-selected="false">Tab 2<\/a><\/li><\/ul><div class="tab-content" id="tab[a-f0-9]+content"><div class="tab-pane fade show active" role="tabpanel" id="Tab1" aria-labelledby="tab[a-f0-9]+link0">Tab 1 Content<\/div><div class="tab-pane fade" role="tabpanel" id="Tab2" aria-labelledby="tab[a-f0-9]+link1">Tab 2 Content<\/div><\/div>$/
+      /^<ul role="tablist" id="tab[a-f0-9]+" class="nav nav-tabs"><li class="nav-item" role="presentation"><a class="nav-link active" id="tab[a-f0-9]+link0" data-bs-toggle="tab" data-bs-target="#tab[a-f0-9]+tab0" href="#tab[a-f0-9]+tab0" role="tab" aria-controls="tab[a-f0-9]+tab0" aria-selected="true">Tab 1<\/a><\/li><li class="nav-item" role="presentation"><a class="nav-link" id="tab[a-f0-9]+link1" data-bs-toggle="tab" data-bs-target="#tab[a-f0-9]+tab1" href="#tab[a-f0-9]+tab1" role="tab" aria-controls="tab[a-f0-9]+tab1" aria-selected="false">Tab 2<\/a><\/li><\/ul><div class="tab-content" id="tab[a-f0-9]+content"><div class="tab-pane fade show active" role="tabpanel" id="tab[a-f0-9]+tab0" aria-labelledby="tab[a-f0-9]+link0">Tab 1 Content<\/div><div class="tab-pane fade" role="tabpanel" id="tab[a-f0-9]+tab1" aria-labelledby="tab[a-f0-9]+link1">Tab 2 Content<\/div><\/div>$/
     );
+  });
+
+  it("gives each instance its own pane ids when titles repeat", () => {
+    const opts = {
+      contents: ["One", "Two"],
+      titles: ["Tab1", "Tab2"],
+      tabsStyle: "Tabs",
+      independent: true,
+    };
+    const paneIds = (html: string) =>
+      [...html.matchAll(/role="tabpanel" id="([^"]+)"/g)].map((m) => m[1]);
+    const first = renderTabs(opts, (content) => content);
+    const second = renderTabs(
+      { ...opts, tabsStyle: "Pills" },
+      (content) => content
+    );
+    const ids = [...paneIds(first), ...paneIds(second)];
+    expect(ids).toHaveLength(4);
+    expect(new Set(ids).size).toBe(4);
+    for (const html of [first, second])
+      for (const id of paneIds(html)) {
+        expect(html).toContain(`data-bs-target="#${id}"`);
+        expect(html).toContain(`aria-controls="${id}"`);
+      }
+  });
+
+  it("keeps title-based hrefs but scoped pane ids for deeplink tabs", () => {
+    const opts = {
+      contents: ["One", "Two", "Three"],
+      titles: ["Tab 1", "Tab 2", "Tab 1"],
+      tabsStyle: "Tabs",
+      deeplink: true,
+      independent: true,
+    };
+    const first = renderTabs(opts, (content) => content);
+    const second = renderTabs(opts, (content) => content);
+    expect(first).toContain('href="#Tab1"');
+    expect(first).toContain('href="#Tab2"');
+    expect(first).toContain('href="#tab2"');
+    expect(first).not.toContain('id="Tab1"');
+    const paneIds = (html: string) =>
+      [...html.matchAll(/role="tabpanel" id="([^"]+)"/g)].map((m) => m[1]);
+    const ids = [...paneIds(first), ...paneIds(second)];
+    expect(new Set(ids).size).toBe(6);
+    for (const id of paneIds(first))
+      expect(first).toContain(`data-bs-target="#${id}"`);
   });
 
   it("renders accordion-style tabs", () => {
