@@ -784,12 +784,14 @@ class Trigger implements AbstractTrigger {
       .map(([k, v]: [string, any]) => {
         const hasConfig = !!v.configFields;
         const requireRow = !!v.requireRow;
+        const allowWithoutRow = !!v.allowWithoutRow;
         const disableInWorkflow = !!v.disableInWorkflow;
         const disableInBuilder = !!v.disableInBuilder;
         return {
           name: k,
           hasConfig,
           requireRow,
+          allowWithoutRow,
           disableInWorkflow,
           disableInBuilder,
           namespace: v.namespace,
@@ -936,7 +938,10 @@ class Trigger implements AbstractTrigger {
         .filter(
           (a) =>
             (ns === "Other" ? !a.namespace : a.namespace === ns) &&
-            (!notRequireRow || !a.requireRow || forWorkflow)
+            (!notRequireRow ||
+              !a.requireRow ||
+              a.allowWithoutRow ||
+              forWorkflow)
         )
         .map((t) => t.name)
         .sort();
