@@ -24,6 +24,7 @@ import {
   readState,
   generate_joined_query,
   stateToQueryString,
+  picked_fields_to_query,
 } from "../plugin-helper.js";
 import { getState } from "../db/state.js";
 import {
@@ -32,6 +33,7 @@ import {
   cloneName,
   objectToQueryString,
   validSqlId,
+  joinFieldKey,
 } from "../utils.js";
 import fs from "fs";
 import PlainDate from "@saltcorn/plain-date";
@@ -838,6 +840,34 @@ describe("stateFieldsToWhere", () => {
           },
         ],
       });
+  });
+});
+describe("join field alias collisions", () => {
+  it("joinFieldKey leaves non-colliding keys alone", async () => {
+    expect(joinFieldKey("favbook_author", [{ name: "name" }])).toBe(
+      "favbook_author"
+    );
+  });
+  it("joinFieldKey disambiguates keys matching a real column", async () => {
+    expect(joinFieldKey("favbook_author", [{ name: "favbook_author" }])).toBe(
+      "favbook_author__join"
+    );
+  });
+  it("picked_fields_to_query does not alias a join field onto an existing column", async () => {
+    const table = Table.findOne({ name: "patients" })!;
+    assertIsSet(table);
+    const fields = [
+      ...table.getFields(),
+      new Field({ name: "favbook_author", type: "String" }),
+    ];
+    const { joinFields } = picked_fields_to_query(
+      [{ type: "JoinField", join_field: "favbook.author" }],
+      fields,
+      undefined,
+      mockReqRes.req,
+      table
+    );
+    expect(Object.keys(joinFields)).toStrictEqual(["favbook_author__join"]);
   });
 });
 describe("satisfies", () => {
