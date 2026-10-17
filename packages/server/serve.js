@@ -55,6 +55,15 @@ import { writeFileSync, rmSync, readFileSync, readdirSync } from "fs";
 import fsExtra from "fs-extra";
 const { pathExistsSync } = fsExtra;
 import envPaths from "env-paths";
+import {
+  isSocketEventMsg,
+  forwardPrimarySocketEmits as _forwardPrimarySocketEmits,
+} from "./socket_forwarding.js";
+
+const forwardPrimarySocketEmits = () =>
+  _forwardPrimarySocketEmits(getState(), () =>
+    Object.values(cluster.workers || {})
+  );
 
 const take_snapshot = async () => {
   return await Snapshot.take_if_changed();
@@ -366,45 +375,6 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   }
   if (msg.restart_tenant) restart_tenant(Plugin.loadAllPlugins);
   if (msg.removePlugin) getState().remove_plugin(msg.removePlugin, true);
-};
-
-const isSocketEventMsg = (msg) =>
-  !!(
-    msg.dynamic_update ||
-    msg.real_time_collab_event ||
-    msg.real_time_chat_event ||
-    msg.log_event ||
-    msg.restore_progress_event
-  );
-
-/**
- * The primary has no socket.io server when workers are forked, so hand its
- * socket events to one worker. The cluster adapter delivers them to all workers.
- */
-const forwardPrimarySocketEmits = () => {
-  const sendToOneWorker = (msg) => {
-    const worker = Object.values(cluster.workers || {})[0];
-    if (worker) worker.send(msg);
-  };
-  const state = getState();
-  state.setDynamicUpdateEmitter((tenant, data, userIds) =>
-    sendToOneWorker({ dynamic_update: data, tenant, userIds })
-  );
-  state.setCollabEmitter((tenant, type, data, viewname) =>
-    sendToOneWorker({
-      real_time_collab_event: { type, data, viewname },
-      tenant,
-    })
-  );
-  state.setLogEmitter((tenant, min_level, msg) =>
-    sendToOneWorker({ log_event: { min_level, msg }, tenant })
-  );
-  state.setRestoreEmitter((tenant, jobId, data) =>
-    sendToOneWorker({ restore_progress_event: { jobId, data }, tenant })
-  );
-  state.setRoomEmitter((...args) =>
-    sendToOneWorker({ real_time_chat_event: { ...args } })
-  );
 };
 
 /**
