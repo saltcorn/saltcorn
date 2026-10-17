@@ -297,7 +297,7 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   }
   if (msg.dynamic_update) {
     getState().emitDynamicUpdate(
-      tenant || "public",
+      db.getTenantSchema(),
       msg.dynamic_update,
       msg.userIds,
       true
@@ -311,7 +311,7 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   }
   if (msg.real_time_collab_event) {
     getState().emitCollabMessage(
-      tenant || "public",
+      db.getTenantSchema(),
       msg.real_time_collab_event.type,
       msg.real_time_collab_event.data,
       msg.real_time_collab_event.viewname,
@@ -325,7 +325,7 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   }
   if (msg.log_event) {
     getState().emitLog(
-      tenant || "public",
+      db.getTenantSchema(),
       msg.log_event.min_level,
       msg.log_event.msg,
       true
@@ -333,7 +333,7 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   }
   if (msg.restore_progress_event) {
     getState().emitRestoreProgress(
-      tenant || "public",
+      db.getTenantSchema(),
       msg.restore_progress_event.jobId,
       msg.restore_progress_event.data,
       true
@@ -366,6 +366,45 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   }
   if (msg.restart_tenant) restart_tenant(Plugin.loadAllPlugins);
   if (msg.removePlugin) getState().remove_plugin(msg.removePlugin, true);
+};
+
+const isSocketEventMsg = (msg) =>
+  !!(
+    msg.dynamic_update ||
+    msg.real_time_collab_event ||
+    msg.real_time_chat_event ||
+    msg.log_event ||
+    msg.restore_progress_event
+  );
+
+/**
+ * The primary has no socket.io server when workers are forked, so hand its
+ * socket events to one worker. The cluster adapter delivers them to all workers.
+ */
+const forwardPrimarySocketEmits = () => {
+  const sendToOneWorker = (msg) => {
+    const worker = Object.values(cluster.workers || {})[0];
+    if (worker) worker.send(msg);
+  };
+  const state = getState();
+  state.setDynamicUpdateEmitter((tenant, data, userIds) =>
+    sendToOneWorker({ dynamic_update: data, tenant, userIds })
+  );
+  state.setCollabEmitter((tenant, type, data, viewname) =>
+    sendToOneWorker({
+      real_time_collab_event: { type, data, viewname },
+      tenant,
+    })
+  );
+  state.setLogEmitter((tenant, min_level, msg) =>
+    sendToOneWorker({ log_event: { min_level, msg }, tenant })
+  );
+  state.setRestoreEmitter((tenant, jobId, data) =>
+    sendToOneWorker({ restore_progress_event: { jobId, data }, tenant })
+  );
+  state.setRoomEmitter((...args) =>
+    sendToOneWorker({ real_time_chat_event: { ...args } })
+  );
 };
 
 /**
@@ -667,6 +706,14 @@ async ({
           }
         });
         getState().sendMessageToWorkers = (msg) => {
+          if (isSocketEventMsg(msg)) {
+            // already emitted locally, only other nodes need it
+            if (nodesDispatchMsg)
+              nodesDispatchMsg(msg).catch((e) => {
+                console.log("Error sending multinode message", e.message);
+              });
+            return;
+          }
           Object.entries(cluster.workers).forEach(([wpid, w]) => {
             w.send(msg);
           });
@@ -701,7 +748,10 @@ async ({
           getState().processSend("Start");
         })
         .master(() => {
-          initMaster(appargs, true, multiNodeClient).then(initMasterListeners);
+          initMaster(appargs, true, multiNodeClient).then(() => {
+            forwardPrimarySocketEmits();
+            initMasterListeners();
+          });
         });
 
       return; // none of stuff below will execute
@@ -715,7 +765,16 @@ async ({
 
     if (forkAnyWorkers) {
       for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
+      forwardPrimarySocketEmits();
       getState().sendMessageToWorkers = (msg) => {
+        if (isSocketEventMsg(msg)) {
+          // already emitted locally, only other nodes need it
+          if (nodesDispatchMsg)
+            nodesDispatchMsg(msg).catch((e) => {
+              console.log("Error sending multinode message", e.message);
+            });
+          return;
+        }
         Object.entries(cluster.workers).forEach(([wpid, w]) => {
           w.send(msg);
         });
