@@ -55,6 +55,15 @@ import { writeFileSync, rmSync, readFileSync, readdirSync } from "fs";
 import fsExtra from "fs-extra";
 const { pathExistsSync } = fsExtra;
 import envPaths from "env-paths";
+import {
+  isSocketEventMsg,
+  forwardPrimarySocketEmits as _forwardPrimarySocketEmits,
+} from "./socket_forwarding.js";
+
+const forwardPrimarySocketEmits = () =>
+  _forwardPrimarySocketEmits(getState(), () =>
+    Object.values(cluster.workers || {})
+  );
 
 const take_snapshot = async () => {
   return await Snapshot.take_if_changed();
@@ -297,7 +306,7 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   }
   if (msg.dynamic_update) {
     getState().emitDynamicUpdate(
-      tenant || "public",
+      db.getTenantSchema(),
       msg.dynamic_update,
       msg.userIds,
       true
@@ -311,7 +320,7 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   }
   if (msg.real_time_collab_event) {
     getState().emitCollabMessage(
-      tenant || "public",
+      db.getTenantSchema(),
       msg.real_time_collab_event.type,
       msg.real_time_collab_event.data,
       msg.real_time_collab_event.viewname,
@@ -325,7 +334,7 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   }
   if (msg.log_event) {
     getState().emitLog(
-      tenant || "public",
+      db.getTenantSchema(),
       msg.log_event.min_level,
       msg.log_event.msg,
       true
@@ -333,7 +342,7 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   }
   if (msg.restore_progress_event) {
     getState().emitRestoreProgress(
-      tenant || "public",
+      db.getTenantSchema(),
       msg.restore_progress_event.jobId,
       msg.restore_progress_event.data,
       true
@@ -667,6 +676,14 @@ async ({
           }
         });
         getState().sendMessageToWorkers = (msg) => {
+          if (isSocketEventMsg(msg)) {
+            // already emitted locally, only other nodes need it
+            if (nodesDispatchMsg)
+              nodesDispatchMsg(msg).catch((e) => {
+                console.log("Error sending multinode message", e.message);
+              });
+            return;
+          }
           Object.entries(cluster.workers).forEach(([wpid, w]) => {
             w.send(msg);
           });
@@ -701,7 +718,10 @@ async ({
           getState().processSend("Start");
         })
         .master(() => {
-          initMaster(appargs, true, multiNodeClient).then(initMasterListeners);
+          initMaster(appargs, true, multiNodeClient).then(() => {
+            forwardPrimarySocketEmits();
+            initMasterListeners();
+          });
         });
 
       return; // none of stuff below will execute
@@ -715,7 +735,16 @@ async ({
 
     if (forkAnyWorkers) {
       for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
+      forwardPrimarySocketEmits();
       getState().sendMessageToWorkers = (msg) => {
+        if (isSocketEventMsg(msg)) {
+          // already emitted locally, only other nodes need it
+          if (nodesDispatchMsg)
+            nodesDispatchMsg(msg).catch((e) => {
+              console.log("Error sending multinode message", e.message);
+            });
+          return;
+        }
         Object.entries(cluster.workers).forEach(([wpid, w]) => {
           w.send(msg);
         });
