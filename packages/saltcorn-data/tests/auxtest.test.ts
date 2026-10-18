@@ -853,21 +853,110 @@ describe("join field alias collisions", () => {
       "favbook_author__join"
     );
   });
-  it("picked_fields_to_query does not alias a join field onto an existing column", async () => {
-    const table = Table.findOne({ name: "patients" })!;
-    assertIsSet(table);
-    const fields = [
-      ...table.getFields(),
-      new Field({ name: "favbook_author", type: "String" }),
-    ];
-    const { joinFields } = picked_fields_to_query(
-      [{ type: "JoinField", join_field: "favbook.author" }],
-      fields,
-      undefined,
-      mockReqRes.req,
-      table
-    );
-    expect(Object.keys(joinFields)).toStrictEqual(["favbook_author__join"]);
+  describe("with a real table", () => {
+    beforeAll(async () => {
+      const parents = await Table.create("jfc_parents");
+      await Field.create({
+        table: parents,
+        name: "name",
+        label: "name",
+        type: "String",
+      });
+      const children = await Table.create("jfc_children");
+      await Field.create({
+        table: children,
+        name: "parent",
+        label: "parent",
+        type: "Key to jfc_parents",
+      });
+      await Field.create({
+        table: children,
+        name: "parent_name",
+        label: "parent_name",
+        type: "String",
+      });
+      await Field.create({
+        table: children,
+        name: "calc_stored",
+        label: "calc_stored",
+        type: "String",
+        calculated: true,
+        stored: true,
+        expression: "parent?.name",
+      });
+      const zid = await parents.insertRow({ name: "Zed" });
+      const aid = await parents.insertRow({ name: "Amy" });
+      await children.insertRow({ parent: zid, parent_name: "aaa-col" });
+      await children.insertRow({ parent: aid, parent_name: "zzz-col" });
+    });
+    const getTable = () => Table.findOne({ name: "jfc_children" })!;
+
+    it("returns both the join field and the real column", async () => {
+      const table = getTable();
+      const { joinFields } = picked_fields_to_query(
+        [{ type: "JoinField", join_field: "parent.name" }],
+        table.getFields(),
+        undefined,
+        mockReqRes.req,
+        table
+      );
+      const rows = await table.getJoinedRows({
+        joinFields,
+        orderBy: "id",
+      });
+      expect(rows.map((r: any) => r.parent_name__join)).toStrictEqual([
+        "Zed",
+        "Amy",
+      ]);
+      expect(rows.map((r: any) => r.parent_name)).toStrictEqual([
+        "aaa-col",
+        "zzz-col",
+      ]);
+    });
+    it("orders by a dotted join path", async () => {
+      const table = getTable();
+      const { joinFields } = picked_fields_to_query(
+        [{ type: "JoinField", join_field: "parent.name" }],
+        table.getFields(),
+        undefined,
+        mockReqRes.req,
+        table
+      );
+      const rows = await table.getJoinedRows({
+        joinFields,
+        orderBy: "parent.name",
+      });
+      expect(rows.map((r: any) => r.parent_name__join)).toStrictEqual([
+        "Amy",
+        "Zed",
+      ]);
+    });
+    it("evaluates formulas against the joined value", async () => {
+      const table = getTable();
+      const joinFields: any = {};
+      add_free_variables_to_joinfields(
+        freeVariables("parent.name"),
+        joinFields,
+        table.getFields()
+      );
+      const rows = await table.getJoinedRows({ joinFields, orderBy: "id" });
+      expect(rows.map((r: any) => r.parent.name)).toStrictEqual([
+        "Zed",
+        "Amy",
+      ]);
+      expect(rows.map((r: any) => r.parent_name)).toStrictEqual([
+        "aaa-col",
+        "zzz-col",
+      ]);
+    });
+    it("stores calculated fields from the joined value", async () => {
+      const table = getTable();
+      const rows = await table.getRows({}, { orderBy: "id" });
+      expect(rows.map((r: any) => r.calc_stored)).toStrictEqual([
+        "Zed",
+        "Amy",
+      ]);
+    });
   });
 });
 describe("satisfies", () => {

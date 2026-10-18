@@ -26,7 +26,12 @@ import { PluginFunction } from "@saltcorn/types/base_types";
 import db from "../db/index.js";
 import * as utils from "../utils.js";
 import { GenObj } from "@saltcorn/db-common/types";
-import { mergeIntoWhere, isNode, isValidJsIdentifier } from "../utils.js";
+import {
+  mergeIntoWhere,
+  isNode,
+  isValidJsIdentifier,
+  joinFieldKey,
+} from "../utils.js";
 const { VM } = vm2Pkg;
 
 function deproxy(value: any): any {
@@ -691,14 +696,14 @@ const add_free_variables_to_joinfields = (
       if (joinFieldNames.has(kpath[0]))
         if (kpath.length === 2) {
           const [refNm, targetNm] = kpath;
-          joinFields[`${refNm}_${targetNm}`] = {
+          joinFields[joinFieldKey(`${refNm}_${targetNm}`, fields)] = {
             ref: refNm,
             target: targetNm,
             rename_object: [refNm, targetNm],
           };
         } else if (kpath.length === 3) {
           const [refNm, through, targetNm] = kpath;
-          joinFields[`${refNm}_${through}_${targetNm}`] = {
+          joinFields[joinFieldKey(`${refNm}_${through}_${targetNm}`, fields)] = {
             ref: refNm,
             target: targetNm,
             through,
@@ -706,7 +711,7 @@ const add_free_variables_to_joinfields = (
           };
         } else if (kpath.length === 4) {
           const [refNm, through1, through2, targetNm] = kpath;
-          joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
+          joinFields[joinFieldKey(`${refNm}_${through1}_${through2}_${targetNm}`, fields)] = {
             ref: refNm,
             target: targetNm,
             through: [through1, through2],
