@@ -932,8 +932,18 @@ const renderTabs = (
       contentWrapperClass ? div({ class: contentWrapperClass }, s) : s;
     const maybeWrapHeader = (s: string) =>
       headerWrapperClass ? div({ class: headerWrapperClass }, s) : s;
+    const paneIds = contents.map((t, ix) => `${rndid}tab${ix}`);
+    const seen = new Set<string>();
+    const hrefIds = contents.map((t, ix) => {
+      if (!deeplink && !isMobile) return paneIds[ix];
+      let id = validID(titles[ix]);
+      if (!id || seen.has(id)) id = `tab${ix}`;
+      while (seen.has(id)) id += "_";
+      seen.add(id);
+      return id;
+    });
     const buildOnClick = (ix: number) => {
-      const execLink = isMobile ? `execLink('#${validID(titles[ix])}');` : "";
+      const execLink = isMobile ? `execLink('#${hrefIds[ix]}');` : "";
       let result = disable_inactive
         ? `disable_inactive_tab_inputs('${rndid}'); `
         : "";
@@ -967,11 +977,14 @@ const renderTabs = (
                   onclick: buildOnClick(ix),
                   id: `${rndid}link${ix}`,
                   "data-bs-toggle": serverRendered ? undefined : "tab",
+                  "data-bs-target": serverRendered
+                    ? undefined
+                    : `#${paneIds[ix]}`,
                   href: serverRendered
                     ? `javascript:set_state_field('${tabId || "_tab"}', ${ix})`
-                    : `#${validID(titles[ix])}`,
+                    : `#${hrefIds[ix]}`,
                   role: "tab",
-                  "aria-controls": `${rndid}tab${ix}`,
+                  "aria-controls": paneIds[ix],
                   "aria-selected": ix === 0 ? "true" : "false",
                 },
                 titles[ix]
@@ -988,7 +1001,7 @@ const renderTabs = (
                 {
                   class: ["tab-pane", bodyClass || "", "show active"],
                   role: "tabpanel",
-                  id: `${validID(titles[activeIx])}`,
+                  id: paneIds[activeIx],
                   "aria-labelledby": `${rndid}link${activeIx}`,
                 },
                 go(contents[activeIx], false, activeIx)
@@ -1002,7 +1015,7 @@ const renderTabs = (
                       ix === activeIx && "show active",
                     ],
                     role: "tabpanel",
-                    id: `${validID(titles[ix])}`,
+                    id: paneIds[ix],
                     "aria-labelledby": `${rndid}link${ix}`,
                   },
                   go(t, false, ix)
