@@ -51,6 +51,14 @@ describe("single relations", () => {
     ]);
   });
 
+  it("child relations with a non-unique key", () => {
+    const { tables, views } = fixturesData(__dirname);
+    const finder = new RelationsFinder(tables, views, 6);
+    expect(finder.singleRelationPaths("rooms", "show_message", [])).toEqual([
+      ".rooms.messages$room",
+    ]);
+  });
+
   it("employee department relation", () => {
     const { tables, views } = fixturesData(__dirname);
     const finder = new RelationsFinder(tables, views, 6);
