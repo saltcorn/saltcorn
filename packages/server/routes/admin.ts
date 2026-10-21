@@ -814,7 +814,7 @@ router.get(
       res.send("Not authorized");
       return;
     }
-    res.set("Page-Title", `Restore ${text(name)}`);
+    res.set("Page-Title", encodeURIComponent(`Restore ${text(name)}`));
     let olderUrl = `/admin/snapshot-restore/${type}/${encodeURIComponent(name)}?snap_offset=${snapOffset + 100}`;
     if (req.query.on_done_redirect)
       olderUrl += `&on_done_redirect=${encodeURIComponent(req.query.on_done_redirect)}`;
@@ -1781,7 +1781,10 @@ router.get(
 
       if (versions.length === 0) throw new Error(req.__("No versions found"));
       const tags = pkgInfo["dist-tags"] || {};
-      res.set("Page-Title", req.__("%s versions", "Saltcorn"));
+      res.set(
+        "Page-Title",
+        encodeURIComponent(req.__("%s versions", "Saltcorn"))
+      );
       let selected = packagejson.version;
       res.send(
         form(
@@ -5297,9 +5300,8 @@ router.get(
           // this server's own APN push config - a build machine building
           // against this schema should bundle push support based on this,
           // not whatever its own (possibly unrelated) local config says
-          pushNotificationsEnabled: !!getState()!.getConfig(
-            "apn_signing_key_id"
-          ),
+          pushNotificationsEnabled:
+            !!getState()!.getConfig("apn_signing_key_id"),
         });
       }
     )(req, res, next);
@@ -5318,7 +5320,10 @@ router.post(
       }
       // not form fields - fetch-remote-schema-info sets these; preserve them
       // here or every unrelated auto-save (any field change) would wipe them
-      const oldCfgForSchema = getState()!.getConfig("mobile_builder_settings", {});
+      const oldCfgForSchema = getState()!.getConfig(
+        "mobile_builder_settings",
+        {}
+      );
       newCfg.remoteSchemaInfo = oldCfgForSchema.remoteSchemaInfo;
       newCfg.remoteSchemaInfoUrl = oldCfgForSchema.remoteSchemaInfoUrl;
       const excludedPlugins = (await Plugin.find())
