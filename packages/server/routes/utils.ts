@@ -472,6 +472,27 @@ const scan_for_page_title = (contents: string | object, viewname: string) => {
 };
 
 /**
+ * Layout options from a page's settings. Shared by the page route and by
+ * search results from the page's search bar, so both look the same
+ * @param {object} page
+ * @returns {object}
+ */
+const pageWrapOpts = (page: any) => ({
+  bodyClass: "page_" + db.sqlsanitize(page.name),
+  no_menu: page.attributes?.no_menu,
+  requestFluidLayout: page.attributes?.request_fluid_layout,
+});
+
+/**
+ * Layout options from a view's settings, see pageWrapOpts
+ * @param {object} view
+ * @returns {object}
+ */
+const viewWrapOpts = (view: any) => ({
+  no_menu: view.attributes?.no_menu,
+});
+
+/**
  * Gets gir revision
  * @returns {string}
  */
@@ -915,6 +936,8 @@ export {
   get_base_url,
   error_catcher,
   scan_for_page_title,
+  pageWrapOpts,
+  viewWrapOpts,
   getGitRevision,
   getSessionStore,
   validateHostAuthority,

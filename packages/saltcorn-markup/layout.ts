@@ -31,6 +31,7 @@ const {
   script,
   text_attr,
   form,
+  input,
 } = tags;
 import {
   toast,
@@ -1032,7 +1033,10 @@ const render = ({
           autofocus: segment.autofocus,
           contents: go(segment.contents),
           hints,
-        })
+        }),
+        Object.entries(req?.search_source || {}).map(([name, value]) =>
+          input({ type: "hidden", name, value: value as string })
+        )
       );
     }
     if (segment.above) {
