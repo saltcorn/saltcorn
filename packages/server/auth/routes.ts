@@ -1476,10 +1476,11 @@ router.post(
  * @function
  * @memberof module:auth/routes~routesRouter
  */
+// no userLimiter on the OAuth GET/callback routes: there is no request body
+// to key on, so every user would share the "nokey" bucket
 router.get(
   "/login-with/:method",
   ipLimiter,
-  userLimiter,
   error_catcher(async (req: Req, res: Res, next: any) => {
     const { method } = req.params;
     const auth = getState()!.auth_methods[method];
@@ -1730,14 +1731,12 @@ const callbackFn = async (req: Req, res: Res, next: any) => {
 router.get(
   "/callback/:method",
   ipLimiter,
-  userLimiter,
   error_catcher(callbackFn)
 );
 
 router.post(
   "/callback/:method",
   ipLimiter,
-  userLimiter,
   error_catcher(callbackFn)
 );
 
