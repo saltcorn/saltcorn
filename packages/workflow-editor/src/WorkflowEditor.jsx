@@ -831,7 +831,7 @@ const WorkflowEditor = ({ data }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [modal, setModal] = useState(null);
+  const [modal, setModalState] = useState(null);
   const [savingModal, setSavingModal] = useState(false);
   const [savingPositions, setSavingPositions] = useState(false);
   const [sizeSyncing, setSizeSyncing] = useState(false);
@@ -842,6 +842,13 @@ const WorkflowEditor = ({ data }) => {
     return 600;
   });
   const modalRef = useRef(null);
+  // dispose Monaco editors in the drawer before React swaps/removes its HTML
+  const setModal = useCallback((next) => {
+    if (modalRef.current && window.dispose_monaco_in)
+      window.dispose_monaco_in(modalRef.current);
+    setModalState(next);
+  }, []);
+  const stepFormRequestRef = useRef(null);
   const drawerRef = useRef(null);
   const shellRef = useRef(null);
   const resizingRef = useRef(false);
@@ -1457,6 +1464,9 @@ const WorkflowEditor = ({ data }) => {
 
   const openStepForm = useCallback(
     async ({ stepId, initial_step, after_step } = {}) => {
+      stepFormRequestRef.current?.abort();
+      const controller = new AbortController();
+      stepFormRequestRef.current = controller;
       try {
         setError("");
         const descriptor = {
@@ -1471,14 +1481,24 @@ const WorkflowEditor = ({ data }) => {
         url.searchParams.set("vw", window.innerWidth);
         if (initial_step) url.searchParams.set("initial_step", "true");
         if (after_step) url.searchParams.set("after_step", after_step);
-        const res = await fetchJson(url.toString());
+        const res = await fetchJson(url.toString(), {
+          signal: controller.signal,
+        });
+        if (stepFormRequestRef.current !== controller) return;
         setModal({ title: res.title, body: res.form, stepId: stepId || null });
       } catch (e) {
+        if (e.name === "AbortError") return;
         clearDrawerState();
         setError(e.message);
       }
     },
-    [clearDrawerState, data.urls.stepForm, fetchJson, persistDrawerState]
+    [
+      clearDrawerState,
+      data.urls.stepForm,
+      fetchJson,
+      persistDrawerState,
+      setModal,
+    ]
   );
 
   const submitStepForm = useCallback(
