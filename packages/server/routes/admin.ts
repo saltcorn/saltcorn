@@ -987,7 +987,7 @@ router.post(
     // req.body is undefined when only the file was sent
     filter_pack(pack, req.body || {});
     // runs in the background so a long restore can't time out the request
-    const jobId = startJob(async (onLog) => {
+    const jobId = await startJob(async (onLog) => {
       await db.withTransaction(async () => {
         await install_pack(
           pack,

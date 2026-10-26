@@ -87,7 +87,7 @@ const postSnapshot = (app, loginCookie, content, fields = {}) => {
 
 describe("startJob", () => {
   it("reports progress and done", async () => {
-    const jobId = startJob(async (onLog) => {
+    const jobId = await startJob(async (onLog) => {
       onLog("step one");
       await sleep(10);
     });
@@ -95,7 +95,7 @@ describe("startJob", () => {
   });
   it("reports an error when the job throws", async () => {
     const logged = await captureErrors(async () => {
-      const jobId = startJob(async () => {
+      const jobId = await startJob(async () => {
         throw new Error("it broke");
       });
       expect(await waitForJobFile(jobId)).toEqual({
@@ -107,7 +107,7 @@ describe("startJob", () => {
   });
   it("reports password_required when the job needs a password", async () => {
     const logged = await captureErrors(async () => {
-      const jobId = startJob(async () => {
+      const jobId = await startJob(async () => {
         const e = new Error("password");
         e.requiresPassword = true;
         throw e;
@@ -120,7 +120,7 @@ describe("startJob", () => {
   });
   it("reuses a given job id", async () => {
     const givenId = uuidv4();
-    const jobId = startJob(async () => {}, givenId);
+    const jobId = await startJob(async () => {}, givenId);
     expect(jobId).toBe(givenId);
     expect(await waitForJobFile(jobId)).toEqual({ status: "done" });
   });
@@ -132,15 +132,11 @@ describe("restore job status files", () => {
 
   it("writes a progress status right away, in the file store", async () => {
     let finishJob;
-    const jobId = startJob(
+    const jobId = await startJob(
       () => new Promise((resolve) => (finishJob = resolve))
     );
-    // the first write is async, give it a moment
-    let status = null;
-    for (let i = 0; i < 50 && !status; i++) {
-      status = await getRestoreJobStatus(jobId);
-      if (!status) await sleep(20);
-    }
+    // startJob resolves only after the first write, so no polling needed
+    const status = await getRestoreJobStatus(jobId);
     expect(status.status).toBe("progress");
     expect(fs.existsSync(join(statusDir(), `sc-restore-${jobId}.json`))).toBe(
       true
@@ -158,7 +154,7 @@ describe("restore job status files", () => {
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
     fs.utimesSync(oldFile, twoDaysAgo, twoDaysAgo);
 
-    const jobId = startJob(async () => {});
+    const jobId = await startJob(async () => {});
     await waitForJobFile(jobId);
     // cleanup runs in the background, give it a moment
     for (let i = 0; i < 50 && fs.existsSync(oldFile); i++) await sleep(20);
