@@ -33,6 +33,7 @@ const {
   setTenant,
   applyUserLocale,
   rejectTenantDrift,
+  dropTenantDriftUser,
 } = require("./routes/utils.js");
 const {
   getAllTenants,
@@ -238,9 +239,9 @@ const getApp = async (opts = {}) => {
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));
   // The session store is shared by all tenants, so a session minted in
-  // tenant A can be replayed against tenant B's host. Reject that drift for
-  // every route here, before any handler trusts req.user's role.
-  app.use(rejectTenantDrift);
+  // tenant A can be replayed against tenant B's host. Treat such a session
+  // as logged out for every route, before any handler trusts req.user's role.
+  app.use(dropTenantDriftUser);
   app.use(applyUserLocale);
   const isPlaywright = process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD?.length > 0;
   app.use((req, res, next) => {

@@ -139,6 +139,27 @@ function rejectTenantDrift(req, res, next) {
   next();
 }
 
+/**
+ * App-wide guard, run right after passport restores the session: a session
+ * user minted in a different tenant than the one resolved for this request
+ * is treated as unauthenticated, so every route applies its normal public
+ * (role 100) checks instead of the home-tenant role. The session itself is
+ * left untouched.
+ * @param {object} req
+ * @param {object} res
+ * @param {function} next
+ * @returns {void}
+ */
+function dropTenantDriftUser(req, res, next) {
+  if (
+    req.user &&
+    req.user.tenant !== undefined &&
+    req.user.tenant !== db.getTenantSchema()
+  )
+    req.user = undefined;
+  next();
+}
+
 const isAdminOrHasConfigMinRole = (cfg) => (req, res, next) => {
   const cur_tenant = db.getTenantSchema();
   //console.log({ cur_tenant, user: req.user });
@@ -853,6 +874,7 @@ module.exports = {
   isAdmin,
   isAdminOrHasConfigMinRole,
   rejectTenantDrift,
+  dropTenantDriftUser,
   get_base_url,
   error_catcher,
   scan_for_page_title,
