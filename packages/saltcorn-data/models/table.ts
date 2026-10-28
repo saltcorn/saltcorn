@@ -87,6 +87,7 @@ import {
   apply,
   applyAsync,
   asyncMap,
+  joinFieldKey,
 } from "../utils.js";
 import tags, { em } from "@saltcorn/markup/tags";
 const { text } = tags;
@@ -4939,7 +4940,11 @@ ${rejectDetails}`,
     process_aggregations(this, aggregations, fldNms, values, schema);
 
     const odbUnderscore =
-      typeof opts.orderBy === "string" ? opts.orderBy.replace(/\./g, "_") : "";
+      typeof opts.orderBy === "string"
+        ? opts.orderBy.includes(".")
+          ? joinFieldKey(opts.orderBy.replace(/\./g, "_"), fields)
+          : opts.orderBy.replace(/\./g, "_")
+        : "";
     const selectopts: SelectOptions = this.processSelectOptions({
       limit: opts.limit,
       orderBy:
