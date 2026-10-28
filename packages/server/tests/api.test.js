@@ -8,6 +8,9 @@ import User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
 
 import { promises as fs } from "fs";
+import fsSync from "fs";
+import path from "path";
+import { tmpdir } from "os";
 
 import {
   getStaffLoginCookie,
@@ -1574,5 +1577,47 @@ describe("API viewQuery restricted where operators", () => {
     const resp2 = await runManyQuery([{ _fts: "Tolstoy" }, {}]);
     expect(resp2.status).toBe(200);
     expect(resp2.body.success.map((r) => r.author)).toEqual(["Leo Tolstoy"]);
+  });
+});
+
+describe("API mobile-app build-bundle job_id path traversal", () => {
+  let adminToken;
+  // jobs dir is <tmpdir>/sc-mobile-build-jobs/<tenant>, so ../../ lands in tmpdir
+  const probeName = `sc-traversal-probe-${Date.now()}`;
+  const probeBase = path.join(tmpdir(), probeName);
+  const traversalId = `../../${probeName}`;
+  beforeAll(async () => {
+    const admin = await User.findOne({ email: "admin@foo.com" });
+    adminToken = await admin.getNewAPIToken();
+    fsSync.writeFileSync(`${probeBase}.error.txt`, "outside-secret");
+    fsSync.writeFileSync(`${probeBase}.zip`, "outside-zip");
+  });
+  afterAll(() => {
+    fsSync.rmSync(`${probeBase}.error.txt`, { force: true });
+    fsSync.rmSync(`${probeBase}.zip`, { force: true });
+  });
+
+  it("status does not read files outside the jobs dir", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .get("/api/mobile-app/build-bundle/status")
+      .query({ job_id: traversalId })
+      .set("Authorization", "Bearer " + adminToken);
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).not.toContain("outside-secret");
+    expect(res.body.status).not.toBe("done");
+  });
+
+  it("result does not stream or delete files outside the jobs dir", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .get("/api/mobile-app/build-bundle/result")
+      .query({ job_id: traversalId })
+      .set("Authorization", "Bearer " + adminToken);
+    expect(res.status).toBe(400);
+    expect(res.text || "").not.toContain("outside-zip");
+    await sleep(200);
+    expect(fsSync.existsSync(`${probeBase}.zip`)).toBe(true);
+    expect(fsSync.existsSync(`${probeBase}.error.txt`)).toBe(true);
   });
 });

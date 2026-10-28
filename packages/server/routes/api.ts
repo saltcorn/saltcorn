@@ -415,7 +415,12 @@ const BUILD_BUNDLE_JOB_TTL_MS = 30 * 60 * 1000;
 const BUILD_BUNDLE_JOBS_ROOT = path.join(tmpdir(), "sc-mobile-build-jobs");
 const safeTenantDirName = (tenant: string) =>
   tenant.replace(/[^a-zA-Z0-9_-]/g, "_");
+// job ids are always crypto.randomUUID() - anything else could traverse out of dir
+const isValidBuildBundleJobId = (jobId: unknown): jobId is string =>
+  typeof jobId === "string" &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(jobId);
 const buildBundleJobPaths = (tenant: string, jobId: string) => {
+  if (!isValidBuildBundleJobId(jobId)) throw new Error("Invalid job_id");
   const dir = path.join(BUILD_BUNDLE_JOBS_ROOT, safeTenantDirName(tenant));
   return {
     zip: path.join(dir, `${jobId}.zip`),
@@ -555,9 +560,13 @@ router.post(
 router.get(
   "/mobile-app/build-bundle/status",
   withAdminBearer(async (req: Req, res: Res) => {
+    if (!isValidBuildBundleJobId(req.query.job_id)) {
+      res.status(400).json({ error: req.__("Invalid job_id") });
+      return;
+    }
     const { zip, error } = buildBundleJobPaths(
       db.getTenantSchema(),
-      req.query.job_id as string
+      req.query.job_id
     );
     if (fs.existsSync(zip)) res.json({ status: "done" });
     else if (fs.existsSync(error))
@@ -580,9 +589,13 @@ router.get(
 router.get(
   "/mobile-app/build-bundle/result",
   withAdminBearer(async (req: Req, res: Res) => {
+    if (!isValidBuildBundleJobId(req.query.job_id)) {
+      res.status(400).json({ error: req.__("Invalid job_id") });
+      return;
+    }
     const { zip, error } = buildBundleJobPaths(
       db.getTenantSchema(),
-      req.query.job_id as string
+      req.query.job_id
     );
     if (!fs.existsSync(zip)) {
       res.status(409).json({
