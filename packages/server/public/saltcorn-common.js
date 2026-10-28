@@ -712,6 +712,7 @@ function get_form_data(e_in, rndid) {
   const rec = get_form_record(e_in);
   Object.keys(rec).forEach((k) => {
     if (data.has(k)) return;
+    if (rec[k] === null || typeof rec[k] === "undefined") return;
     data.append(k, rec[k]);
   });
   return data;
