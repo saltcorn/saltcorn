@@ -909,7 +909,10 @@ describe("Click to edit save referenced row authorization", () => {
       attributes: { summary_field: "secret" },
       required: false,
     });
-    taskId = await Table.findOne({ name: "clickedit_tasks" }).insertRow({});
+    taskId = await Table.findOne({ name: "clickedit_tasks" }).insertRow({
+      reviewer: null,
+      vault_ref: null,
+    });
     adminId = (await User.findOne({ email: "admin@foo.com" })).id;
   });
 
