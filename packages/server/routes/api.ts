@@ -150,6 +150,24 @@ router.use(
   })
 );
 
+/**
+ * Remote viewtemplate query args are untrusted JSON that ends up in Where
+ * objects. inSelect/inSelectWithLevels let a caller filter on arbitrary other
+ * tables, and an _fts object carries SQL fragments; legitimate clients only
+ * send _fts as a search string, the query builds the rest server-side.
+ */
+const hasRestrictedWhereOps = (x: any): boolean => {
+  if (!x || typeof x !== "object") return false;
+  if (Array.isArray(x)) return x.some(hasRestrictedWhereOps);
+  return Object.entries(x).some(
+    ([k, v]) =>
+      k === "inSelect" ||
+      k === "inSelectWithLevels" ||
+      (k === "_fts" && typeof v !== "string") ||
+      hasRestrictedWhereOps(v)
+  );
+};
+
 router.post(
   "/viewQuery/:viewName/:queryName",
   error_catcher(async (req: Req, res: Res, next: any) => {
@@ -175,6 +193,14 @@ router.post(
       const queries = view.queries(false, req, res);
       if (Object.prototype.hasOwnProperty.call(queries, queryName)) {
         const { args } = req.body || {};
+        if (hasRestrictedWhereOps(args)) {
+          getState()!.log(
+            3,
+            `API viewQuery ${view.name} ${queryName} restricted where operator`
+          );
+          res.status(400).json({ error: req.__("Invalid query arguments") });
+          return;
+        }
         const resp = await queries[queryName](...args, true);
         res.json({ success: resp, alerts: getFlashes(req) });
       } else {

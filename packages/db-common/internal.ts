@@ -57,7 +57,15 @@ export const sqlsanitizeAllowDots = (nm: string | symbol): string => {
   if (typeof nm === "symbol") {
     return nm.description ? sqlsanitizeAllowDots(nm.description) : "";
   }
-  const s = nm.replace(/[^A-Za-z_0-9."]*/g, "");
+  // quotes may only wrap a whole dotted part ("tbl"."fld"); anywhere else they
+  // would end the identifier early, and quote() passes quoted parts through
+  const s = nm
+    .replace(/[^A-Za-z_0-9."]*/g, "")
+    .split(".")
+    .map((part) =>
+      /^"[A-Za-z_0-9]+"$/.test(part) ? part : part.replace(/"/g, "")
+    )
+    .join(".");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
 };
@@ -162,6 +170,11 @@ const postgresPlaceHolderStack = (init: number = 0): SqlDialect => {
     },
     ftsWhereClause(v) {
       const { fields, table, schema } = v;
+      // interpolated into a SQL string literal, so keep to identifier chars
+      const lang = String(v.language || "english").replace(
+        /[^A-Za-z0-9_.]/g,
+        ""
+      );
       const prefixMatch = !v.searchTerm?.includes(" ");
       const actually_use_websearch = v.use_websearch && !prefixMatch;
       const searchTerm =
@@ -170,18 +183,17 @@ const postgresPlaceHolderStack = (init: number = 0): SqlDialect => {
       if (v.disable_fts)
         return `${flds} ILIKE '%' || ${push(v.searchTerm)} || '%'`;
       else if (actually_use_websearch)
-        return `to_tsvector('${v.language || "english"}', ${flds}) @@ websearch_to_tsquery('${v.language || "english"}', ${push(searchTerm)})`;
+        return `to_tsvector('${lang}', ${flds}) @@ websearch_to_tsquery('${lang}', ${push(searchTerm)})`;
       else if (prefixMatch) {
         // Guard against stop words: to_tsquery('english','on:*') raises a syntax error
         // because stop words are stripped to an empty query. Use websearch_to_tsquery as
         // a probe — it returns ''::tsquery for stop words without erroring. When that
         // happens, fall back to ILIKE so common words like "on", "by", "a" still match.
-        const lang = v.language || "english";
         const rawTermPh = push(v.searchTerm);
         const prefixTermPh = push(searchTerm);
         return `CASE WHEN websearch_to_tsquery('${lang}', ${rawTermPh}) = ''::tsquery THEN ${flds} ILIKE '%' || ${rawTermPh} || '%' ELSE to_tsvector('${lang}', ${flds}) @@ to_tsquery('${lang}', ${prefixTermPh}) END`;
       } else
-        return `to_tsvector('${v.language || "english"}', ${flds}) @@ plainto_tsquery('${v.language || "english"}', ${push(searchTerm)})`;
+        return `to_tsvector('${lang}', ${flds}) @@ plainto_tsquery('${lang}', ${push(searchTerm)})`;
     },
     arrayInClause(vals: Value[]) {
       return `= ANY (${push(vals)})`;
@@ -303,20 +315,24 @@ const subSelectWhere =
       };
     }
   ): string => {
+    const { table, through, tenant } = v.inSelect;
+    const field = sqlsanitize(v.inSelect.field);
     const tenantPrefix =
-      !phs.is_sqlite && v.inSelect.tenant ? `"${v.inSelect.tenant}".` : "";
-    if (v.inSelect.through && v.inSelect.valField) {
+      !phs.is_sqlite && tenant ? `"${sqlsanitize(tenant)}".` : "";
+    if (through && v.inSelect.valField) {
+      const valField = sqlsanitize(v.inSelect.valField);
+      const through_pk = sqlsanitize(v.inSelect.through_pk || "id");
       const whereObj = prefixFieldsInWhere(v.inSelect.where, "ss2");
       const wheres = whereObj ? Object.entries(whereObj) : [];
       const where =
         whereObj && wheres.length > 0
           ? "where " + wheres.map(whereClause(phs)).join(" and ")
           : "";
-      return `${quote(sqlsanitizeAllowDots(k))} in (select ss1."${
-        v.inSelect.valField
-      }" from ${tenantPrefix}"${sqlsanitize(v.inSelect.table)}" ss1 join ${tenantPrefix}"${sqlsanitize(
-        v.inSelect.through
-      )}" ss2 on ss2."${v.inSelect.through_pk || "id"}" = ss1."${v.inSelect.field}" ${where})`;
+      return `${quote(sqlsanitizeAllowDots(k))} in (select ss1."${valField}" from ${tenantPrefix}"${sqlsanitize(
+        table
+      )}" ss1 join ${tenantPrefix}"${sqlsanitize(
+        through
+      )}" ss2 on ss2."${through_pk}" = ss1."${field}" ${where})`;
     } else {
       const whereObj = v.inSelect.where;
       const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -324,9 +340,9 @@ const subSelectWhere =
         whereObj && wheres.length > 0
           ? "where " + wheres.map(whereClause(phs)).join(" and ")
           : "";
-      return `${quote(sqlsanitizeAllowDots(k))} in (select "${
-        v.inSelect.field
-      }" from ${tenantPrefix}"${sqlsanitize(v.inSelect.table)}" ${where})`;
+      return `${quote(sqlsanitizeAllowDots(k))} in (select "${field}" from ${tenantPrefix}"${sqlsanitize(
+        table
+      )}" ${where})`;
     }
   };
 

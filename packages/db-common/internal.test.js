@@ -287,6 +287,19 @@ describe("mkWhere", () => {
       values: ["foo"],
       where: `where coalesce("description",'') || ' ' || coalesce("name",'') LIKE '%' || ? || '%'`,
     });
+    //sanitizes the text search language, which is inlined as a literal
+    expect(
+      mkWhere({
+        _fts: {
+          fields: [fld("name")],
+          searchTerm: "foo bar",
+          language: "pg_catalog.english') or ('1",
+        },
+      })
+    ).toStrictEqual({
+      values: ["foo bar"],
+      where: `where to_tsvector('pg_catalog.englishor1', coalesce("name",'')) @@ plainto_tsquery('pg_catalog.englishor1', $1)`,
+    });
   });
   it("should query subselect", () => {
     expect(
@@ -352,6 +365,36 @@ describe("mkWhere", () => {
       values: [7],
       where:
         'where "id" in (select ss1."id" from "sub1"."foo" ss1 join "sub1"."baz" ss2 on ss2."id" = ss1."bar" where "ss2"."baz"=$1)',
+    });
+    //sanitizes field, tenant, valField and through_pk identifiers
+    expect(
+      mkWhere({
+        id: [{ inSelect: { table: "foo", field: 'bar" x', where: {} } }],
+      })
+    ).toStrictEqual({
+      values: [],
+      where: 'where "id" in (select "barx" from "foo" )',
+    });
+    expect(
+      mkWhere({
+        id: [
+          {
+            inSelect: {
+              table: "foo",
+              field: 'bar"',
+              tenant: 'sub1"',
+              valField: 'id"',
+              through: "baz",
+              through_pk: 'pk"',
+              where: { baz: 7 },
+            },
+          },
+        ],
+      })
+    ).toStrictEqual({
+      values: [7],
+      where:
+        'where "id" in (select ss1."id" from "sub1"."foo" ss1 join "sub1"."baz" ss2 on ss2."pk" = ss1."bar" where "ss2"."baz"=$1)',
     });
     //where "id" in (select foo."iz" from "foo" join "bazzy"  on bazzy."id" = foo."bar" where "ss2"."baz"=$1)
     expect(
@@ -536,6 +579,23 @@ describe("sqlsanitize", () => {
   });
   it("should allow quotes when dots specified", () => {
     expect(sqlsanitizeAllowDots('ffoo."oo"')).toBe('ffoo."oo"');
+  });
+  it("should only allow quotes around a whole dotted part", () => {
+    expect(sqlsanitizeAllowDots('"ffoo"."oo"')).toBe('"ffoo"."oo"');
+    expect(sqlsanitizeAllowDots('"id"or"admin"')).toBe("idoradmin");
+    expect(sqlsanitizeAllowDots('ff"oo')).toBe("ffoo");
+    expect(sqlsanitizeAllowDots('"ffoo')).toBe("ffoo");
+    expect(sqlsanitizeAllowDots('ffoo."o"o"')).toBe("ffoo.oo");
+  });
+  it("should not let quoted where keys escape the identifier", () => {
+    expect(mkWhere({ '"id"or"admin"': 1 })).toStrictEqual({
+      values: [1],
+      where: 'where "idoradmin"=$1',
+    });
+    expect(mkWhere({ 'a."b"': 1 })).toStrictEqual({
+      values: [1],
+      where: 'where "a"."b"=$1',
+    });
   });
   it("should allow numbers", () => {
     expect(sqlsanitize("ff1oo_oo")).toBe("ff1oo_oo");

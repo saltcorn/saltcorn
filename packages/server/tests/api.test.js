@@ -1511,3 +1511,68 @@ describe("API CSRF protection", () => {
       .expect(302);
   });
 });
+
+describe("API viewQuery restricted where operators", () => {
+  // /api/viewQuery passes JSON args straight into viewtemplate queries, so a
+  // caller could smuggle in where operators that reference other tables
+  // (inSelect) or carry unescaped SQL fragments (_fts objects). authorshow is
+  // a public Show view on books, so these requests are unauthenticated.
+  const runManyQuery = async (args) => {
+    const app = await getApp({ disableCsrf: true });
+    return await request(app)
+      .post("/api/viewQuery/authorshow/runManyQuery")
+      .set("Content-Type", "application/json")
+      .send({ args });
+  };
+  const crossTable = {
+    inSelect: { table: "users", field: "id", where: { role_id: 1 } },
+  };
+
+  it("rejects inSelect in the where argument", async () => {
+    const resp = await runManyQuery([{}, { where: { id: crossTable } }]);
+    expect(resp.status).toBe(400);
+    expect(resp.body.success).toBeUndefined();
+  });
+  it("rejects inSelect in the state argument", async () => {
+    const resp = await runManyQuery([{ id: crossTable }, {}]);
+    expect(resp.status).toBe(400);
+    expect(resp.body.success).toBeUndefined();
+  });
+  it("rejects inSelectWithLevels nested in or", async () => {
+    const resp = await runManyQuery([
+      {},
+      {
+        where: {
+          or: [{ id: 1 }, { id: { inSelectWithLevels: { joinLevels: [] } } }],
+        },
+      },
+    ]);
+    expect(resp.status).toBe(400);
+  });
+  it("rejects _fts given as an object", async () => {
+    const resp = await runManyQuery([
+      {},
+      { where: { _fts: { searchTerm: "a", language: "english", fields: [] } } },
+    ]);
+    expect(resp.status).toBe(400);
+  });
+  it("still runs ordinary remote queries", async () => {
+    const books = Table.findOne({ name: "books" });
+    const allIds = (await books.getRows({}, { orderBy: "id" })).map(
+      (r) => r.id
+    );
+    const ids = (resp) => resp.body.success.map((r) => r.id).sort();
+    const resp = await runManyQuery([{}, {}]);
+    expect(resp.status).toBe(200);
+    expect(ids(resp)).toEqual(allIds);
+    const resp1 = await runManyQuery([
+      {},
+      { where: { id: { not: { in: [1] } } } },
+    ]);
+    expect(resp1.status).toBe(200);
+    expect(ids(resp1)).toEqual(allIds.filter((id) => id !== 1));
+    const resp2 = await runManyQuery([{ _fts: "Tolstoy" }, {}]);
+    expect(resp2.status).toBe(200);
+    expect(resp2.body.success.map((r) => r.author)).toEqual(["Leo Tolstoy"]);
+  });
+});
