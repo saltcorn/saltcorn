@@ -1685,11 +1685,14 @@ router.post(
     if (field.is_fkey) {
       if (join_field) {
         const refTable = Table.findOne({ name: field.reftable_name });
-        const refRow = (await refTable.getRow({ [refTable.pk_name]: val }));
-        if (!refRow) blank = true;
+        const refRow = await refTable.getRow(
+          { [refTable.pk_name]: val },
+          { forUser: req.user, forPublic: !req.user }
+        );
+        const targetField = refTable.getField(join_field);
+        if (!refRow || !targetField) blank = true;
         else {
           val = refRow[join_field];
-          const targetField = refTable.getField(join_field);
           const fieldviews = targetField.type.fieldviews;
 
           fv = fieldviews[fieldview];
