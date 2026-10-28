@@ -867,3 +867,78 @@ describe("Click to edit save", () => {
     expect(updated.pages).toBe(967);
   });
 });
+
+describe("Click to edit save referenced row authorization", () => {
+  const SECRET = "VAULT-SECRET-P4SS-9f27";
+  let taskId, vaultId, adminId;
+
+  beforeAll(async () => {
+    const vault = await Table.create("clickedit_vault", {
+      min_role_read: 1,
+      min_role_write: 1,
+    });
+    await Field.create({
+      table: vault,
+      name: "secret",
+      label: "Secret",
+      type: "String",
+    });
+    vaultId = await Table.findOne({ name: "clickedit_vault" }).insertRow({
+      secret: SECRET,
+    });
+
+    const tasks = await Table.create("clickedit_tasks", {
+      min_role_read: 80,
+      min_role_write: 80,
+    });
+    await Field.create({
+      table: tasks,
+      name: "reviewer",
+      label: "Reviewer",
+      type: "Key",
+      reftable_name: "users",
+      attributes: { summary_field: "email" },
+      required: false,
+    });
+    await Field.create({
+      table: tasks,
+      name: "vault_ref",
+      label: "Vault ref",
+      type: "Key",
+      reftable_name: "clickedit_vault",
+      attributes: { summary_field: "secret" },
+      required: false,
+    });
+    taskId = await Table.findOne({ name: "clickedit_tasks" }).insertRow({});
+    adminId = (await User.findOne({ email: "admin@foo.com" })).id;
+  });
+
+  const post = async (field_name, join_field, val) => {
+    const loginCookie = await getUserLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const fielddata = JSON.stringify({
+      table_name: "clickedit_tasks",
+      field_name,
+      pk: taskId,
+      fieldview: "as_text",
+      configuration: {},
+      join_field,
+    });
+    return await request(app)
+      .post("/field/save-click-edit")
+      .set("Cookie", loginCookie)
+      .send(
+        `_fielddata=${encodeURIComponent(fielddata)}&${field_name}=${val}`
+      );
+  };
+
+  it("should not disclose fields of restricted users row", async () => {
+    const res = await post("reviewer", "email", adminId);
+    expect(res.text).not.toContain("admin@foo.com");
+  });
+
+  it("should not disclose fields of restricted table row", async () => {
+    const res = await post("vault_ref", "secret", vaultId);
+    expect(res.text).not.toContain(SECRET);
+  });
+});
