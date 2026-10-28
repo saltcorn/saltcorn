@@ -841,7 +841,7 @@ router.post(
     const newPath = File.get_new_path(jobId);
     await req.files.file.mv(newPath);
 
-    startRestoreJob(newPath, true, undefined, jobId);
+    await startRestoreJob(newPath, true, undefined, jobId);
     return sendRestoreWaitPage(req, res, jobId);
   })
 );
@@ -968,7 +968,7 @@ router.post(
     // the upload from create_from_restore was named after the job id, so
     // the path is recomputed rather than looked up anywhere
     const backupPath = File.get_new_path(jobId);
-    startRestoreJob(backupPath, true, password, jobId);
+    await startRestoreJob(backupPath, true, password, jobId);
     return sendRestoreWaitPage(req, res, jobId, true);
   })
 );

@@ -94,7 +94,10 @@ type JobRunner = (onLog: (msg: string) => void) => Promise<void>;
  * @param jobId reuse an existing job id, otherwise a fresh one is minted
  * @returns job id
  */
-const startJob = (run: JobRunner, jobId: string = uuidv4()): string => {
+const startJob = async (
+  run: JobRunner,
+  jobId: string = uuidv4()
+): Promise<string> => {
   const ten = db.getTenantSchema();
   // the last queued status file write
   let writes: Promise<void> = Promise.resolve();
@@ -113,6 +116,7 @@ const startJob = (run: JobRunner, jobId: string = uuidv4()): string => {
   removeOldStatusFiles().catch(() => {});
   // written right away, so an early poll doesn't see an unknown job
   onLog("");
+  await writes;
   const heartbeat = setInterval(() => onLog(lastMsg), HEARTBEAT_MS);
   heartbeat.unref();
 
@@ -149,7 +153,7 @@ const startRestoreJob = (
   restoreFirstUser: boolean,
   password?: string,
   jobId: string = uuidv4()
-): string =>
+): Promise<string> =>
   startJob(async (onLog) => {
     let err;
     try {

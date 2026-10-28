@@ -1522,6 +1522,7 @@ ${value}`;
         const singleline = $(el).attr("singleline");
         const asInput = singleline || compact;
         const div = document.createElement("div");
+        div.classList.add("sc-monaco-host");
         el.after(div);
         if (asInput) {
           div.classList.add("form-control", "monaco-input");
@@ -1575,16 +1576,17 @@ ${value}`;
           ...(lineHeight ? { lineHeight } : {}),
         });
         $(div).data("monaco-editor", editor);
-        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-          noLib: true,
-          allowNonTsExtensions: true,
-        });
-        monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
         // Observe the container for changes
         const resizeObserver = new ResizeObserver((entries) => {
           editor.layout();
         });
         resizeObserver.observe(el.parentNode);
+        $(div).data("monaco-dispose", () => {
+          resizeObserver.disconnect();
+          const model = editor.getModel();
+          editor.dispose(); // also drops its onDid*/onKeyDown/addAction subscriptions
+          if (model && !model.isDisposed()) model.dispose();
+        });
         if (isExpression) {
           // hide prefix line
           editor.setHiddenAreas([
@@ -2150,6 +2152,19 @@ function enable_codemirror(f) {
   });
 }
 
+// dispose Monaco editors created by initialize_page inside root, and restore
+// their textareas so a later initialize_page can re-create them
+function dispose_monaco_in(root) {
+  $(root)
+    .find(".sc-monaco-host")
+    .each(function () {
+      const dispose = $(this).data("monaco-dispose");
+      if (dispose) dispose();
+      $(this).prev("textarea.monaco-enabled").removeClass("monaco-enabled");
+      $(this).remove();
+    });
+}
+
 let monaco_enabled_declares = false;
 const monaco_init_queue = [];
 
@@ -2195,6 +2210,15 @@ function enable_monaco(codes, f) {
             },
           });
           require(["vs/editor/editor.main"], function () {
+            monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+              noLib: true,
+              allowNonTsExtensions: true,
+            });
+            // fixed path so the lib is registered once, not once per editor
+            monaco.languages.typescript.typescriptDefaults.addExtraLib(
+              ds,
+              "file:///saltcorn-declares.d.ts"
+            );
             monaco_enabled_declares = ds;
             monaco_init_queue.forEach((qf) => qf(ds));
             f(ds);
