@@ -56,7 +56,15 @@ export const sqlsanitizeAllowDots = (nm: string | symbol): string => {
   if (typeof nm === "symbol") {
     return nm.description ? sqlsanitizeAllowDots(nm.description) : "";
   }
-  const s = nm.replace(/[^A-Za-z_0-9."]*/g, "");
+  // quotes may only wrap a whole dotted part ("tbl"."fld"); anywhere else they
+  // would end the identifier early, and quote() passes quoted parts through
+  const s = nm
+    .replace(/[^A-Za-z_0-9."]*/g, "")
+    .split(".")
+    .map((part) =>
+      /^"[A-Za-z_0-9]+"$/.test(part) ? part : part.replace(/"/g, "")
+    )
+    .join(".");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
 };
@@ -155,6 +163,8 @@ const whereFTS = (
   phs: PlaceHolderStack
 ): string => {
   const { fields, table, schema } = v;
+  // interpolated into a SQL string literal, so keep to identifier chars
+  const lang = String(v.language || "english").replace(/[^A-Za-z0-9_.]/g, "");
   const prefixMatch = !v.searchTerm?.includes(" ");
   const actually_use_websearch = v.use_websearch && !prefixMatch;
   const no_fts = phs.is_sqlite || v.disable_fts;
@@ -166,9 +176,9 @@ const whereFTS = (
   else if (v.disable_fts)
     return `${flds} ILIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
   else
-    return `to_tsvector('${v.language || "english"}', ${flds}) @@ ${
+    return `to_tsvector('${lang}', ${flds}) @@ ${
       actually_use_websearch ? "websearch_" : prefixMatch ? "" : `plain`
-    }to_tsquery('${v.language || "english"}', ${phs.push(searchTerm)})`;
+    }to_tsquery('${lang}', ${phs.push(searchTerm)})`;
 };
 
 export /**
@@ -193,20 +203,24 @@ const subSelectWhere =
       };
     }
   ): string => {
+    const { table, through, tenant } = v.inSelect;
+    const field = sqlsanitize(v.inSelect.field);
     const tenantPrefix =
-      !phs.is_sqlite && v.inSelect.tenant ? `"${v.inSelect.tenant}".` : "";
-    if (v.inSelect.through && v.inSelect.valField) {
+      !phs.is_sqlite && tenant ? `"${sqlsanitize(tenant)}".` : "";
+    if (through && v.inSelect.valField) {
+      const valField = sqlsanitize(v.inSelect.valField);
+      const through_pk = sqlsanitize(v.inSelect.through_pk || "id");
       const whereObj = prefixFieldsInWhere(v.inSelect.where, "ss2");
       const wheres = whereObj ? Object.entries(whereObj) : [];
       const where =
         whereObj && wheres.length > 0
           ? "where " + wheres.map(whereClause(phs)).join(" and ")
           : "";
-      return `${quote(sqlsanitizeAllowDots(k))} in (select ss1."${
-        v.inSelect.valField
-      }" from ${tenantPrefix}"${sqlsanitize(v.inSelect.table)}" ss1 join ${tenantPrefix}"${sqlsanitize(
-        v.inSelect.through
-      )}" ss2 on ss2."${v.inSelect.through_pk || "id"}" = ss1."${v.inSelect.field}" ${where})`;
+      return `${quote(sqlsanitizeAllowDots(k))} in (select ss1."${valField}" from ${tenantPrefix}"${sqlsanitize(
+        table
+      )}" ss1 join ${tenantPrefix}"${sqlsanitize(
+        through
+      )}" ss2 on ss2."${through_pk}" = ss1."${field}" ${where})`;
     } else {
       const whereObj = v.inSelect.where;
       const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -214,9 +228,9 @@ const subSelectWhere =
         whereObj && wheres.length > 0
           ? "where " + wheres.map(whereClause(phs)).join(" and ")
           : "";
-      return `${quote(sqlsanitizeAllowDots(k))} in (select "${
-        v.inSelect.field
-      }" from ${tenantPrefix}"${sqlsanitize(v.inSelect.table)}" ${where})`;
+      return `${quote(sqlsanitizeAllowDots(k))} in (select "${field}" from ${tenantPrefix}"${sqlsanitize(
+        table
+      )}" ${where})`;
     }
   };
 
