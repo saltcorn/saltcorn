@@ -679,6 +679,8 @@ class User {
     email: string;
     verification_token: string;
   }): Promise<true | ErrorMessage> {
+    if (typeof email !== "string" || typeof verification_token !== "string")
+      return { error: "Invalid token" };
     if (verification_token.length < 10 || !email)
       return { error: "Invalid token" };
     const u = await User.findOne({ email, verification_token });
@@ -722,6 +724,12 @@ class User {
     password: string;
     confirm_password: string;
   }): Promise<SuccessMessage | ErrorMessage> {
+    // Guard against non-string input (e.g. a nested object parsed from the
+    // request body) being used as a structured Where clause in findOne.
+    if (typeof email !== "string" || typeof reset_password_token !== "string")
+      return {
+        error: "Invalid token or invalid token length or incorrect email",
+      };
     if (reset_password_token.length < 10)
       return {
         error: "Invalid token or invalid token length or incorrect email",
