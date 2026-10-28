@@ -36,6 +36,7 @@ import {
   setTenant,
   applyUserLocale,
   rejectTenantDrift,
+  dropTenantDriftUser,
 } from "./routes/utils.js";
 import _am_tenant from "@saltcorn/admin-models/models/tenant";
 const { getAllTenants, eachTenant } = _am_tenant;
@@ -249,9 +250,9 @@ const getApp = async (opts = {}) => {
   app.use(passport.initialize());
   app.use(passport.authenticate(["session"]));
   // The session store is shared by all tenants, so a session minted in
-  // tenant A can be replayed against tenant B's host. Reject that drift for
-  // every route here, before any handler trusts req.user's role.
-  app.use(rejectTenantDrift);
+  // tenant A can be replayed against tenant B's host. Treat such a session
+  // as logged out for every route, before any handler trusts req.user's role.
+  app.use(dropTenantDriftUser);
   app.use(applyUserLocale);
   app.use(flash());
 

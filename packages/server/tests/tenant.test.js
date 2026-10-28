@@ -274,8 +274,9 @@ describe("session-tenant isolation", () => {
         .get("/auth/settings")
         .set("Cookie", loginCookie)
         .set("Host", `${TENANT}.example.com`);
-      expect(res.status).toBe(403);
-      expect(res.body.error).toBe("Session tenant mismatch");
+      // the foreign session is treated as logged out
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toBe("/auth/login");
     });
 
     // Regression test for the tenant-isolation bypass on the data API: a
