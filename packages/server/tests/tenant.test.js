@@ -18,6 +18,9 @@ import View from "@saltcorn/data/models/view";
 import Page from "@saltcorn/data/models/page";
 import File from "@saltcorn/data/models/file";
 import { resToLoginCookie } from "../auth/testhelp.js";
+import http from "http";
+import WebSocket from "ws";
+import { setupSocket } from "../serve.js";
 
 afterAll(db.close);
 jest.setTimeout(10000);
@@ -633,6 +636,118 @@ describe("session-tenant isolation", () => {
         .set("Host", `${TENANT}.example.com`)
         .expect(200)
         .expect(toInclude(SECRET));
+    });
+
+    // The socket.io layer shares the session store with HTTP, so it needs the
+    // same drift guard: an attacker-tenant session replayed over a websocket
+    // whose Host names the victim tenant must not be bound to the victim
+    // tenant. Both tenants' admins are user id 1, so without the guard the
+    // attacker lands in the victim admin's per-user dynamic update room.
+    describe("socket.io cross-tenant session replay", () => {
+      let server, port;
+      beforeAll(async () => {
+        const app = await getApp({ disableCsrf: true });
+        server = http.createServer(app);
+        await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+        port = server.address().port;
+        setupSocket(undefined, undefined, server);
+      });
+      afterAll(async () => {
+        await new Promise((resolve) => server.close(resolve));
+      });
+
+      // minimal socket.io v4 client over a raw websocket
+      const connectSocket = (cookie, host) =>
+        new Promise((resolve, reject) => {
+          const ws = new WebSocket(
+            `ws://127.0.0.1:${port}/socket.io/?EIO=4&transport=websocket`,
+            { headers: { Cookie: cookie, Host: host } }
+          );
+          const acks = {};
+          const events = [];
+          let ackId = 0;
+          const client = {
+            events,
+            emitWithAck: (event, ...args) =>
+              new Promise((res) => {
+                const id = ackId++;
+                acks[id] = res;
+                ws.send(`42${id}${JSON.stringify([event, ...args])}`);
+              }),
+            close: () => ws.close(),
+          };
+          ws.on("message", (buf) => {
+            const msg = buf.toString();
+            if (msg.startsWith("0")) ws.send("40");
+            else if (msg === "2") ws.send("3");
+            else if (msg.startsWith("40")) resolve(client);
+            else if (msg.startsWith("44")) reject(new Error(msg));
+            else if (msg.startsWith("43")) {
+              const m = msg.match(/^43(\d+)(.*)$/);
+              acks[m[1]]?.(JSON.parse(m[2])[0]);
+            } else if (msg.startsWith("42"))
+              events.push(JSON.parse(msg.slice(2)));
+          });
+          ws.on("error", reject);
+        });
+
+      const emitToVictimUserOne = async (payload) => {
+        await db.runWithTenant(TENANT, async () => {
+          const state = getState();
+          state.hasJoinedDynamicUpdateSockets = true;
+          state.emitDynamicUpdate(TENANT, payload, [1]);
+        });
+        await new Promise((r) => setTimeout(r, 300));
+      };
+
+      it("does not deliver victim-tenant dynamic updates to a cross-tenant session", async () => {
+        const loginCookie = await getAttackerAdminLoginCookie();
+        const sock = await connectSocket(
+          loginCookie,
+          `${TENANT}.example.com`
+        );
+        try {
+          await sock.emitWithAck("join_dynamic_update_room");
+          await emitToVictimUserOne({ notify: "XTENANT_SOCKET_MSG" });
+          expect(JSON.stringify(sock.events)).not.toContain(
+            "XTENANT_SOCKET_MSG"
+          );
+        } finally {
+          sock.close();
+        }
+      });
+
+      it("does not let a cross-tenant admin session join the log room", async () => {
+        const loginCookie = await getAttackerAdminLoginCookie();
+        const sock = await connectSocket(
+          loginCookie,
+          `${TENANT}.example.com`
+        );
+        try {
+          const ack = await sock.emitWithAck("join_log_room");
+          expect(ack.status).toBe("error");
+        } finally {
+          sock.close();
+        }
+      });
+
+      it("delivers dynamic updates to a same-tenant session", async () => {
+        const loginCookie = await getTenantAdminLoginCookie();
+        const sock = await connectSocket(
+          loginCookie,
+          `${TENANT}.example.com`
+        );
+        try {
+          const ack = await sock.emitWithAck("join_dynamic_update_room");
+          expect(ack.status).toBe("ok");
+          await emitToVictimUserOne({ notify: "SAMETENANT_SOCKET_MSG" });
+          expect(JSON.stringify(sock.events)).toContain(
+            "SAMETENANT_SOCKET_MSG"
+          );
+        } finally {
+          sock.close();
+        }
+      });
     });
   } else {
     it("does not support tenants on SQLite", () => {

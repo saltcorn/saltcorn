@@ -1247,3 +1247,5 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     });
   });
 };
+
+export { setupSocket };
