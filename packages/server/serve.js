@@ -882,6 +882,18 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     io.of(namespace).use(wrap(sessionStore));
     io.of(namespace).use(wrap(passportInit));
     io.of(namespace).use(wrap(passport.authenticate(["session"])));
+    // drop a session user minted under a different tenant than this host
+    // resolves to, same drift guard as the HTTP app
+    io.of(namespace).use((socket, next) => {
+      const user = socket.request.user;
+      if (user && user.tenant !== undefined) {
+        const ten =
+          tenantFromSocket(socket, subdomainOffset) ||
+          db.connectObj.default_schema;
+        if (user.tenant !== ten) socket.request.user = undefined;
+      }
+      next();
+    });
   };
   setupNamespace("/");
   setupNamespace("/datastream");

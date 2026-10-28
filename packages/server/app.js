@@ -248,6 +248,10 @@ const getApp = async (opts = {}) => {
   app.use(setTenant);
   app.use(passport.initialize());
   app.use(passport.authenticate(["session"]));
+  // The session store is shared by all tenants, so a session minted in
+  // tenant A can be replayed against tenant B's host. Reject that drift for
+  // every route here, before any handler trusts req.user's role.
+  app.use(rejectTenantDrift);
   app.use(applyUserLocale);
   app.use(flash());
 
