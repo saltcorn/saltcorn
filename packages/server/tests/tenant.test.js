@@ -15,6 +15,9 @@ const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
 const Field = require("@saltcorn/data/models/field");
 const User = require("@saltcorn/data/models/user");
+const View = require("@saltcorn/data/models/view");
+const Page = require("@saltcorn/data/models/page");
+const File = require("@saltcorn/data/models/file");
 const { resToLoginCookie } = require("../auth/testhelp");
 
 afterAll(db.close);
@@ -126,6 +129,7 @@ describe("session-tenant isolation", () => {
     let tenantAdminToken; // admin of the victim tenant (secauth)
     let attackerAdminToken; // admin of the attacker tenant (secauth2)
     let foreignAdminToken; // admin of the default tenant
+    let secretFilePath; // path_to_serve of an admin-only file in the victim tenant
 
     // log in as the victim tenant's own admin, against the victim subdomain
     const getTenantAdminLoginCookie = async () => {
@@ -186,6 +190,34 @@ describe("session-tenant isolation", () => {
         });
         const tadmin = await User.findOne({ email: TENANT_ADMIN_EMAIL });
         tenantAdminToken = await tadmin.getNewAPIToken();
+        // admin-only view, page and file holding the secret, for the
+        // cross-tenant checks on the core HTML routes
+        await View.create({
+          table_id: t.id,
+          name: "secretlist",
+          viewtemplate: "List",
+          configuration: {
+            columns: [
+              { type: "Field", field_name: "data", fieldview: "as_text" },
+            ],
+          },
+          min_role: 1,
+        });
+        await Page.create({
+          name: "secretpage",
+          title: "Secret page",
+          description: "",
+          min_role: 1,
+          layout: { type: "blank", contents: SECRET },
+        });
+        const f = await File.from_contents(
+          "secretfile.txt",
+          "text/plain",
+          SECRET,
+          tadmin.id,
+          1
+        );
+        secretFilePath = f.path_to_serve;
       });
 
       // Seed an admin in the attacker tenant and mint its API token. This tenant
@@ -458,6 +490,91 @@ describe("session-tenant isolation", () => {
         .set("Authorization", `Bearer ${attackerAdminToken}`);
       expect(res.status).not.toBe(200);
       expect(res.body.success).toBeUndefined();
+    });
+    // The drift guard must also cover the core HTML routes, not only /api,
+    // /scapi and plugin routes: an attacker-tenant admin replaying their own
+    // session against the victim subdomain must not get their role-1 applied
+    // to the victim tenant's views, pages, files or rows.
+    it("rejects sub-tenant->sub-tenant session reuse on GET /view/:viewname", async () => {
+      const loginCookie = await getAttackerAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      const res = await request(app)
+        .get("/view/secretlist")
+        .set("Cookie", loginCookie)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.text || "").not.toContain(SECRET);
+    });
+
+    it("rejects sub-tenant->sub-tenant session reuse on GET /page/:pagename", async () => {
+      const loginCookie = await getAttackerAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      const res = await request(app)
+        .get("/page/secretpage")
+        .set("Cookie", loginCookie)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.text || "").not.toContain(SECRET);
+    });
+
+    it("rejects sub-tenant->sub-tenant session reuse on GET /files/serve/*", async () => {
+      const loginCookie = await getAttackerAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      const res = await request(app)
+        .get(`/files/serve/${secretFilePath}`)
+        .set("Cookie", loginCookie)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.status).not.toBe(200);
+      expect(res.text || "").not.toContain(SECRET);
+    });
+
+    it("rejects sub-tenant->sub-tenant session reuse on POST /delete/:table/:id", async () => {
+      const id = await db.runWithTenant(TENANT, async () =>
+        Table.findOne({ name: "secrets" }).insertRow({ data: "deleteme" })
+      );
+      const loginCookie = await getAttackerAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .post(`/delete/secrets/${id}`)
+        .set("Cookie", loginCookie)
+        .set("Host", `${TENANT}.example.com`)
+        .set("X-Requested-With", "XMLHttpRequest");
+      const remaining = await db.runWithTenant(TENANT, async () => {
+        const t = Table.findOne({ name: "secrets" });
+        const n = await t.countRows({ id });
+        await t.deleteRows({ id });
+        return n;
+      });
+      expect(remaining).toBe(1);
+    });
+
+    it("allows same-tenant session on GET /view/:viewname", async () => {
+      const loginCookie = await getTenantAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .get("/view/secretlist")
+        .set("Cookie", loginCookie)
+        .set("Host", `${TENANT}.example.com`)
+        .expect(toInclude(SECRET));
+    });
+
+    it("allows same-tenant session on GET /page/:pagename", async () => {
+      const loginCookie = await getTenantAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .get("/page/secretpage")
+        .set("Cookie", loginCookie)
+        .set("Host", `${TENANT}.example.com`)
+        .expect(toInclude(SECRET));
+    });
+
+    it("allows same-tenant session on GET /files/serve/*", async () => {
+      const loginCookie = await getTenantAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .get(`/files/serve/${secretFilePath}`)
+        .set("Cookie", loginCookie)
+        .set("Host", `${TENANT}.example.com`)
+        .expect(200)
+        .expect(toInclude(SECRET));
     });
   } else {
     it("does not support tenants on SQLite", () => {
