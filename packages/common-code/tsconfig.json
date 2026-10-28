@@ -17,7 +17,8 @@
     "lib": ["ES2021"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "target": "ES2021"
+    "target": "ES2021",
+    "types": ["node"]
   },
   "exclude": ["node_modules", "dist/**", "webpack.config.js"],
   "include": ["**/*", "**/*.json"]
