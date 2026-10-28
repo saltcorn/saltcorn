@@ -354,12 +354,24 @@ const search_bar = (
             span(
               { class: "badge bg-primary" },
               b.text,
-              b.onclick
-                ? a(
-                    { href: `javascript:${b.onclick}` },
+              b.state_key
+                ? // the key comes from the query string; pass it as data
+                  // rather than interpolating it into javascript source
+                  a(
+                    {
+                      href: "#",
+                      "data-state-key": text_attr(b.state_key),
+                      onclick:
+                        "unset_state_field(this.dataset.stateKey, this); return false;",
+                    },
                     i({ class: "ms-1 fas fa-lg fa-times" })
                   )
-                : ""
+                : b.onclick
+                  ? a(
+                      { href: `javascript:${b.onclick}` },
+                      i({ class: "ms-1 fas fa-lg fa-times" })
+                    )
+                  : ""
             )
           )
         )
