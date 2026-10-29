@@ -41,7 +41,7 @@ To install Saltcorn on a fresh virtual machine, simply install node.js and run `
 
 For self-hosting, a 2 GB virtual private server is sufficient to run Saltcorn unless you expect high traffic volumes. Installation instructions are given below. Saltcorn can also run on a 1GB virtual machine, but there can be issues with upgrading.
 
-[DigitalOcean](https://marketplace.digitalocean.com/apps/saltcorn) and [Linode](https://www.linode.com/marketplace/apps/linode/saltcorn/) have one-click install options for Saltcorn
+[DigitalOcean](https://marketplace.digitalocean.com/apps/saltcorn), [Linode](https://www.linode.com/marketplace/apps/linode/saltcorn/), [RepoCloud](https://repocloud.io/details/Saltcorn/), and [Elestio](https://elest.io/open-source/saltcorn) have one-click install options for Saltcorn
 
 If hosting on DigitalOcean, which offers a 2GB virtual machine for $12 per month, please consider using our [referral code](https://m.do.co/c/a1bcfb757fda) which will give you $100 credit over 60 days.
 
