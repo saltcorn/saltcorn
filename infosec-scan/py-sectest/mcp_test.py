@@ -101,43 +101,46 @@ class Test:
         )
         assert self.sess.status == 200, f"Configure failed with status {self.sess.status}"
 
+    def _post_initialize(self, headers):
+        """Send a raw MCP initialize request and return the HTTP response.
+
+        Done with plain httpx (rather than the mcp client) so the HTTP status
+        code can be asserted directly: mcp>=2 no longer exposes it in errors.
+        """
+        return httpx.post(
+            MCP_URL,
+            headers={
+                "Accept": "application/json, text/event-stream",
+                "Content-Type": "application/json",
+                **headers,
+            },
+            json={
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2025-03-26",
+                    "capabilities": {},
+                    "clientInfo": {"name": "sectest", "version": "1.0"},
+                },
+            },
+        )
+
     def test_no_token_is_rejected(self):
         """Requests without a bearer token must be rejected with 401."""
-        async def run():
-            async with streamable_http_client(MCP_URL) as (read, write, _):
-                async with ClientSession(read, write) as session:
-                    await session.initialize()
-
-        with pytest.raises(Exception) as exc_info:
-            asyncio.run(run())
-        exc = exc_info.value
-        all_messages = str(exc) + "".join(
-            str(e) for e in getattr(exc, "exceptions", [])
-        )
-        assert "401" in all_messages, f"Expected 401, got: {exc}"
+        resp = self._post_initialize({})
+        assert resp.status_code == 401, f"Expected 401, got: {resp.status_code}"
 
     def test_wrong_token_is_rejected(self):
         """Requests with an invalid bearer token must be rejected with 401."""
-        async def run():
-            async with streamable_http_client(
-                MCP_URL, http_client=httpx.AsyncClient(headers={"Authorization": "Bearer invalid-token"})
-            ) as (read, write, _):
-                async with ClientSession(read, write) as session:
-                    await session.initialize()
-
-        with pytest.raises(Exception) as exc_info:
-            asyncio.run(run())
-        exc = exc_info.value
-        all_messages = str(exc) + "".join(
-            str(e) for e in getattr(exc, "exceptions", [])
-        )
-        assert "401" in all_messages, f"Expected 401, got: {exc}"
+        resp = self._post_initialize({"Authorization": "Bearer invalid-token"})
+        assert resp.status_code == 401, f"Expected 401, got: {resp.status_code}"
 
     def test_list_tools(self):
         async def run():
             async with streamable_http_client(
                 MCP_URL, http_client=auth_client(self.__class__.api_token)
-            ) as (read, write, _):
+            ) as (read, write, *_):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
 
@@ -152,12 +155,13 @@ class Test:
         async def run():
             async with streamable_http_client(
                 MCP_URL, http_client=auth_client(self.__class__.api_token)
-            ) as (read, write, _):
+            ) as (read, write, *_):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
 
                     call_result = await session.call_tool("insert_album", {})
-                    assert not call_result.isError, f"Tool call failed: {call_result.content}"
+                    is_error = getattr(call_result, "is_error", getattr(call_result, "isError", None))
+                    assert not is_error, f"Tool call failed: {call_result.content}"
                     logger.info("Tool call result: %s", call_result.content)
 
         asyncio.run(run())
@@ -173,7 +177,7 @@ class Test:
         async def run():
             async with streamable_http_client(
                 MCP_URL, http_client=auth_client(self.__class__.staff_api_token)
-            ) as (read, write, _):
+            ) as (read, write, *_):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
 
@@ -194,7 +198,7 @@ class Test:
         async def run():
             async with streamable_http_client(
                 MCP_URL, http_client=auth_client(self.__class__.api_token)
-            ) as (read, write, _):
+            ) as (read, write, *_):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
 
