@@ -1905,13 +1905,14 @@ router.get(
         req.__(
           "Action %s run successfully with no console output",
           trigger.action
-        ) + runres
-          ? script(
-              domReady(
-                `common_done(${JSON.stringify(returnDirectivesOnly(runres))})`
+        ) +
+          (runres
+            ? script(
+                domReady(
+                  `common_done(${JSON.stringify(returnDirectivesOnly(runres))})`
+                )
               )
-            )
-          : ""
+            : "")
       );
       if (trigger.action === "Workflow")
         res.redirect(

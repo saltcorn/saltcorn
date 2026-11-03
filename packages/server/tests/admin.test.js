@@ -579,6 +579,10 @@ describe("actions", () => {
       .get("/actions/testrun/2")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/actions/"));
+    await request(app)
+      .get("/actions/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("run successfully with no console output"));
   });
   it("create api trigger", async () => {
     const app = await getApp({ disableCsrf: true });
