@@ -334,7 +334,7 @@ const run = async (
       }
       badges.push({
         text: `${text_attr(k)}:${text_attr(showv)}`,
-        onclick: `unset_state_field('${text_attr(k)}', this)`,
+        state_key: k,
       });
     }
   });

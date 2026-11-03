@@ -8,6 +8,9 @@ import User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
 
 import { promises as fs } from "fs";
+import fsSync from "fs";
+import path from "path";
+import { tmpdir } from "os";
 
 import {
   getStaffLoginCookie,
@@ -1509,5 +1512,112 @@ describe("API CSRF protection", () => {
       .set("Cookie", loginCookie)
       .set("Content-Type", "application/json")
       .expect(302);
+  });
+});
+
+describe("API viewQuery restricted where operators", () => {
+  // /api/viewQuery passes JSON args straight into viewtemplate queries, so a
+  // caller could smuggle in where operators that reference other tables
+  // (inSelect) or carry unescaped SQL fragments (_fts objects). authorshow is
+  // a public Show view on books, so these requests are unauthenticated.
+  const runManyQuery = async (args) => {
+    const app = await getApp({ disableCsrf: true });
+    return await request(app)
+      .post("/api/viewQuery/authorshow/runManyQuery")
+      .set("Content-Type", "application/json")
+      .send({ args });
+  };
+  const crossTable = {
+    inSelect: { table: "users", field: "id", where: { role_id: 1 } },
+  };
+
+  it("rejects inSelect in the where argument", async () => {
+    const resp = await runManyQuery([{}, { where: { id: crossTable } }]);
+    expect(resp.status).toBe(400);
+    expect(resp.body.success).toBeUndefined();
+  });
+  it("rejects inSelect in the state argument", async () => {
+    const resp = await runManyQuery([{ id: crossTable }, {}]);
+    expect(resp.status).toBe(400);
+    expect(resp.body.success).toBeUndefined();
+  });
+  it("rejects inSelectWithLevels nested in or", async () => {
+    const resp = await runManyQuery([
+      {},
+      {
+        where: {
+          or: [{ id: 1 }, { id: { inSelectWithLevels: { joinLevels: [] } } }],
+        },
+      },
+    ]);
+    expect(resp.status).toBe(400);
+  });
+  it("rejects _fts given as an object", async () => {
+    const resp = await runManyQuery([
+      {},
+      { where: { _fts: { searchTerm: "a", language: "english", fields: [] } } },
+    ]);
+    expect(resp.status).toBe(400);
+  });
+  it("still runs ordinary remote queries", async () => {
+    const books = Table.findOne({ name: "books" });
+    const allIds = (await books.getRows({}, { orderBy: "id" })).map(
+      (r) => r.id
+    );
+    const ids = (resp) => resp.body.success.map((r) => r.id).sort();
+    const resp = await runManyQuery([{}, {}]);
+    expect(resp.status).toBe(200);
+    expect(ids(resp)).toEqual(allIds);
+    const resp1 = await runManyQuery([
+      {},
+      { where: { id: { not: { in: [1] } } } },
+    ]);
+    expect(resp1.status).toBe(200);
+    expect(ids(resp1)).toEqual(allIds.filter((id) => id !== 1));
+    const resp2 = await runManyQuery([{ _fts: "Tolstoy" }, {}]);
+    expect(resp2.status).toBe(200);
+    expect(resp2.body.success.map((r) => r.author)).toEqual(["Leo Tolstoy"]);
+  });
+});
+
+describe("API mobile-app build-bundle job_id path traversal", () => {
+  let adminToken;
+  // jobs dir is <tmpdir>/sc-mobile-build-jobs/<tenant>, so ../../ lands in tmpdir
+  const probeName = `sc-traversal-probe-${Date.now()}`;
+  const probeBase = path.join(tmpdir(), probeName);
+  const traversalId = `../../${probeName}`;
+  beforeAll(async () => {
+    const admin = await User.findOne({ email: "admin@foo.com" });
+    adminToken = await admin.getNewAPIToken();
+    fsSync.writeFileSync(`${probeBase}.error.txt`, "outside-secret");
+    fsSync.writeFileSync(`${probeBase}.zip`, "outside-zip");
+  });
+  afterAll(() => {
+    fsSync.rmSync(`${probeBase}.error.txt`, { force: true });
+    fsSync.rmSync(`${probeBase}.zip`, { force: true });
+  });
+
+  it("status does not read files outside the jobs dir", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .get("/api/mobile-app/build-bundle/status")
+      .query({ job_id: traversalId })
+      .set("Authorization", "Bearer " + adminToken);
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).not.toContain("outside-secret");
+    expect(res.body.status).not.toBe("done");
+  });
+
+  it("result does not stream or delete files outside the jobs dir", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .get("/api/mobile-app/build-bundle/result")
+      .query({ job_id: traversalId })
+      .set("Authorization", "Bearer " + adminToken);
+    expect(res.status).toBe(400);
+    expect(res.text || "").not.toContain("outside-zip");
+    await sleep(200);
+    expect(fsSync.existsSync(`${probeBase}.zip`)).toBe(true);
+    expect(fsSync.existsSync(`${probeBase}.error.txt`)).toBe(true);
   });
 });

@@ -150,6 +150,24 @@ router.use(
   })
 );
 
+/**
+ * Remote viewtemplate query args are untrusted JSON that ends up in Where
+ * objects. inSelect/inSelectWithLevels let a caller filter on arbitrary other
+ * tables, and an _fts object carries SQL fragments; legitimate clients only
+ * send _fts as a search string, the query builds the rest server-side.
+ */
+const hasRestrictedWhereOps = (x: any): boolean => {
+  if (!x || typeof x !== "object") return false;
+  if (Array.isArray(x)) return x.some(hasRestrictedWhereOps);
+  return Object.entries(x).some(
+    ([k, v]) =>
+      k === "inSelect" ||
+      k === "inSelectWithLevels" ||
+      (k === "_fts" && typeof v !== "string") ||
+      hasRestrictedWhereOps(v)
+  );
+};
+
 router.post(
   "/viewQuery/:viewName/:queryName",
   error_catcher(async (req: Req, res: Res, next: any) => {
@@ -175,6 +193,14 @@ router.post(
       const queries = view.queries(false, req, res);
       if (Object.prototype.hasOwnProperty.call(queries, queryName)) {
         const { args } = req.body || {};
+        if (hasRestrictedWhereOps(args)) {
+          getState()!.log(
+            3,
+            `API viewQuery ${view.name} ${queryName} restricted where operator`
+          );
+          res.status(400).json({ error: req.__("Invalid query arguments") });
+          return;
+        }
         const resp = await queries[queryName](...args, true);
         res.json({ success: resp, alerts: getFlashes(req) });
       } else {
@@ -389,7 +415,12 @@ const BUILD_BUNDLE_JOB_TTL_MS = 30 * 60 * 1000;
 const BUILD_BUNDLE_JOBS_ROOT = path.join(tmpdir(), "sc-mobile-build-jobs");
 const safeTenantDirName = (tenant: string) =>
   tenant.replace(/[^a-zA-Z0-9_-]/g, "_");
+// job ids are always crypto.randomUUID() - anything else could traverse out of dir
+const isValidBuildBundleJobId = (jobId: unknown): jobId is string =>
+  typeof jobId === "string" &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(jobId);
 const buildBundleJobPaths = (tenant: string, jobId: string) => {
+  if (!isValidBuildBundleJobId(jobId)) throw new Error("Invalid job_id");
   const dir = path.join(BUILD_BUNDLE_JOBS_ROOT, safeTenantDirName(tenant));
   return {
     zip: path.join(dir, `${jobId}.zip`),
@@ -529,9 +560,13 @@ router.post(
 router.get(
   "/mobile-app/build-bundle/status",
   withAdminBearer(async (req: Req, res: Res) => {
+    if (!isValidBuildBundleJobId(req.query.job_id)) {
+      res.status(400).json({ error: req.__("Invalid job_id") });
+      return;
+    }
     const { zip, error } = buildBundleJobPaths(
       db.getTenantSchema(),
-      req.query.job_id as string
+      req.query.job_id
     );
     if (fs.existsSync(zip)) res.json({ status: "done" });
     else if (fs.existsSync(error))
@@ -554,9 +589,13 @@ router.get(
 router.get(
   "/mobile-app/build-bundle/result",
   withAdminBearer(async (req: Req, res: Res) => {
+    if (!isValidBuildBundleJobId(req.query.job_id)) {
+      res.status(400).json({ error: req.__("Invalid job_id") });
+      return;
+    }
     const { zip, error } = buildBundleJobPaths(
       db.getTenantSchema(),
-      req.query.job_id as string
+      req.query.job_id
     );
     if (!fs.existsSync(zip)) {
       res.status(409).json({

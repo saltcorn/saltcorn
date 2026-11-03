@@ -216,6 +216,46 @@ describe("AuthTest forgot password", () => {
       .send("password=bazzRGGR65zoo")
       .expect(toRedirect("/"));
   });
+
+  it("should not accept a non-scalar email (SQL injection via inSelect)", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // The extended body parser turns email[inSelect][...] into an object. If it
+    // reached User.findOne it would be interpreted as a structured Where clause
+    // (a subselect), enabling an unauthenticated SQL injection / data-exfil
+    // oracle against the users table. The request must be rejected, not run as
+    // a query, and must never crash the server (500).
+    await request(app)
+      .post("/auth/reset")
+      .send("token=aaaaaaaaaaaaaaaa")
+      .send("password=bazzRGGR65zoo")
+      .send("confirm_password=bazzRGGR65zoo")
+      .send("email[inSelect][table]=users")
+      .send("email[inSelect][field]=id")
+      .send("email[inSelect][where][id]=1")
+      .expect(toRedirect("/auth/login"));
+
+    // and the data-model boundary rejects it directly too
+    const result = await User.resetPasswordWithToken({
+      email: { inSelect: { table: "users", field: "id", where: { id: 1 } } },
+      reset_password_token: "aaaaaaaaaaaaaaaa",
+      password: "bazzRGGR65zoo",
+      confirm_password: "bazzRGGR65zoo",
+    });
+    expect(result.success).toBeUndefined();
+    expect(result.error).toBeTruthy();
+  });
+
+  it("should allow reset when forgot is disabled (admin-issued links)", async () => {
+    // Reset links are also sent by the admin when creating users, so /auth/reset
+    // must stay reachable even when self-service allow_forgot is off.
+    const app = await getApp({ disableCsrf: true });
+    await getState().setConfig("allow_forgot", false);
+    await request(app)
+      .get("/auth/reset")
+      .expect(toSucceed())
+      .expect(toInclude("Enter your new password below"));
+    await getState().setConfig("allow_forgot", true);
+  });
 });
 
 describe("AuthTest user admin", () => {

@@ -574,6 +574,8 @@ router.get(
 router.get(
   "/reset",
   error_catcher(async (req: Req, res: Res) => {
+    // Not gated by allow_forgot: reset links are also issued by the admin when
+    // creating users / resetting a password, independent of self-service forgot.
     const form = resetForm(req.query, req);
     res.sendAuthWrap(req.__(`Reset password`), form, {});
   })
@@ -612,11 +614,26 @@ router.post(
   ipLimiter,
   userLimiter,
   error_catcher(async (req: Req, res: Res) => {
+    // Not gated by allow_forgot: reset links are also issued by the admin when
+    // creating users / resetting a password, independent of self-service forgot.
+    // The extended body parser lets a client submit these fields as nested
+    // objects/arrays (e.g. email[inSelect][field]=...). If such a value reached
+    // User.findOne it would be interpreted as a structured Where clause, so
+    // reject any non-string value here at the route boundary.
+    const { email, token, password, confirm_password } = req.body || {};
+    for (const v of [email, token, password, confirm_password]) {
+      if (typeof v !== "undefined" && typeof v !== "string") {
+        getState()!.log(3, `Non-string field in /auth/reset request body`);
+        req.flash("danger", req.__("Invalid request"));
+        res.redirect("/auth/login");
+        return;
+      }
+    }
     const result: any = await User.resetPasswordWithToken({
-      email: (req.body || {}).email,
-      reset_password_token: (req.body || {}).token,
-      password: (req.body || {}).password,
-      confirm_password: (req.body || {}).confirm_password,
+      email,
+      reset_password_token: token,
+      password,
+      confirm_password,
     });
     if (result.success) {
       req.flash(
