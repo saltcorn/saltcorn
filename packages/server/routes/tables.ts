@@ -56,6 +56,8 @@ import {
   br,
   select,
   option,
+  details,
+  summary,
 } from "@saltcorn/markup/tags";
 import { stringify } from "csv-stringify";
 import TableConstraint from "@saltcorn/data/models/table_constraints";
@@ -426,7 +428,7 @@ router.post(
  * True when a plugin has registered a file importer
  */
 const hasImporters = () => Object.keys(getState()!.importers).length > 0;
-console.log("Importers", getState()!.importers);
+// console.log("Importers", getState()!.importers);
 
 /**
  * accept attribute for table file uploads: CSV plus every registered importer
@@ -1291,10 +1293,15 @@ router.get(
       req.user!.role_id === 1 ||
       getState()!.getConfig("min_role_edit_triggers", 1) >= req.user!.role_id;
     let nrows: any;
+    let nrowsError: string | undefined;
     try {
       nrows = await table.countRows({}, { forUser: req.user });
-    } catch {
-      nrows = NaN;
+    } catch (e: any) {
+      nrowsError = e?.message || String(e);
+      getState()!.log(
+        2,
+        `Failed to count rows of table ${table.name}: ${nrowsError}`
+      );
     }
     const fields = table.getFields();
     const { child_relations } = await table.get_child_relations();
@@ -1546,8 +1553,14 @@ router.get(
     // Table Data card
     const dataCard = div(
       { class: "d-flex text-center" },
-      nrows !== null &&
-        div({ class: "mx-auto" }, h4(`${nrows}`), req.__("Rows")),
+      nrowsError !== undefined
+        ? div(
+            { class: "mx-auto" },
+            h4({ class: "text-danger" }, "?"),
+            req.__("Rows")
+          )
+        : nrows !== null &&
+            div({ class: "mx-auto" }, h4(`${nrows}`), req.__("Rows")),
       div(
         { class: "mx-auto" },
         a(
@@ -1766,7 +1779,15 @@ router.get(
               {
                 type: "card",
                 title: req.__("Table data"),
-                contents: dataCard,
+                contents:
+                  nrowsError !== undefined
+                    ? dataCard +
+                      details(
+                        { class: "small text-danger mt-3" },
+                        summary(req.__("Unable to count rows")),
+                        div({ class: "mt-1 text-break" }, text(nrowsError))
+                      )
+                    : dataCard,
               },
             ]
           : []),
