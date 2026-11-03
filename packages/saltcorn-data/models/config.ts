@@ -1896,66 +1896,111 @@ const remove_from_menu = async (item: RemoveFromMenuOpts): Promise<void> => {
   await save_menu_items(new_menu);
 };
 
-const save_menu_items = async (menu_items: any[]): Promise<void> => {
-  const Table = (await import("./table.js")).default;
+const isBlank = (s: any) => typeof s !== "string" || !s.trim();
 
+/**
+ * Expand a Dynamic menu item into the menu items it stands for, one per row.
+ * Throws InvalidConfiguration if the item is not usable.
+ */
+const unroll_dynamic_menu_item = async (item: any): Promise<any[]> => {
+  const Table = (await import("./table.js")).default;
+  if (isBlank(item.dyn_table))
+    throw new InvalidConfiguration("Dynamic menu item: Table is required");
+  if (isBlank(item.dyn_label_fml))
+    throw new InvalidConfiguration(
+      "Dynamic menu item: Label formula is required"
+    );
+  if (isBlank(item.dyn_url_fml))
+    throw new InvalidConfiguration("Dynamic menu item: URL formula is required");
+  const table = Table.findOne({ name: item.dyn_table });
+  if (!table)
+    throw new InvalidConfiguration(
+      `Dynamic menu item: Unable to find table ${item.dyn_table}`
+    );
+  const fields = table.getFields();
+  const compile = (fml: string, what: string) => {
+    try {
+      return get_expression_function(fml, fields);
+    } catch (e: any) {
+      throw new InvalidConfiguration(
+        `Dynamic menu item: ${what} formula error: ${e.message}`
+      );
+    }
+  };
+  const fLabel = compile(item.dyn_label_fml, "Label");
+  const fTooltip = isBlank(item.dyn_tooltip_fml)
+    ? undefined
+    : compile(item.dyn_tooltip_fml, "Tooltip");
+  const fUrl = compile(item.dyn_url_fml, "URL");
+  let where;
+  try {
+    where = isBlank(item.dyn_include_fml)
+      ? {}
+      : jsexprToWhere(item.dyn_include_fml);
+  } catch (e: any) {
+    throw new InvalidConfiguration(
+      `Dynamic menu item: Include formula error: ${e.message}`
+    );
+  }
+  const selopts = item.dyn_order
+    ? { orderBy: db.sqlsanitize(item.dyn_order) }
+    : {};
+  const rows = await table.getRows(where, selopts);
+  const toLink = (row: any) => ({
+    ...item,
+    label: fLabel(row),
+    tooltip: fTooltip ? fTooltip(row) : undefined,
+    url: fUrl(row),
+    type: "Link",
+  });
+  if (item.dyn_section_field) {
+    const section_field = fields.find(
+      (f) => f.name === item.dyn_section_field
+    );
+    if (!section_field) {
+      throw new InvalidConfiguration(
+        `Dynamic menu section field ${item.dyn_section_field} not found`
+      );
+    }
+    const sections = section_field.attributes.options
+      .split(",")
+      .map((s: string) => s.trim());
+    return sections.map((section: string) => ({
+      ...item,
+      label: section,
+      type: "Header",
+      subitems: rows
+        .filter((r) => r[item.dyn_section_field] === section)
+        .map(toLink),
+    }));
+  }
+  return rows.map(toLink);
+};
+
+/**
+ * Save the menu and its unrolled form (Dynamic items expanded).
+ * @param menu_items
+ * @param opts.strict - if true, a broken Dynamic item throws and nothing is
+ *   saved. Otherwise it is logged and left out of the unrolled menu, so that
+ *   unrelated menu changes (e.g. deleting a view) are not blocked by it.
+ */
+const save_menu_items = async (
+  menu_items: any[],
+  opts: { strict?: boolean } = {}
+): Promise<void> => {
   const unroll: (items: any[]) => Promise<any[]> = async (items) => {
     const unrolled_menu_items = [];
     for (const item of items) {
       if (item.type === "Dynamic") {
-        const table = Table.findOne({ name: item.dyn_table });
-        if (!table) throw new Error(`Unable to find table ${item.dyn_table}`);
-        const fields = table.getFields();
-        const where = item.dyn_include_fml
-          ? jsexprToWhere(item.dyn_include_fml)
-          : {};
-        const selopts = item.dyn_order
-          ? { orderBy: db.sqlsanitize(item.dyn_order) }
-          : {};
-        const rows = await table.getRows(where, selopts);
-        const fLabel = get_expression_function(item.dyn_label_fml, fields);
-        const fTooltip = item.dyn_tooltip_fml
-          ? get_expression_function(item.dyn_tooltip_fml, fields)
-          : undefined;
-        const fUrl = get_expression_function(item.dyn_url_fml, fields);
-        if (item.dyn_section_field) {
-          const section_field = fields.find(
-            (f) => f.name === item.dyn_section_field
+        try {
+          unrolled_menu_items.push(...(await unroll_dynamic_menu_item(item)));
+        } catch (e: any) {
+          if (opts.strict) throw e;
+          getState()!.log(
+            2,
+            `Skipping broken dynamic menu item: ${e?.message || e}`
           );
-          if (!section_field) {
-            throw new InvalidConfiguration(
-              `Dynamic menu section field ${item.dyn_section_field} not found`
-            );
-          }
-          const sections = section_field.attributes.options
-            .split(",")
-            .map((s: string) => s.trim());
-          for (const section of sections) {
-            unrolled_menu_items.push({
-              ...item,
-              label: section,
-              type: "Header",
-              subitems: rows
-                .filter((r) => r[item.dyn_section_field] === section)
-                .map((row) => ({
-                  ...item,
-                  label: fLabel(row),
-                  tooltip: fTooltip ? fTooltip(row) : undefined,
-                  url: fUrl(row),
-                  type: "Link",
-                })),
-            });
-          }
-        } else
-          for (const row of rows) {
-            unrolled_menu_items.push({
-              ...item,
-              label: fLabel(row),
-              tooltip: fTooltip ? fTooltip(row) : undefined,
-              url: fUrl(row),
-              type: "Link",
-            });
-          }
+        }
       } else if (item.subitems && item.subitems.length > 0) {
         const subitems = await unroll(item.subitems);
         unrolled_menu_items.push({ ...item, subitems });
@@ -1963,8 +2008,9 @@ const save_menu_items = async (menu_items: any[]): Promise<void> => {
     }
     return unrolled_menu_items;
   };
+  const unrolled = await unroll(menu_items);
   await getState()!.setConfig("menu_items", menu_items);
-  await getState()!.setConfig("unrolled_menu_items", await unroll(menu_items));
+  await getState()!.setConfig("unrolled_menu_items", unrolled);
 };
 
 // For now latestVersion() ignores the supported version
