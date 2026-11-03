@@ -16,9 +16,11 @@ import User from "@saltcorn/data/models/user";
 import View from "@saltcorn/data/models/view";
 import Page from "@saltcorn/data/models/page";
 import PageGroup from "@saltcorn/data/models/page_group";
-import { save_menu_items } from "@saltcorn/data/models/config";
+import {
+  save_menu_items,
+  menu_items_errors,
+} from "@saltcorn/data/models/config";
 import db from "@saltcorn/data/db";
-import { InvalidConfiguration } from "@saltcorn/data/utils";
 
 import { renderForm } from "@saltcorn/markup";
 import { script, domReady, div, ul, i, style } from "@saltcorn/markup/tags";
@@ -793,15 +795,12 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const new_menu = req.body || {};
     const menu_items = jQMEtoMenu(new_menu);
-    try {
-      await save_menu_items(menu_items, { strict: true });
-    } catch (e: any) {
-      if (e instanceof InvalidConfiguration) {
-        res.status(400).json({ error: e.message });
-        return;
-      }
-      throw e;
+    const errors = await menu_items_errors(menu_items);
+    if (errors.length) {
+      res.status(400).json({ error: errors.join("; ") });
+      return;
     }
+    await save_menu_items(menu_items);
     Trigger.emitEvent("AppChange", `Menu`, req.user, {});
 
     res.json({ success: true });

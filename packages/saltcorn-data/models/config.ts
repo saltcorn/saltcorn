@@ -1978,37 +1978,51 @@ const unroll_dynamic_menu_item = async (item: any): Promise<any[]> => {
 };
 
 /**
- * Save the menu and its unrolled form (Dynamic items expanded).
- * @param menu_items
- * @param opts.strict - if true, a broken Dynamic item throws and nothing is
- *   saved. Otherwise it is logged and left out of the unrolled menu, so that
- *   unrelated menu changes (e.g. deleting a view) are not blocked by it.
+ * Unroll the menu (Dynamic items expanded). A broken Dynamic item is left out
+ * and its error message passed to onError.
  */
-const save_menu_items = async (
-  menu_items: any[],
-  opts: { strict?: boolean } = {}
-): Promise<void> => {
-  const unroll: (items: any[]) => Promise<any[]> = async (items) => {
-    const unrolled_menu_items = [];
-    for (const item of items) {
-      if (item.type === "Dynamic") {
-        try {
-          unrolled_menu_items.push(...(await unroll_dynamic_menu_item(item)));
-        } catch (e: any) {
-          if (opts.strict) throw e;
-          getState()!.log(
-            2,
-            `Skipping broken dynamic menu item: ${e?.message || e}`
-          );
-        }
-      } else if (item.subitems && item.subitems.length > 0) {
-        const subitems = await unroll(item.subitems);
-        unrolled_menu_items.push({ ...item, subitems });
-      } else unrolled_menu_items.push(item);
-    }
-    return unrolled_menu_items;
-  };
-  const unrolled = await unroll(menu_items);
+const unroll_menu_items = async (
+  items: any[],
+  onError: (msg: string) => void
+): Promise<any[]> => {
+  const unrolled_menu_items = [];
+  for (const item of items) {
+    if (item.type === "Dynamic") {
+      try {
+        unrolled_menu_items.push(...(await unroll_dynamic_menu_item(item)));
+      } catch (e: any) {
+        onError(e?.message || String(e));
+      }
+    } else if (item.subitems && item.subitems.length > 0) {
+      const subitems = await unroll_menu_items(item.subitems, onError);
+      unrolled_menu_items.push({ ...item, subitems });
+    } else unrolled_menu_items.push(item);
+  }
+  return unrolled_menu_items;
+};
+
+/**
+ * Check the menu without saving it.
+ * @param menu_items
+ * @returns error messages, one per broken Dynamic item; empty if all valid
+ */
+const menu_items_errors = async (menu_items: any[]): Promise<string[]> => {
+  const errors: string[] = [];
+  await unroll_menu_items(menu_items, (msg) => errors.push(msg));
+  return errors;
+};
+
+/**
+ * Save the menu and its unrolled form (Dynamic items expanded).
+ * A broken Dynamic item is logged and left out of the unrolled menu, so that
+ * unrelated menu changes (e.g. deleting a view) are not blocked by it.
+ * Use menu_items_errors to reject invalid menus before saving.
+ * @param menu_items
+ */
+const save_menu_items = async (menu_items: any[]): Promise<void> => {
+  const unrolled = await unroll_menu_items(menu_items, (msg) =>
+    getState()!.log(2, `Skipping broken dynamic menu item: ${msg}`)
+  );
   await getState()!.setConfig("menu_items", menu_items);
   await getState()!.setConfig("unrolled_menu_items", unrolled);
 };
@@ -2178,6 +2192,7 @@ export {
   get_saltcorn_npm_versions,
   get_base_url,
   save_menu_items,
+  menu_items_errors,
   check_email_mask,
 };
 
