@@ -18,6 +18,7 @@ import {
   interpolate,
   objectToQueryString,
   validSqlId,
+  joinFieldKey,
   InvalidConfiguration,
   renderServerSide,
   isNode,
@@ -1178,7 +1179,7 @@ const get_viewable_fields = (
         } else {
           refNm = keypath[0];
           targetNm = keypath[keypath.length - 1];
-          key = keypath.join("_");
+          key = joinFieldKey(keypath.join("_"), table.fields);
         }
         const field = table.getField(column.join_field);
 
@@ -1884,7 +1885,7 @@ const standardBlockDispatch = (
           `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;
         value = row[validSqlId(key)];
       } else {
-        value = row[join_field.split(".").join("_")];
+        value = row[joinFieldKey(join_field.split(".").join("_"), table.fields)];
       }
       if (field_type === "File") {
         return value

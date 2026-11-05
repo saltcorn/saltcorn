@@ -32,6 +32,7 @@ import {
   mergeIntoWhere,
   validSqlId,
   isNode,
+  joinFieldKey,
 } from "./utils.js";
 import {
   jsexprToWhere,
@@ -1835,14 +1836,14 @@ const picked_fields_to_query = (
           let jfKey: string | undefined;
           if (kpath.length === 2) {
             const [refNm, targetNm] = kpath;
-            jfKey = `${refNm}_${targetNm}`;
+            jfKey = joinFieldKey(`${refNm}_${targetNm}`, fields);
             joinFields[jfKey] = {
               ref: refNm,
               target: targetNm,
             };
           } else if (kpath.length === 3) {
             const [refNm, through, targetNm] = kpath;
-            jfKey = `${refNm}_${through}_${targetNm}`;
+            jfKey = joinFieldKey(`${refNm}_${through}_${targetNm}`, fields);
             joinFields[jfKey] = {
               ref: refNm,
               target: targetNm,
@@ -1850,7 +1851,7 @@ const picked_fields_to_query = (
             };
           } else if (kpath.length === 4) {
             const [refNm, through1, through2, targetNm] = kpath;
-            jfKey = `${refNm}_${through1}_${through2}_${targetNm}`;
+            jfKey = joinFieldKey(`${refNm}_${through1}_${through2}_${targetNm}`, fields);
             joinFields[jfKey] = {
               ref: refNm,
               target: targetNm,
