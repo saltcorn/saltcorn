@@ -486,3 +486,24 @@ describe("Table file importers", () => {
       .expect(toRedirect(`/table/${books.id}`));
   });
 });
+
+describe("Table page row count", () => {
+  it("shows the reason instead of NaN when countRows fails", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const orig = Table.prototype.countRows;
+    Table.prototype.countRows = async function () {
+      throw new Error("count <boom>");
+    };
+    try {
+      await request(app)
+        .get("/table/books")
+        .set("Cookie", loginCookie)
+        .expect(toInclude("<summary>Unable to count rows</summary>"))
+        .expect(toInclude("count &lt;boom&gt;"))
+        .expect(toNotInclude("NaN"));
+    } finally {
+      Table.prototype.countRows = orig;
+    }
+  });
+});
