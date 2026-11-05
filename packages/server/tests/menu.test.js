@@ -13,6 +13,9 @@ import { save_menu_items } from "@saltcorn/data/models/config";
 
 import db from "@saltcorn/data/db";
 import Page from "@saltcorn/data/models/page";
+import View from "@saltcorn/data/models/view";
+import Table from "@saltcorn/data/models/table";
+import { getState } from "@saltcorn/data/db/state";
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -231,5 +234,89 @@ describe("Menu keyboard shortcuts", () => {
       .set("Cookie", loginCookie);
     expect(res.text).toContain("_sc_menu_shortcuts");
     expect(res.text).toContain("Alt+n");
+  });
+});
+
+describe("Dynamic menu items", () => {
+  const dynItem = (extra = {}) => ({
+    type: "Dynamic",
+    text: "dyn",
+    dyn_table: "books",
+    dyn_label_fml: "author",
+    dyn_url_fml: "'/view/authorshow?id='+id",
+    dyn_include_fml: "",
+    min_role: "100",
+    max_role: "1",
+    location: "Standard",
+    style: "",
+    ...extra,
+  });
+
+  it("rejects a Dynamic item with empty label formula", async () => {
+    await save_menu_items([]);
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    const res = await request(app)
+      .post("/menu")
+      .set("Cookie", loginCookie)
+      .send([dynItem({ dyn_label_fml: "" })]);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("Label formula is required");
+    expect(getState().getConfig("menu_items")).toEqual([]);
+  });
+
+  it("rejects a Dynamic item with empty URL formula", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    const res = await request(app)
+      .post("/menu")
+      .set("Cookie", loginCookie)
+      .send([dynItem({ dyn_url_fml: " " })]);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("URL formula is required");
+  });
+
+  it("accepts a valid Dynamic item with no include formula", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    const res = await request(app)
+      .post("/menu")
+      .set("Cookie", loginCookie)
+      .send([dynItem()]);
+    expect(res.status).toBe(200);
+    const unrolled = getState().getConfig("unrolled_menu_items");
+    const nbooks = await Table.findOne({ name: "books" }).countRows();
+    expect(unrolled.length).toBe(nbooks);
+    expect(unrolled[0].type).toBe("Link");
+  });
+
+  it("a broken Dynamic item does not block deleting a view", async () => {
+    const table = Table.findOne({ name: "books" });
+    const view = await View.create({
+      name: "dynmenu_del_test",
+      table_id: table.id,
+      viewtemplate: "List",
+      configuration: { columns: [] },
+      min_role: 100,
+    });
+    await save_menu_items([
+      dynItem({ dyn_label_fml: "" }),
+      {
+        type: "View",
+        label: "v",
+        viewname: "dynmenu_del_test",
+        min_role: "100",
+        max_role: "1",
+        location: "Standard",
+        style: "",
+      },
+    ]);
+    await View.findOne({ name: "dynmenu_del_test" }).delete();
+    expect(View.findOne({ name: "dynmenu_del_test" })).toBeFalsy();
+    const menu = getState().getConfig("menu_items");
+    expect(menu.length).toBe(1);
+    expect(menu[0].type).toBe("Dynamic");
+    expect(getState().getConfig("unrolled_menu_items")).toEqual([]);
+    expect(view).toBeTruthy();
   });
 });

@@ -16,7 +16,10 @@ import User from "@saltcorn/data/models/user";
 import View from "@saltcorn/data/models/view";
 import Page from "@saltcorn/data/models/page";
 import PageGroup from "@saltcorn/data/models/page_group";
-import { save_menu_items } from "@saltcorn/data/models/config";
+import {
+  save_menu_items,
+  menu_items_errors,
+} from "@saltcorn/data/models/config";
 import db from "@saltcorn/data/db";
 
 import { renderForm } from "@saltcorn/markup";
@@ -270,7 +273,7 @@ const menuForm = async (req: Req) => {
         ),
         class: "item-menu",
         type: "String",
-        required: true,
+        required: false,
         showIf: { type: "Dynamic" },
       },
       {
@@ -554,7 +557,10 @@ const menuEditorScript = (menu_items: any) => `
       success: ()=>{ ajax_indicator(false)}, 
       dataType : 'json', 
       contentType: 'application/json;charset=UTF-8',
-      error: (r) => {ajax_indicate_error(undefined, r); }
+      error: (r) => {
+        ajax_indicate_error(undefined, r);
+        if (r?.responseJSON?.error) notifyAlert({type: "danger", text: r.responseJSON.error});
+      }
     })
   }
   var sortableListOptions = {
@@ -575,17 +581,38 @@ const menuEditorScript = (menu_items: any) => `
   editor.setData(${JSON.stringify(menu_items)});
   //Calling the update method
 
+  // jquery-menu-editor does not check the form, so enforce required fields
+  // of the selected item type (fields hidden by showIf are disabled)
+  function menuFormMissingRequired() {
+    const missing = [];
+    $('#menuForm .item-menu[required]:enabled').each(function () {
+      const v = $(this).val();
+      if (v === null || v === undefined || String(v).trim() === "") {
+        const label = $('#menuForm label[for="' + this.id + '"]').first().text().trim();
+        missing.push(label || $(this).attr("name"));
+      }
+    });
+    if (missing.length) {
+      notifyAlert({type: "danger", text: "Required: " + missing.join(", ")});
+      return true;
+    }
+    return false;
+  }
+
   $("#btnUpdate").click(function(){
+      if (menuFormMissingRequired()) return;
       editor.update();
       ajax_save_menu();
   });
   $("#btnRecalc").click(function(){
+    if (editor.getCurrentItem() && menuFormMissingRequired()) return;
     editor.update();
     ajax_save_menu(true);
     location.reload();
   });
   // Calling the add method
   $('#btnAdd').click(function(){
+      if (menuFormMissingRequired()) return;
       editor.add();
       ajax_save_menu();
   });
@@ -768,6 +795,11 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const new_menu = req.body || {};
     const menu_items = jQMEtoMenu(new_menu);
+    const errors = await menu_items_errors(menu_items);
+    if (errors.length) {
+      res.status(400).json({ error: errors.join("; ") });
+      return;
+    }
     await save_menu_items(menu_items);
     Trigger.emitEvent("AppChange", `Menu`, req.user, {});
 
