@@ -1717,6 +1717,25 @@ const pullCapacitorBuilder = (req: Req, res: any, version: any) => {
   });
 };
 
+// version of the globally installed @saltcorn/cli (after npm install -g)
+const installedCliVersion = (): Promise<string | undefined> =>
+  new Promise((resolve) => {
+    exec("npm root -g", (err: any, stdout: string) => {
+      if (err) return resolve(undefined);
+      try {
+        const pkgFile = path.join(
+          stdout.trim(),
+          "@saltcorn",
+          "cli",
+          "package.json"
+        );
+        resolve(JSON.parse(fs.readFileSync(pkgFile, "utf8")).version);
+      } catch (e) {
+        resolve(undefined);
+      }
+    });
+  });
+
 const tryInstallSdNotify = (req: Req, res: any) => {
   const child = spawn("npm", ["install", "-g", "sd-notify"], {
     stdio: ["ignore", "pipe", "pipe"],
@@ -1996,7 +2015,9 @@ const doInstall = async (
           res_write(
             req.__("Pulling the capacitor-builder docker image...") + "\n"
           );
-          const pullCode = await pullCapacitorBuilder(req, res, version);
+          // pull the tag of the version npm actually installed, not "latest"
+          const pullVersion = (await installedCliVersion()) || version;
+          const pullCode = await pullCapacitorBuilder(req, res, pullVersion);
           res_write(req.__("Pull done with code %s", pullCode) + "\n");
           if (pullCode === 0) {
             res_write(req.__("Pruning docker...") + "\n");
@@ -2010,13 +2031,17 @@ const doInstall = async (
         process.exit(0);
       }, 200);
       res.end(
-        version === "latest"
+        (version === "latest"
           ? req.__(
               `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
             )
           : req.__(
               `Install done with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
-            )
+            )) +
+          "\n" +
+          req.__(
+            "The server stops now to load the new version. If Saltcorn is not running as a service (e.g. started with 'saltcorn serve' in a terminal), start it again manually."
+          )
       );
     });
   }
@@ -2024,7 +2049,12 @@ const doInstall = async (
 
 router.post("/install", isAdmin, async (req: Req, res: Res) => {
   const { version, deep_clean } = req.body || {};
-  await doInstall(req, res, version, deep_clean === "on", false);
+  // only pull a matching builder image when one is already in use
+  const { installed: hasBuilder } = await imageAvailable(
+    "saltcorn/capacitor-builder",
+    version
+  );
+  await doInstall(req, res, version, deep_clean === "on", !!hasBuilder);
 });
 
 /**

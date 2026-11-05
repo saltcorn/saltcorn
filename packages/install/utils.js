@@ -117,8 +117,11 @@ const pullCapacitorBuilder = async (
   user,
   dockerMode,
   addToDockerGroup,
-  dryRun
+  dryRun,
+  version = "latest"
 ) => {
+  // use the tag matching the installed Saltcorn version, the build page looks for it
+  const image = `saltcorn/capacitor-builder:${version}`;
   if (dockerMode === "rootless") {
     await asyncSudo(
       [
@@ -128,7 +131,7 @@ const pullCapacitorBuilder = async (
         "/bin/bash",
         "--login",
         "-c",
-        "docker pull saltcorn/capacitor-builder",
+        `docker pull ${image}`,
       ],
       false,
       dryRun
@@ -140,7 +143,7 @@ const pullCapacitorBuilder = async (
           "bash",
           "-c",
           `newgrp docker <<EOF  
-  docker pull saltcorn/capacitor-builder
+  docker pull ${image}
 EOF`,
         ],
         false,
@@ -149,7 +152,7 @@ EOF`,
     } else {
       await asyncSudoUser(
         user,
-        ["docker", "pull", "saltcorn/capacitor-builder"],
+        ["docker", "pull", image],
         false,
         dryRun
       );
