@@ -32,7 +32,7 @@ import Plugin from "@saltcorn/data/models/plugin";
 import File from "@saltcorn/data/models/file";
 // @ts-ignore
 import passport from "passport";
-import { spawn, exec } from "child_process";
+import { spawn, exec, execFile } from "child_process";
 import User from "@saltcorn/data/models/user";
 import Trigger from "@saltcorn/data/models/trigger";
 import path from "path";
@@ -1717,6 +1717,18 @@ const pullCapacitorBuilder = (req: Req, res: any, version: any) => {
   });
 };
 
+// ask npm which version a tag like "latest" points to (same registry as the install)
+const resolveNpmTag = (tag: string): Promise<string | undefined> =>
+  new Promise((resolve) => {
+    execFile(
+      "npm",
+      ["view", `@saltcorn/cli@${tag}`, "version"],
+      { timeout: 30000 },
+      (err: any, stdout: string) =>
+        resolve(err ? undefined : stdout.trim() || undefined)
+    );
+  });
+
 const tryInstallSdNotify = (req: Req, res: any) => {
   const child = spawn("npm", ["install", "-g", "sd-notify"], {
     stdio: ["ignore", "pipe", "pipe"],
@@ -1952,6 +1964,11 @@ const doInstall = async (
         ? req.__("Starting upgrade, please wait...\n")
         : req.__("Installing %s, please wait...\n", version)
     );
+    // resolve "latest" up front so we install and pull the same version
+    const installVersion =
+      version === "latest"
+        ? (await resolveNpmTag("latest")) || "latest"
+        : version;
     if (deepClean) {
       res_write(req.__("Cleaning node_modules...\n"));
       try {
@@ -1972,7 +1989,7 @@ const doInstall = async (
     }
     const child = spawn(
       "npm",
-      ["install", "-g", `@saltcorn/cli@${version}`, "--omit=dev"],
+      ["install", "-g", `@saltcorn/cli@${installVersion}`, "--omit=dev"],
       {
         stdio: ["ignore", "pipe", "pipe"],
       }
@@ -1996,7 +2013,11 @@ const doInstall = async (
           res_write(
             req.__("Pulling the capacitor-builder docker image...") + "\n"
           );
-          const pullCode = await pullCapacitorBuilder(req, res, version);
+          const pullCode = await pullCapacitorBuilder(
+            req,
+            res,
+            installVersion
+          );
           res_write(req.__("Pull done with code %s", pullCode) + "\n");
           if (pullCode === 0) {
             res_write(req.__("Pruning docker...") + "\n");
@@ -2010,13 +2031,17 @@ const doInstall = async (
         process.exit(0);
       }, 200);
       res.end(
-        version === "latest"
+        (version === "latest"
           ? req.__(
               `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
             )
           : req.__(
               `Install done with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
-            )
+            )) +
+          "\n" +
+          req.__(
+            "The server stops now to load the new version. If Saltcorn is not running as a service (e.g. started with 'saltcorn serve' in a terminal), start it again manually."
+          )
       );
     });
   }
@@ -2024,7 +2049,12 @@ const doInstall = async (
 
 router.post("/install", isAdmin, async (req: Req, res: Res) => {
   const { version, deep_clean } = req.body || {};
-  await doInstall(req, res, version, deep_clean === "on", false);
+  // only pull a matching builder image when one is already in use
+  const { installed: hasBuilder } = await imageAvailable(
+    "saltcorn/capacitor-builder",
+    version
+  );
+  await doInstall(req, res, version, deep_clean === "on", !!hasBuilder);
 });
 
 /**

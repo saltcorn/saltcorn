@@ -18,6 +18,7 @@ const tcpPortUsed = require("tcp-port-used");
 const envPaths = require("env-paths");
 const si = require("systeminformation");
 const os = require("os");
+const { execFileSync } = require("child_process");
 const {
   asyncSudo,
   asyncSudoUser,
@@ -32,6 +33,25 @@ const {
   seLinuxDisabled,
 } = require("./utils");
 //const {fetchAsyncQuestionProperty} = require("inquirer/lib/utils/utils");
+
+// version of the just installed @saltcorn/cli, falls back to the npm tag
+const installedCliVersion = (user, nextNpmTag) => {
+  try {
+    const pkgFile = `/home/${user}/.local/lib/node_modules/@saltcorn/cli/package.json`;
+    // another user's home may not be readable for us, so read it as that user
+    const content =
+      isRoot || user === os.userInfo().username
+        ? fs.readFileSync(pkgFile, "utf8")
+        : execFileSync("sudo", ["-u", user, "cat", pkgFile], {
+            encoding: "utf8",
+          });
+    const { version } = JSON.parse(content);
+    if (version) return version;
+  } catch (e) {
+    console.log("Unable to read the installed Saltcorn version:", e.message);
+  }
+  return nextNpmTag ? "next" : "latest";
+};
 
 //https://github.com/sindresorhus/is-root/blob/main/index.js
 const isRoot = process.getuid && process.getuid() === 0;
@@ -767,7 +787,13 @@ WantedBy=multi-user.target`
         await setupDocker(user, dockerMode, addToDockerGroup, osInfo, dryRun);
       else if (dockerMode === "standard" && addToDockerGroup)
         await doAddToDockerGroup(user, dryRun);
-      await pullCapacitorBuilder(user, dockerMode, addToDockerGroup, dryRun);
+      await pullCapacitorBuilder(
+        user,
+        dockerMode,
+        addToDockerGroup,
+        dryRun,
+        installedCliVersion(user, nextNpmTag)
+      );
       // restart to apply the docker group membership
       await asyncSudo(["systemctl", "daemon-reload"], false, dryRun);
       await asyncSudo(["systemctl", "restart", osService], false, dryRun);

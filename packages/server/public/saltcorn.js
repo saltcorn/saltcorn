@@ -1449,10 +1449,10 @@ function check_capacitor_builder() {
         class="list-unstyled mb-0"
       >
         <li>
-          <span class="fw-semibold text-muted">Docker tag:</span>1.3.1-beta.0
+          <span class="fw-semibold text-muted">Docker tag:</span>${res.version}
         </li>
         <li>
-          <span class="fw-semibold text-muted">SC version:</span>1.3.1-beta.10
+          <span class="fw-semibold text-muted">SC version:</span>${res.sc_version}
         </li>
       </ul>
     </div>`);
