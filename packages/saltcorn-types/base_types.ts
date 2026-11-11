@@ -328,6 +328,8 @@ export type Action = {
   disableInList?: boolean;
   disableInWorkflow?: boolean;
   requireRow?: boolean;
+  /** requires a row, but can also be used by triggers without a table (config uses the workflow-style fields) */
+  allowWithoutRow?: boolean;
   deprecated?: boolean;
   disableIf?: () => boolean;
   configFormOptions?: GenObj;
