@@ -57,6 +57,17 @@ const validSqlId = (s: string): string =>
     .toLowerCase()
     .trim();
 
+/**
+ * Result-column alias for a join field. If the table already has a column with
+ * the natural alias (e.g. FK `create_user` + column `create_user_name` vs join
+ * `create_user.name`), a suffix keeps the two result columns distinct.
+ */
+const joinFieldKey = (
+  baseKey: string,
+  fields?: { name: string }[] | null
+): string =>
+  (fields || []).some((f) => f.name === baseKey) ? `${baseKey}__join` : baseKey;
+
 const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};
   Object.entries(obj).forEach(([k, v]) => {
@@ -976,6 +987,7 @@ export {
   isRoot,
   flatEqual,
   validSqlId,
+  joinFieldKey,
   ensure_final_slash,
   getFetchProxyOptions,
   jsIdentifierValidator,
