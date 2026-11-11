@@ -26,8 +26,12 @@
 import { GenObj } from "@saltcorn/db-common/types";
 import { VM } from "vm2";
 
-/** Local copy: importing it from utils would make utils and this circular. */
-const VALID_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+/**
+ * Local copy: importing it from utils would make utils and this circular.
+ * Must accept Unicode identifiers, not just ASCII: join paths in expressions
+ * are written `refⱵtarget` (U+2C75), and field names may be non-ASCII.
+ */
+const VALID_IDENTIFIER = /^[\p{ID_Start}$_][\p{ID_Continue}$\u200C\u200D]*$/u;
 const RESERVED = new Set([
   "arguments",
   "await",

@@ -128,6 +128,17 @@ describe("get_async_expression_function", () => {
   });
 });
 
+describe("eval_expression with non-ASCII identifiers", () => {
+  it("evaluates a Ⱶ join path variable", () => {
+    expect(
+      eval_expression("publisherⱵname", { publisherⱵname: "AK Press" })
+    ).toBe("AK Press");
+  });
+  it("evaluates a non-ASCII field name", () => {
+    expect(eval_expression("prénom + '!'", { prénom: "Zoë" })).toBe("Zoë!");
+  });
+});
+
 describe("get_expression_function", () => {
   it("allows eval in the root tenant", () => {
     // eval is enabled in vm2 for the root (default) tenant only
