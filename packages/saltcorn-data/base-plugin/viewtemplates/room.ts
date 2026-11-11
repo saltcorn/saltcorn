@@ -18,6 +18,7 @@ import Field from "../../models/field.js";
 import Workflow from "../../models/workflow.js";
 const {
   text,
+  a,
   div,
   h4,
   hr,
@@ -124,6 +125,19 @@ const configuration_workflow = (req: Req) =>
               }
             }
           }
+          const order_field_options = roomtable
+            .getFields()
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => f.name);
+          const more_view_options = (
+            await View.find_table_views_where(
+              context.table_id,
+              ({ state_fields, viewrow, viewtemplate }: GenObj) =>
+                viewtemplate.view_quantity === "Many" &&
+                viewrow.name !== context.viewname &&
+                state_fields.every((sf: GenObj) => !sf.required)
+            )
+          ).map((v) => v.name);
           return new Form({
             fields: [
               {
@@ -190,6 +204,41 @@ const configuration_workflow = (req: Req) =>
                 attributes: {
                   options: participant_max_read_options,
                 },
+              },
+              {
+                name: "multiple_rows",
+                label: req.__("If several rooms match"),
+                type: "String",
+                sublabel: req.__(
+                  "When the room is picked by fields other than id, e.g. embedded in a view of a parent table"
+                ),
+                attributes: {
+                  options: ["First", "Error", "First with link to more"],
+                },
+              },
+              {
+                name: "row_order_field",
+                label: req.__("First room by"),
+                type: "String",
+                sublabel: req.__("Defaults to the primary key"),
+                attributes: {
+                  options: order_field_options,
+                },
+              },
+              {
+                name: "row_order_desc",
+                label: req.__("Descending"),
+                type: "Bool",
+              },
+              {
+                name: "more_rows_view",
+                label: req.__("View for more rooms"),
+                type: "String",
+                sublabel: req.__("Opened by the link, with the same filter"),
+                attributes: {
+                  options: more_view_options,
+                },
+                showIf: { multiple_rows: "First with link to more" },
               },
             ] as any,
           });
@@ -310,19 +359,47 @@ const run = async (
     msg_container_height,
     pin_form_bottom,
     layout,
+    multiple_rows,
+    row_order_field,
+    row_order_desc,
+    more_rows_view,
   }: GenObj,
   state: GenObj,
   { req, res }: { req: Req; res: Res },
-  { getRowQuery, updateQuery, optionsQuery }: GenObj
+  { getRowQuery, updateQuery, optionsQuery, findRoomQuery }: GenObj
 ) => {
   const table = Table.findOne({ id: table_id })!;
   const fields = table.getFields();
   readState(state, fields);
-  if (!state.id) return "Need room id";
   const appState = getState()!;
   const locale = req.getLocale();
   const role = req && req.user ? req.user.role_id : 100;
   const __ = (s: string) => appState.i18n.__({ phrase: s, locale }) || s;
+  let more_link = "";
+  if (!state.id) {
+    // e.g. {group: 1} from a parent view, or ?name=... in a link
+    const found = await findRoomQuery(state, row_order_field, row_order_desc);
+    const rooms = found?.rows;
+    if (found?.notParticipant)
+      return __("You are not a participant in this room");
+    if (rooms && rooms.length === 0) return __("No row selected");
+    if (rooms?.length > 1 && multiple_rows === "Error")
+      return __("More than one room matches");
+    if (
+      rooms?.length > 1 &&
+      multiple_rows === "First with link to more" &&
+      more_rows_view
+    )
+      more_link = a(
+        {
+          class: "sc-room-more",
+          href: `/view/${encodeURIComponent(more_rows_view)}${stateToQueryString(state)}`,
+        },
+        __("More rooms")
+      );
+    if (rooms?.length) state = { ...state, id: rooms[0][table.pk_name] };
+  }
+  if (!state.id) return "Need room id";
   const missing = [
     !msg_relation && "Message relation",
     !msgsender_field && "Message sender field",
@@ -497,6 +574,7 @@ const run = async (
           hints: (appState.getLayout(req.user as any) as any).hints || {},
         })
       : [message_list, message_form],
+    more_link,
     script({
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
     }) + script(domReady(`init_room("${viewname}", ${state.id})`))
@@ -855,9 +933,54 @@ export default {
   queries: ({
     table_id,
     viewname,
-    configuration: { columns, default_state },
+    configuration: { columns, default_state, participant_field },
     req,
   }: GenObj) => ({
+    /**
+     * rooms matching a state without id, first one first (at most 2, to know
+     * if there are more). Only rooms the user takes part in, if participation
+     * is configured; notParticipant tells rooms matched but none of them are
+     * ours. null if the state has nothing to filter on
+     */
+    async findRoomQuery(
+      state: GenObj,
+      orderBy?: string,
+      orderDesc?: boolean
+    ) {
+      const table = Table.findOne({ id: table_id })!;
+      const where = stateFieldsToWhere({
+        fields: table.getFields(),
+        state,
+        table,
+      });
+      if (Object.keys(where).length === 0) return null;
+      const selopts = {
+        orderBy: orderBy || table.pk_name,
+        orderDesc: !!orderDesc,
+        limit: 2,
+        forUser: req.user,
+        forPublic: !req.user,
+      };
+      if (!participant_field) return { rows: await table.getRows(where, selopts) };
+
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
+      const parttable = Table.findOne({ name: part_table_name })!;
+      const partRows = await parttable.getRows({
+        [part_user_field]: req.user ? req.user.id : 0,
+      });
+      const myRoomIds = partRows.map((r: GenObj) => r[part_key_to_room]);
+      const rows = myRoomIds.length
+        ? await table.getRows(
+            { ...where, [table.pk_name]: { in: myRoomIds } },
+            selopts
+          )
+        : [];
+      if (rows.length > 0) return { rows };
+      // rooms match but we are in none of them: say so rather than "no row"
+      const anyRoom = await table.getRows(where, { ...selopts, limit: 1 });
+      return { rows: [], notParticipant: anyRoom.length > 0 };
+    },
     async getRowQuery(
       state_id: string,
       part_table_name: string,

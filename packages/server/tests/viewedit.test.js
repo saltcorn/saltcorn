@@ -408,6 +408,28 @@ describe("viewedit new Show", () => {
       .send("columns=" + encodeURIComponent(JSON.stringify(columns)))
       .send("layout=" + encodeURIComponent(JSON.stringify(layout)))
       .set("Cookie", loginCookie)
+      .expect(toInclude("If several rows match"));
+  });
+  it("save new view options", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(
+      JSON.stringify({
+        table_id: table.id,
+        viewname: "mybook",
+        columns,
+        layout,
+      })
+    );
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/viewedit/config/mybook")
+      .send("contextEnc=" + ctx)
+      .send("stepName=Options")
+      .send("multiple_rows=First")
+      .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
   it("should show new view", async () => {
