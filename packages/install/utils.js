@@ -25,7 +25,7 @@ const asyncSudo = (args, allowFail, dryRun) => {
       });
       child.on("exit", function (data) {
         if (data !== 0 && !allowFail) reject(data);
-        else resolve();
+        else resolve(data);
       });
     });
 };
@@ -89,6 +89,7 @@ const setupDocker = async (
       dryRun
     );
     await asyncSudo(["loginctl", "enable-linger", "saltcorn"], false, dryRun);
+    await prepareRootlessRequirements(dryRun);
     await runDockerRootlessScript(user, dryRun);
   } else if (dockerMode === "standard") {
     console.log("Setting up docker for standard mode");
@@ -150,12 +151,7 @@ EOF`,
         dryRun
       );
     } else {
-      await asyncSudoUser(
-        user,
-        ["docker", "pull", image],
-        false,
-        dryRun
-      );
+      await asyncSudoUser(user, ["docker", "pull", image], false, dryRun);
     }
   } else throw new Error(`Unknown docker mode ${dockerMode}`);
 };
@@ -183,6 +179,54 @@ include <tunables/global>
   ]);
 };
 
+/**
+ * The kernel module Docker's rootless script checks for: ip_tables when
+ * iptables is the legacy build, nf_tables otherwise (same rule as the script)
+ * @param iptablesVersion - output of `iptables --version`, empty if not installed
+ * @returns {string}
+ */
+const iptablesModule = (iptablesVersion) =>
+  /legacy/.test(iptablesVersion || "") ? "ip_tables" : "nf_tables";
+
+const getIptablesVersion = () => {
+  const res = spawnSync("iptables", ["--version"], {
+    env: { ...process.env, PATH: `${process.env.PATH}:/sbin:/usr/sbin` },
+  });
+  return res.stdout ? res.stdout.toString() : "";
+};
+
+/**
+ * Docker's rootless install script stops with "Missing system requirements"
+ * unless the iptables binary is installed and its kernel module is loaded.
+ * Minimal and cloud images often have neither, so provide both here
+ * (installing the extra kernel modules package if the module is missing)
+ * and load the module on every boot.
+ * @param dryRun
+ */
+const prepareRootlessRequirements = async (dryRun) => {
+  await asyncSudo(["apt-get", "install", "-y", "iptables"], false, dryRun);
+  const module = iptablesModule(dryRun ? "" : getIptablesVersion());
+  let code = await asyncSudo(["modprobe", module], true, dryRun);
+  if (code) {
+    await asyncSudo(
+      ["apt-get", "install", "-y", `linux-modules-extra-${os.release()}`],
+      true,
+      dryRun
+    );
+    code = await asyncSudo(["modprobe", module], true, dryRun);
+  }
+  if (code)
+    console.log(
+      `Unable to load the ${module} kernel module, the docker installation will probably fail`
+    );
+  else
+    await asyncSudo(
+      ["sh", "-c", `echo ${module} > /etc/modules-load.d/saltcorn-docker.conf`],
+      true,
+      dryRun
+    );
+};
+
 const runDockerRootlessScript = async (user, dryRun) => {
   await asyncSudoUser(
     user,
@@ -206,6 +250,13 @@ const runDockerRootlessScript = async (user, dryRun) => {
     false,
     dryRun
   );
+  // machinectl shell exits with 0 even when the script fails. Check as root:
+  // the installing user often can't read the saltcorn home directory
+  const dockerBin = `/home/${user}/bin/docker`;
+  if (!dryRun && (await asyncSudo(["test", "-x", dockerBin], true, dryRun)))
+    throw new Error(
+      `The docker rootless install script did not install ${dockerBin}, see its output above`
+    );
 };
 
 const runDockerScript = async (dryRun) => {
@@ -251,7 +302,7 @@ const asyncSudoPostgres = (args, allowFail, dryRun) => {
  */
 const gen_password = () => {
   const num_between = (lo, hi) => lo + Math.random() * (hi - lo);
-  
+
   const oneOf = (vs) => vs[Math.floor(Math.random() * vs.length)];
 
   const char = () => {
@@ -295,4 +346,5 @@ module.exports = {
   pullCapacitorBuilder,
   getDockerEnvVars,
   seLinuxDisabled,
+  iptablesModule,
 };
