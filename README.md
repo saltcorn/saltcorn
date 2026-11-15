@@ -70,6 +70,15 @@ The first two lines will install Node.js 24 (you can also use 20, or 22). The la
 accepting all the defaults, which installs PostgreSQL and sets up Saltcorn as a service
 listening on port 80.
 
+The defaults also install Docker (rootless) and pull the `saltcorn/capacitor-builder` image,
+which is used to build mobile apps. The image is large, so this last step can take several minutes.
+Saltcorn is already running while it downloads and is restarted once at the end. If you don't need to build mobile apps, skip the
+Docker setup and still accept all other defaults:
+
+```
+npx saltcorn-install -y --skip-docker
+```
+
 If you want a different port, a different database backend, or to not install as a service, you
 can omit the final `-y` to get an interactive installation:
 
