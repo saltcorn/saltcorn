@@ -41,8 +41,8 @@ export async function apiCall({
     fetchOptions.body = body;
   } else if (body !== undefined) {
     if (body && typeof body === "object" && "_csrf" in body) {
-      const { _csrf, ...rest } = body;
-      body = rest;
+      body = { ...body };
+      delete body._csrf;
     }
     fetchOptions.body = JSON.stringify(body);
     headers["Content-Type"] = "application/json";

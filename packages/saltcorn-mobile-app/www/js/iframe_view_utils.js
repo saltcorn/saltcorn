@@ -1,8 +1,8 @@
 /*eslint-env browser*/
-/*global $, KTDrawer, reload_embedded_view, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success, get_current_state_url, initialize_page, reset_spinners, apply_showif_fetching_urls */
+/*global $, KTDrawer, reload_embedded_view, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success, get_current_state_url, initialize_page, reset_spinners, apply_showif_fetching_urls, notifyAlert, get_form_record, _sc_version_tag */
 
 // read by common_done in saltcorn-common.js, defined in saltcorn.js on the web
-var last_route_viewname;
+window.last_route_viewname = undefined;
 
 // Tapping a javascript: link silently does nothing on iOS, so we run the
 // code ourselves instead of relying on the link to do it.
@@ -1316,3 +1316,9 @@ function delprevwfroomrun(viewname, e, runid) {
   $(e.target).closest(".prevwfroomrun").remove();
   return false;
 }
+
+window.checkNetworkError = checkNetworkError;
+window.ensure_script_loaded = ensure_script_loaded;
+window.ensure_css_loaded = ensure_css_loaded;
+window.fill_formula_btn_click = fill_formula_btn_click;
+window.delprevwfroomrun = delprevwfroomrun;
