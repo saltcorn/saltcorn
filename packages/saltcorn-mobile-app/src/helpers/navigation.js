@@ -43,6 +43,12 @@ export function addQueryParam(key, value) {
   }
 }
 
+// replaces the query of the current page, e.g. after a filter change
+export function setCurrentQuery(query) {
+  if (routingHistory.length > 0)
+    routingHistory[routingHistory.length - 1].query = query;
+}
+
 export function setAnchor(anchor) {
   if (routingHistory.length === 0)
     throw new Error("No current route to set anchor");
@@ -142,7 +148,8 @@ export async function handleRoute(route, query, files, data) {
   let routeAdded = false;
   const isModal = isModalOpen();
   try {
-    if (!isModal) clearContentDiv();
+    // keep the page on POSTs, so a failed submit doesn't wipe the form
+    if (!isModal && !route?.startsWith("post")) clearContentDiv();
     if (
       mobileConfig.networkState === "none" &&
       mobileConfig.allowOfflineMode &&
@@ -203,6 +210,8 @@ export async function handleRoute(route, query, files, data) {
     }
   } catch (error) {
     if (routeAdded) popRoute();
+    // the login page is already shown with its own message
+    if (error?.sessionExpired) return;
     showToasts([
       {
         type: "error",

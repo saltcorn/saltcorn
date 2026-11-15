@@ -9,7 +9,12 @@ export const getHeaders = () => {
   const versionTag = config.version_tag;
   const stdHeaders = [
     {
-      headerTag: `<script>var _sc_version_tag = "${versionTag}";</script>`,
+      // same globals the web wrapper defines, saltcorn-common.js reads them
+      headerTag: `<script>var _sc_version_tag = "${versionTag}", _sc_globalCsrf = ${JSON.stringify(
+        config.csrfToken || ""
+      )}, _sc_lightmode = ${JSON.stringify(
+        state.getLightDarkMode?.(config.user) || "light"
+      )}, _sc_pageloadtag = Math.floor(Math.random() * 16777215).toString(16);</script>`,
     },
     { css: `static_assets/${versionTag}/saltcorn.css` },
     { css: `static_assets/${versionTag}/saltcorn-mobile.css` },

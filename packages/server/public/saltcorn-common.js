@@ -1056,7 +1056,7 @@ function doMobileTransforms() {
 
   $("button").each(function () {
     for (const [k, v] of Object.entries({ onclick: replacers.onclick })) {
-      for ({ web, mobile } of v) replaceAttr(this, k, v.web, v.mobile);
+      for (const { web, mobile } of v) replaceAttr(this, k, web, mobile);
     }
   });
 
@@ -2725,8 +2725,10 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
       const next = new URL(res.goto, "http://localhost");
       const pathname = next.pathname;
       if (pathname.startsWith("/view/") || pathname.startsWith("/page/")) {
-        const route = `get${pathname}${next.search ? "?" + next.search : ""}`;
-        await parent.saltcorn.mobileApp.navigation.handleRoute(route);
+        await parent.saltcorn.mobileApp.navigation.handleRoute(
+          `get${pathname}`,
+          next.search ? next.search.substring(1) : undefined
+        );
       } else parent.cordova.InAppBrowser.open(res.goto, "_system"); // TODO
     } else if (res.target === "_blank") window.open(res.goto, "_blank").focus();
     else {
@@ -3101,7 +3103,7 @@ function init_dynamic_update_room() {
   }
   let socket = get_shared_socket();
   socket.on("dynamic_update", async (data) => {
-    await common_done(data);
+    await common_done(data, undefined, isNode);
   });
   const joinFn = () => {
     socket.emit("join_dynamic_update_room", (ack) => {

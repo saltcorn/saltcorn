@@ -105,6 +105,8 @@ export function removeLoadSpinner() {
 
 export function errorAlert(error) {
   console.error(error);
+  // the login page is already shown with its own message
+  if (error?.sessionExpired) return;
   showToasts([
     {
       type: "error",

@@ -11,6 +11,7 @@ export async function apiCall({
   responseType,
   timeout,
   additionalHeaders,
+  csrfRetried = false,
 }) {
   const config =
     typeof saltcorn !== "undefined"
@@ -32,7 +33,17 @@ export async function apiCall({
   // The CSRF token has to be sent explicitly, same as the web client does.
   if (config.csrfToken) headers["CSRF-Token"] = config.csrfToken;
   const fetchOptions = { method, headers, credentials: "include" };
-  if (body !== undefined) {
+  // mobile forms render a dummy _csrf input, and the server checks the body
+  // before the header, so drop it and let the header token count
+  // FormData may come from the iframe (another realm), so instanceof won't work
+  if (Object.prototype.toString.call(body) === "[object FormData]") {
+    body.delete("_csrf");
+    fetchOptions.body = body;
+  } else if (body !== undefined) {
+    if (body && typeof body === "object" && "_csrf" in body) {
+      const { _csrf, ...rest } = body;
+      body = rest;
+    }
     fetchOptions.body = JSON.stringify(body);
     headers["Content-Type"] = "application/json";
   }
@@ -43,9 +54,17 @@ export async function apiCall({
   if (controller) fetchOptions.signal = controller.signal;
   try {
     const res = await fetch(url, fetchOptions);
-    if (!res.ok) {
-      const error = new Error(`Request failed with status code ${res.status}`);
-      error.response = { status: res.status };
+    // an expired session gets redirected to the login page, treat it as 401
+    const toLogin =
+      res.redirected && new URL(res.url).pathname === "/auth/login";
+    if (!res.ok || toLogin) {
+      const status = toLogin ? 401 : res.status;
+      const error = new Error(`Request failed with status code ${status}`);
+      error.response = { status };
+      if (status === 403) {
+        const errBody = await res.json().catch(() => ({}));
+        error.csrfInvalid = errBody?.error === "invalid csrf token";
+      }
       throw error;
     }
     let data;
@@ -69,10 +88,29 @@ export async function apiCall({
     }
     return { data, status: res.status };
   } catch (error) {
+    // the server rejected the request before running it, so a retry is safe
+    if (error.csrfInvalid && !csrfRetried && typeof saltcorn !== "undefined") {
+      const tokenRes = await apiCall({ method: "GET", path: "/auth/csrf-token" });
+      config.csrfToken = tokenRes?.data?.csrfToken;
+      return await apiCall({
+        method,
+        path,
+        params,
+        body,
+        responseType,
+        timeout,
+        additionalHeaders,
+        csrfRetried: true,
+      });
+    }
+    // a 401 can also mean "not allowed", only log out when the session is gone
     if (
       error.response?.status === 401 &&
       typeof saltcorn !== "undefined" &&
-      !path.startsWith("/auth/")
+      !path.startsWith("/auth/") &&
+      config.hasSession &&
+      !config.isPublicUser &&
+      !(await isAuthenticated())
     ) {
       const mobileConfig = saltcorn.data.state.getState().mobileConfig;
       mobileConfig.csrfToken = undefined;
@@ -89,11 +127,28 @@ export async function apiCall({
         ],
       });
       await replaceIframe(page.content);
-      return;
+      // callers expect data, so throw; the error toast is skipped for this
+      error.sessionExpired = true;
+      error.message = "Your session has expired, please log in again.";
+      throw error;
     }
     error.message = `Unable to call ${method} ${url}:\n${error.message}`;
     throw error;
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
+// asks the server if the session is still valid, unreachable counts as yes
+async function isAuthenticated() {
+  try {
+    const res = await apiCall({
+      method: "GET",
+      path: "/auth/authenticated",
+      timeout: 10000,
+    });
+    return !!res?.data?.authenticated;
+  } catch {
+    return true;
   }
 }

@@ -26,7 +26,10 @@ export const postShowCalculated = async (context) => {
     const response = await apiCall({
       method: "POST",
       path: `/field/show-calculated/${tableName}/${fieldName}/${fieldview}`,
+      params: context.query ? parseQuery(context.query) : undefined,
       body: context.data || {},
+      // the server sends rendered HTML, not JSON
+      responseType: "text",
     });
     return response.data;
   }
