@@ -618,7 +618,8 @@ const roleLabel = (entity: any, roles: any) => {
 const tableActionsDropdown = (
   entity: any,
   req: Req,
-  user_can_edit_tables: any
+  user_can_edit_tables: any,
+  on_done_redirect_str: string = ""
 ) => {
   const metadata = entity.metadata || {};
   if (metadata.external || metadata.provider_name) return "";
@@ -665,7 +666,7 @@ const tableActionsDropdown = (
     user_can_edit_tables &&
       entity.name !== "users" &&
       post_dropdown_item(
-        `/table/delete/${entity.id}`,
+        `/table/delete/${entity.id}${on_done_redirect_str}`,
         '<i class="fas fa-trash"></i>&nbsp;' + req.__("Delete table"),
         req,
         true
@@ -673,7 +674,7 @@ const tableActionsDropdown = (
     req.user?.role_id === 1 &&
       entity.name !== "users" &&
       post_dropdown_item(
-        `/table/delete-with-trig-views/${entity.id}`,
+        `/table/delete-with-trig-views/${entity.id}${on_done_redirect_str}`,
         '<i class="fas fa-trash"></i>&nbsp;' +
           req.__("Delete table+views+triggers"),
         req,
@@ -760,7 +761,12 @@ router.get(
     )}`;
     const buildActionMenu = (entity: any) => {
       if (entity.type === "table")
-        return tableActionsDropdown(entity, req, user_can_edit_tables);
+        return tableActionsDropdown(
+          entity,
+          req,
+          user_can_edit_tables,
+          on_done_redirect_str
+        );
       if (entity.type === "view")
         return view_dropdown(entity, req, on_done_redirect_str, false);
       if (entity.type === "page")
