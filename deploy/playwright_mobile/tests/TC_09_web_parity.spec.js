@@ -129,6 +129,110 @@ test.describe("Mobile parity with the web helpers", () => {
     }
   });
 
+  // answers view_post routes and records the posted URLs
+  const fakeViewRoute = async (pattern, fn) => {
+    const urls = [];
+    const handler = (r) => {
+      urls.push(r.request().url());
+      return r.fulfill({ contentType: "application/json", body: "{}" });
+    };
+    await page.route(pattern, handler);
+    try {
+      await fn();
+    } finally {
+      await page.unroute(pattern, handler);
+    }
+    return urls.map((u) => new URL(u));
+  };
+
+  test("view_post sends the page state with sendState in the options", async () => {
+    await gotoView("get/view/guitar_list", "name=state_test");
+    const frame = await contentFrame(page);
+    const urls = await fakeViewRoute(
+      "http://localhost:3010/view/guitar_list/tc09_state**",
+      () =>
+        frame.evaluate(() =>
+          view_post("guitar_list", "tc09_state", {}, { sendState: true })
+        )
+    );
+    expect(urls.length).toBe(1);
+    expect(urls[0].searchParams.get("name")).toBe("state_test");
+  });
+
+  test("view_post finds the view of an enclosing edit form", async () => {
+    await gotoView("get/view/guitar_list");
+    const frame = await contentFrame(page);
+    const urls = await fakeViewRoute(
+      "http://localhost:3010/view/**/tc09_form",
+      () =>
+        frame.evaluate(async () => {
+          // a form outside any data-sc-embed-viewname wrapper
+          const form = $(
+            '<form data-viewname="calc_test_edit"><button type="button"></button></form>'
+          ).appendTo("body");
+          try {
+            await view_post(form.find("button")[0], "tc09_form", {});
+          } finally {
+            form.remove();
+          }
+        })
+    );
+    expect(urls.length).toBe(1);
+    expect(urls[0].pathname).toBe("/view/calc_test_edit/tc09_form");
+  });
+
+  // tc09_actions runs a toast action with the text "Guitar {{name}}"
+  const runToastAction = (frame, useFormData) =>
+    frame.evaluate(
+      (useFormData) =>
+        new Promise((resolve) => {
+          let data = { rndid: "tc09ac", id: 1 };
+          if (useFormData) {
+            // built in the iframe, like get_form_data does
+            data = new FormData();
+            data.append("rndid", "tc09ac");
+            data.append("id", "1");
+          }
+          view_post("tc09_actions", "run_action", data, {
+            onDone: (res) => resolve(res),
+          }).then(() => setTimeout(() => resolve("no result"), 500));
+        }),
+      useFormData
+    );
+
+  test("view_post offline runs the route locally", async () => {
+    await gotoView("get/view/guitar_list");
+    const frame = await contentFrame(page);
+    // offline the route must answer from the local db, never the server
+    const requests = [];
+    const block = (route) => {
+      requests.push(route.request().url());
+      return route.abort();
+    };
+    await page.route("http://localhost:3010/**", block);
+    await page.evaluate(() => {
+      window.saltcorn.data.state.getState().mobileConfig.isOfflineMode = true;
+    });
+    try {
+      const res = await runToastAction(frame, false);
+      expect(res?.notify).toBe("Guitar Martin D-28");
+      expect(requests).toEqual([]);
+    } finally {
+      await page.evaluate(() => {
+        window.saltcorn.data.state.getState().mobileConfig.isOfflineMode = false;
+      });
+      await page.unroute("http://localhost:3010/**", block);
+    }
+  });
+
+  test("view_post online sends a FormData body", async () => {
+    await gotoView("get/view/guitar_list");
+    const frame = await contentFrame(page);
+    const res = await runToastAction(frame, true);
+    // the server only finds the action and the row if both fields arrived
+    expect(res?.notify).toBe("Guitar Martin D-28");
+  });
+
   test("saveAndContinueDelayed runs the callback after saving", async () => {
     try {
       await gotoView("get/view/calc_test_edit");
@@ -279,6 +383,43 @@ test.describe("Mobile parity with the web helpers", () => {
     }
   });
 
+  test("a blocking progress popup opens, updates and closes", async () => {
+    try {
+      await gotoView("get/view/guitar_list");
+      const frame = await contentFrame(page);
+      const iframe = page.frameLocator("iframe");
+      // what an action returns to show a blocking progress popup
+      const progress = (upd) =>
+        frame.evaluate(
+          (upd) => common_done({ progress_bar_update: upd }, "", false),
+          upd
+        );
+      const modal = iframe.locator("#scmodal");
+
+      await progress({
+        blocking: true,
+        title: "Working",
+        message: "step 1",
+        percent: 10,
+      });
+      await expect(modal).toBeVisible();
+      await expect(modal.locator(".modal-title")).toHaveText("Working");
+      await expect(modal.locator(".progress-message")).toHaveText("step 1");
+
+      // a second update must change the open popup, not close it
+      await progress({ blocking: true, message: "step 2", percent: 60 });
+      await expect(modal).toBeVisible();
+      await expect(modal.locator(".progress-message")).toHaveText("step 2");
+      await expect(modal.locator("progress")).toHaveJSProperty("value", 60);
+
+      await progress({ blocking: true, close: true });
+      await expect(modal).toBeHidden();
+    } catch (error) {
+      await dumpHTML(page);
+      throw error;
+    }
+  });
+
   test("a second filter keeps the first one", async () => {
     await gotoView("get/view/guitar_list");
     const frame = await contentFrame(page);
@@ -320,5 +461,47 @@ test.describe("Mobile parity with the web helpers", () => {
     expect(queries.length).toBe(3);
     expect(queries[1].getAll("status")).toEqual(["1", "2"]);
     expect(queries[2].getAll("status")).toEqual(["2"]);
+  });
+
+  test("unsetting a filter keeps the others intact", async () => {
+    // name is "a&b c", encoded
+    await gotoView("get/view/guitar_list", "name=a%26b%20c&status=1");
+    const frame = await contentFrame(page);
+    const queries = await pjaxQueries("guitar_list", () =>
+      frame.evaluate(async () => {
+        await unset_state_field("status");
+      })
+    );
+    expect(queries.length).toBe(1);
+    expect(queries[0].has("status")).toBe(false);
+    expect(queries[0].get("name")).toBe("a&b c");
+    expect(queries[0].has("b c")).toBe(false);
+  });
+
+  test("ticking the same checkbox twice adds its value once", async () => {
+    await gotoView("get/view/guitar_list");
+    const frame = await contentFrame(page);
+    const queries = await pjaxQueries("guitar_list", () =>
+      frame.evaluate(async () => {
+        const box = { name: "status", value: "1", checked: true };
+        await check_state_field(box);
+        await check_state_field(box);
+      })
+    );
+    expect(queries.length).toBe(2);
+    expect(queries[1].getAll("status")).toEqual(["1"]);
+  });
+
+  test("setting a filter to an empty value removes it", async () => {
+    await gotoView("get/view/guitar_list", "name=foo&status=1");
+    const frame = await contentFrame(page);
+    const queries = await pjaxQueries("guitar_list", () =>
+      frame.evaluate(async () => {
+        await set_state_field("name", "");
+      })
+    );
+    expect(queries.length).toBe(1);
+    expect(queries[0].has("name")).toBe(false);
+    expect(queries[0].get("status")).toBe("1");
   });
 });
