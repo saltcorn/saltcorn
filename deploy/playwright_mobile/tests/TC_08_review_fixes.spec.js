@@ -99,6 +99,52 @@ test.describe("Mobile review fixes", () => {
     }
   });
 
+  // the fieldview config only travels in the query, and only join fields use it
+  // status 2 is "borrowed", ellipsize with nchars=4 gives "b..."
+  const showJoinField = async () => {
+    const frame = await contentFrame(page);
+    return await frame.evaluate(
+      () =>
+        new Promise((resolve) => {
+          // what saltcorn-common.js does for a join field in an edit form
+          local_post_json(
+            "/field/show-calculated/calc_test/status.name/ellipsize?nchars=4",
+            { status: 2 },
+            {
+              success: resolve,
+              error: (e) => resolve(`error: ${e.message}`),
+            }
+          );
+        })
+    );
+  };
+
+  test("show-calculated online forwards the fieldview config", async () => {
+    expect(await showJoinField()).toBe("b...");
+  });
+
+  test("show-calculated offline uses the fieldview config", async () => {
+    // offline the route must answer from the local db, never the server
+    const requests = [];
+    const block = (route) => {
+      requests.push(route.request().url());
+      return route.abort();
+    };
+    await page.route("http://localhost:3010/**", block);
+    await page.evaluate(() => {
+      window.saltcorn.data.state.getState().mobileConfig.isOfflineMode = true;
+    });
+    try {
+      expect(await showJoinField()).toBe("b...");
+      expect(requests).toEqual([]);
+    } finally {
+      await page.evaluate(() => {
+        window.saltcorn.data.state.getState().mobileConfig.isOfflineMode = false;
+      });
+      await page.unroute("http://localhost:3010/**", block);
+    }
+  });
+
   test("a failed submit keeps the form and the typed values", async () => {
     try {
       await page.evaluate(async () => {
