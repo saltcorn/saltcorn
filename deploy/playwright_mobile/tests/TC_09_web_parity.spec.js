@@ -174,6 +174,33 @@ test.describe("Mobile parity with the web helpers", () => {
     }
   });
 
+  test("saveAndContinueAsync rejects when the save fails", async () => {
+    try {
+      await gotoView("get/view/calc_test_edit");
+      const iframe = page.frameLocator("iframe");
+      await iframe.locator("#inputname").fill("failing save");
+      // simulate a lost connection for the save
+      const abortPosts = (route) =>
+        route.request().method() === "POST" ? route.abort() : route.continue();
+      await page.route("http://localhost:3010/**", abortPosts);
+      try {
+        const frame = await contentFrame(page);
+        const result = await frame.evaluate(() =>
+          Promise.race([
+            saveAndContinueAsync($("#inputname")).then(() => "resolved"),
+            new Promise((resolve) => setTimeout(() => resolve("hung"), 5000)),
+          ]).catch(() => "rejected")
+        );
+        expect(result).toBe("rejected");
+      } finally {
+        await page.unroute("http://localhost:3010/**", abortPosts);
+      }
+    } catch (error) {
+      await dumpHTML(page);
+      throw error;
+    }
+  });
+
   test("ajax_post calls the success option", async () => {
     try {
       const id = await page.evaluate(async () => {
