@@ -293,6 +293,9 @@ class Table implements AbstractTable {
   /** Whether PostgreSQL Row Level Security is enabled for this table */
   rls_enabled: boolean;
 
+  /** Rows are part of the application definition and included in snapshots */
+  system_rows: boolean;
+
   /** Name of the table provider for this table (not a database table) */
   provider_name?: string;
 
@@ -320,6 +323,7 @@ class Table implements AbstractTable {
     this.has_sync_info = !!o.has_sync_info;
     this.is_user_group = !!o.is_user_group;
     this.rls_enabled = !!o.rls_enabled;
+    this.system_rows = !!o.system_rows;
     this.external = false;
     this.description = o.description;
     this.constraints = o.constraints || [];
@@ -980,6 +984,7 @@ class Table implements AbstractTable {
       ownership_field_id: options.ownership_field_id,
       ownership_formula: options.ownership_formula,
       rls_enabled: !!(options as TablePack).rls_enabled,
+      system_rows: !!(options as TablePack).system_rows,
       description: options.description || "",
       provider_name: options.provider_name,
       provider_cfg: options.provider_cfg,

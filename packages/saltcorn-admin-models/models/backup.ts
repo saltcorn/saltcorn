@@ -92,7 +92,15 @@ const create_pack_json = async (
   // tables
   const tables = await asyncMap(
     await Table.find({}, { orderBy: "id" }),
-    async (t: Table) => await table_pack(t) // find already done before
+    async (t: Table) => {
+      const tpack = await table_pack(t); // find already done before
+      // rows of system tables are part of the app, so snapshots carry them.
+      // Backups already store all rows separately, so only for snapshots.
+      // Ordered by pk so the snapshot hash is stable.
+      if (forSnapshot && t.system_rows && !t.external && !t.provider_name)
+        tpack.rows = await t.getRows({}, { orderBy: t.pk_name });
+      return tpack;
+    }
   );
   // views
   const views = await asyncMap(

@@ -953,6 +953,12 @@ router.get(
           default: true,
           type: "Bool",
         },
+        {
+          name: "system_rows",
+          label: req.__("System table rows"),
+          default: true,
+          type: "Bool",
+        },
       ],
     });
     res.sendWrap(`Restore snapshot`, {

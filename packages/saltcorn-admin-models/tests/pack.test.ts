@@ -26,7 +26,9 @@ import basePlugin from "@saltcorn/data/base-plugin";
 import reset from "@saltcorn/data/db/reset_schema";
 import fixtures from "@saltcorn/data/db/fixtures";
 import Table from "@saltcorn/data/models/table";
+import Field from "@saltcorn/data/models/field";
 import Tag from "@saltcorn/data/models/tag";
+import backup from "../models/backup.js";
 import { Pack } from "@saltcorn/types/base_types";
 import {
   afterAll,
@@ -883,5 +885,92 @@ describe("rls_enabled in packs", () => {
       [schema, "rls_formula_owner_table"]
     );
     expect(polRes.rows.length).toBeGreaterThan(0);
+  });
+});
+
+describe("system_rows tables in snapshots", () => {
+  const tname = "sysrows_test_table";
+  const minimalPack = (tables: any[]): Pack => ({
+    tables,
+    views: [],
+    plugins: [],
+    pages: [],
+    page_groups: [],
+    roles: [],
+    library: [],
+    triggers: [],
+    tags: [],
+    models: [],
+    model_instances: [],
+  });
+
+  afterAll(async () => {
+    const t = Table.findOne({ name: tname });
+    if (t) await t.delete();
+  });
+
+  it("includes rows of system_rows tables only in snapshot packs", async () => {
+    const table = await Table.create(tname, { system_rows: true } as any);
+    await Field.create({
+      table,
+      name: "name",
+      label: "Name",
+      type: "String",
+    });
+    const t = Table.findOne({ name: tname });
+    assertIsSet(t);
+    expect(t.system_rows).toBe(true);
+    await t.insertRow({ name: "Open" });
+    await t.insertRow({ name: "Closed" });
+
+    const snapPack: any = await backup.create_pack_json(false, true);
+    const tspec = snapPack.tables.find((tp: any) => tp.name === tname);
+    expect(tspec.system_rows).toBe(true);
+    expect(tspec.rows.map((r: any) => r.name)).toEqual(["Open", "Closed"]);
+    const books = snapPack.tables.find((tp: any) => tp.name === "books");
+    expect(books.rows).toBeUndefined();
+
+    const backupPack: any = await backup.create_pack_json(false, false);
+    const btspec = backupPack.tables.find((tp: any) => tp.name === tname);
+    expect(btspec.rows).toBeUndefined();
+  });
+
+  it("upserts system rows on restore and keeps rows not in the pack", async () => {
+    // round-trip through JSON as a stored/uploaded snapshot would be
+    const snapPack: any = JSON.parse(
+      JSON.stringify(await backup.create_pack_json(false, true))
+    );
+    const tspec = snapPack.tables.find((tp: any) => tp.name === tname);
+
+    const t = Table.findOne({ name: tname });
+    assertIsSet(t);
+    const open = await t.getRow({ name: "Open" });
+    assertIsSet(open);
+    await t.updateRow({ name: "Changed" }, open.id);
+    await t.deleteRows({ name: "Closed" });
+    await t.insertRow({ name: "Prod only" });
+
+    await install_pack(minimalPack([tspec]), undefined, () => {});
+
+    const rows = await t.getRows({}, { orderBy: "id" });
+    expect(rows.map((r) => r.name)).toEqual(["Open", "Closed", "Prod only"]);
+    // sequence was reset past the restored ids
+    const newId = await t.insertRow({ name: "After restore" });
+    expect(newId).toBeGreaterThan(Math.max(...rows.map((r) => r.id)));
+  });
+
+  it("filter_pack strips system rows when not selected", async () => {
+    const snapPack: any = await backup.create_pack_json(false, true);
+    pack.filter_pack(snapPack, {
+      configuration: true,
+      site_name: true,
+      base_url: true,
+      email_settings: true,
+      ssl_settings: true,
+      modules: true,
+      system_rows: false,
+    });
+    const tspec = snapPack.tables.find((tp: any) => tp.name === tname);
+    expect(tspec.rows).toBeUndefined();
   });
 });

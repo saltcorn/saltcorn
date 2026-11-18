@@ -2144,5 +2144,8 @@
 	"Create from file upload": "Create from file upload",
 	"Unknown download format %s": "Unknown download format %s",
 	"Accepted formats: %s": "Accepted formats: %s",
-	"Unable to count rows": "Unable to count rows"
+	"Unable to count rows": "Unable to count rows",
+	"System rows": "System rows",
+	"Rows are part of the application and are included in snapshots": "Rows are part of the application and are included in snapshots",
+	"System table rows": "System table rows"
 }
