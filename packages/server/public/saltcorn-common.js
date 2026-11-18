@@ -25,16 +25,21 @@ function copy_monospace_block(e) {
   else return navigator.clipboard.writeText(e2t);
 }
 
+// host-only, so other apps on subdomains never get it
+// lax, so it's also sent when arriving from a link on another site
 function setScreenInfoCookie() {
-  document.cookie = `_sc_screen_info_=${JSON.stringify({
-    width: window.screen.width,
-    height: window.screen.height,
-    innerWidth: window.innerWidth,
-    innerHeight: window.innerHeight,
-  })}; expires=Thu, 01 Jan 2100 00:00:00 GMT; path=/; domain=.${
-    window.location.hostname
-  }; samesite=strict`;
+  const value = encodeURIComponent(
+    JSON.stringify({
+      width: window.screen.width,
+      height: window.screen.height,
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+    })
+  );
+  document.cookie = `_sc_screen_info_=${value}; max-age=31536000; path=/; samesite=lax`;
 }
+// remove the old cookie that was shared with all subdomains
+document.cookie = `_sc_screen_info_=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.${window.location.hostname}`;
 setScreenInfoCookie();
 $(window).resize(() => {
   setScreenInfoCookie();

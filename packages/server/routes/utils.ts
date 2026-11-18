@@ -889,10 +889,13 @@ const getEligiblePage = async (pageGroup: PageGroup, req: Req, res: Res) => {
     return req.__("Pagegroup %s has no members", pageGroup.name);
   else {
     let screenInfos = null;
-    if (req.cookies["_sc_screen_info_"]) {
-      screenInfos = JSON.parse(req.cookies["_sc_screen_info_"]);
-      screenInfos.device = uaDevice(req);
-    } else {
+    // a broken cookie counts as missing
+    try {
+      const parsed = JSON.parse(req.cookies["_sc_screen_info_"] || "null");
+      if (parsed && typeof parsed === "object")
+        screenInfos = { ...parsed, device: uaDevice(req) };
+    } catch {}
+    if (!screenInfos) {
       const strategy = getState()!.getConfig(
         "missing_screen_info_strategy",
         "guess_from_user_agent"
