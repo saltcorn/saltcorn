@@ -391,12 +391,15 @@ const getAdminLoginCookie = async () => {
  * @returns
  */
 const prepScreenInfoCookie = (width, height, innerWidth, innerHeight) => {
-  return `_sc_screen_info_=${JSON.stringify({
-    width,
-    height,
-    innerWidth: innerWidth || width,
-    innerHeight: innerHeight || height,
-  })}; Path=/;`;
+  // encoded like saltcorn-common.js does
+  return `_sc_screen_info_=${encodeURIComponent(
+    JSON.stringify({
+      width,
+      height,
+      innerWidth: innerWidth || width,
+      innerHeight: innerHeight || height,
+    })
+  )}; Path=/;`;
 };
 
 const prepUserAgent = () => {
