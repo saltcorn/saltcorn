@@ -34,7 +34,6 @@ export type TableCfg = {
   has_sync_info?: boolean;
   is_user_group?: boolean;
   rls_enabled?: boolean;
-  /** Rows are part of the application definition and included in snapshots */
   system_rows?: boolean;
   description?: string;
   fields?: FieldCfg[];
@@ -49,7 +48,6 @@ export type TablePack = {
   triggers?: TriggerCfg[];
   constraints?: Array<any>;
   ownership_field_name?: string | null;
-  /** Rows of a system_rows table, only present in snapshots */
   rows?: Array<Record<string, any>>;
 } & TableCfg;
 
