@@ -80,6 +80,23 @@ const removeDefaultColor = (obj: GenObj) => {
 };
 const isEmpty = (o: GenObj) => Object.keys(o).length === 0;
 
+/**
+ * JSON with sorted keys, so states with the same entries compare equal
+ * @param v
+ * @returns string key
+ */
+const stableStateKey = (v: any): string => {
+  if (v && typeof v.toJSON === "function") return stableStateKey(v.toJSON());
+  if (Array.isArray(v)) return `[${v.map(stableStateKey).join(",")}]`;
+  if (v && typeof v === "object")
+    return `{${Object.keys(v)
+      .filter((k) => v[k] !== undefined)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stableStateKey(v[k])}`)
+      .join(",")}}`;
+  return JSON.stringify(v) ?? "null";
+};
+
 const asyncMap = async (xs: any[], asyncF: Function) => {
   var res = [];
   var ix = 0;
@@ -934,6 +951,7 @@ export {
   removeDefaultColor,
   prefixFieldsInWhere,
   isEmpty,
+  stableStateKey,
   asyncMap,
   numberToBool,
   stringToJSON,

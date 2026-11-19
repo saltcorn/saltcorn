@@ -21,7 +21,13 @@ import Workflow from "../../models/workflow.js";
 import Trigger from "../../models/trigger.js";
 import File from "../../models/file.js";
 import { GenObj } from "@saltcorn/types/common_types";
-import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
+import {
+  Layout,
+  Column,
+  Req,
+  Res,
+  EmbedChain,
+} from "@saltcorn/types/base_types";
 
 import {
   text,
@@ -54,6 +60,7 @@ import {
   structuredClone,
   is_relative_url,
   toSafeRelativeUrl,
+  stableStateKey,
 } from "../../utils.js";
 import { check_view_columns } from "../../plugin-testing.js";
 import {
@@ -574,11 +581,24 @@ const run = async (
     req,
     isPreview,
     hiddenLoginDest,
-  }: { res: Res; req: Req; isPreview?: boolean; hiddenLoginDest?: any },
+    embedChain,
+  }: {
+    res: Res;
+    req: Req;
+    isPreview?: boolean;
+    hiddenLoginDest?: any;
+    embedChain?: EmbedChain;
+  },
   { editQuery }: GenObj
 ) => {
   const mobileReferrer = isWeb(req) ? undefined : req?.headers?.referer;
-  return await editQuery(state, mobileReferrer, isPreview, hiddenLoginDest);
+  return await editQuery(
+    state,
+    mobileReferrer,
+    isPreview,
+    hiddenLoginDest,
+    embedChain
+  );
 };
 
 /**
@@ -637,6 +657,7 @@ const runMany = async (
       confirm_leave,
       enable_realtime,
       update_events,
+      embedChain: extra.embedChain,
     });
     return { html, row };
   });
@@ -701,6 +722,7 @@ const render = async ({
   auto_created_row,
   hiddenLoginDest,
   enable_realtime,
+  embedChain,
 }: {
   table: any;
   fields: any[];
@@ -725,6 +747,7 @@ const render = async ({
   hiddenLoginDest?: any;
   enable_realtime?: boolean;
   update_events?: any;
+  embedChain?: EmbedChain;
 }) => {
   // library refs (plain or slotted) aren't resolved anywhere else on the
   // Edit view render path, unlike Show/List/Filter
@@ -932,6 +955,11 @@ const render = async ({
     viewname,
     optionsQuery,
     state,
+    // Only Show views check for loops; listing this Edit names it in the error
+    embedChain: [
+      ...(embedChain || []),
+      { viewname, state: stableStateKey(state) },
+    ],
   });
   form.id = formId;
   return (
@@ -2121,7 +2149,8 @@ export default {
       state: GenObj,
       mobileReferrer: string | undefined,
       isPreview: boolean,
-      hiddenLoginDest: any
+      hiddenLoginDest: any,
+      embedChain?: EmbedChain
     ) {
       const table = Table.findOne({ id: table_id })!;
       const fields = table.getFields();
@@ -2216,6 +2245,7 @@ export default {
         hiddenLoginDest,
         enable_realtime,
         update_events,
+        embedChain,
       });
     },
     async editManyQuery(
