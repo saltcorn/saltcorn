@@ -79,6 +79,7 @@ import {
   comparingCaseInsensitive,
   validSqlId,
   interpolate,
+  is_relative_url,
 } from "@saltcorn/data/utils";
 import { EOL } from "os";
 
@@ -1947,6 +1948,13 @@ router.post(
   })
 );
 
+// Return to the caller (e.g. /entities) when on_done_redirect is a safe relative URL
+const deleteRedirectTarget = (req: Req) =>
+  req.query.on_done_redirect &&
+  is_relative_url("/" + req.query.on_done_redirect)
+    ? `/${req.query.on_done_redirect}`
+    : "/table";
+
 //delete-with-trig-views
 /**
  * Delete Table Route Handler definition
@@ -1961,15 +1969,16 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
+    const redirectTarget = deleteRedirectTarget(req);
     const t = Table.findOne({ id })!;
     if (!t) {
       req.flash("error", `Table not found`);
-      res.redirect(`/table`);
+      res.redirect(redirectTarget);
       return;
     }
     if (t.name === "users") {
       req.flash("error", req.__(`Cannot delete users table`));
-      res.redirect(`/table`);
+      res.redirect(redirectTarget);
       return;
     }
     try {
@@ -1989,10 +1998,10 @@ router.post(
       await getState()!.refresh_views();
       await getState()!.refresh_triggers();
       req.flash("success", req.__(`Table %s deleted`, t.name));
-      res.redirect(`/table`);
+      res.redirect(redirectTarget);
     } catch (err: any) {
       req.flash("error", err.message);
-      res.redirect(`/table`);
+      res.redirect(redirectTarget);
     }
   })
 );
@@ -2010,15 +2019,16 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
+    const redirectTarget = deleteRedirectTarget(req);
     const t = Table.findOne({ id })!;
     if (!t) {
       req.flash("error", `Table not found`);
-      res.redirect(`/table`);
+      res.redirect(redirectTarget);
       return;
     }
     if (t.name === "users") {
       req.flash("error", req.__(`Cannot delete users table`));
-      res.redirect(`/table`);
+      res.redirect(redirectTarget);
       return;
     }
     const views = (await View.find(
@@ -2031,7 +2041,7 @@ router.post(
           t.name
         }#table-views">Views for ${text(t.name)}</a>`
       );
-      res.redirect(`/table`);
+      res.redirect(redirectTarget);
       return;
     }
     if (t.id) {
@@ -2043,7 +2053,7 @@ router.post(
             t.name
           )} has triggers. Delete these first: <a href="/actions">Trigger list</a>`
         );
-        res.redirect(`/table`);
+        res.redirect(redirectTarget);
         return;
       }
     }
@@ -2057,10 +2067,10 @@ router.post(
         });
       });
       await getState()!.refresh_tables();
-      res.redirect(`/table`);
+      res.redirect(redirectTarget);
     } catch (err: any) {
       req.flash("error", err.message);
-      res.redirect(`/table`);
+      res.redirect(redirectTarget);
     }
   })
 );
