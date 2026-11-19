@@ -34,6 +34,7 @@ export type TableCfg = {
   has_sync_info?: boolean;
   is_user_group?: boolean;
   rls_enabled?: boolean;
+  system_rows?: boolean;
   description?: string;
   fields?: FieldCfg[];
   constraints?: any[];
@@ -47,6 +48,7 @@ export type TablePack = {
   triggers?: TriggerCfg[];
   constraints?: Array<any>;
   ownership_field_name?: string | null;
+  rows?: Array<Record<string, any>>;
 } & TableCfg;
 
 /**

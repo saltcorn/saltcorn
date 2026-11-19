@@ -212,6 +212,14 @@ const tableForm = async (table: any, req: Req) => {
               name: "is_user_group",
               type: "Bool",
             },
+            {
+              label: req.__("System rows"),
+              sublabel: req.__(
+                "Rows are part of the application and are included in snapshots"
+              ),
+              name: "system_rows",
+              type: "Bool",
+            },
             ...(db.supports_row_level_security
               ? [
                   {
@@ -1889,6 +1897,7 @@ router.post(
       rest.has_sync_info = !!rest.has_sync_info;
       rest.is_user_group = !!rest.is_user_group;
       rest.rls_enabled = !!rest.rls_enabled;
+      rest.system_rows = !!rest.system_rows;
       if (rest.ownership_field_id === "_formula") {
         rest.ownership_field_id = null;
         const fmlValidRes = expressionValidator(rest.ownership_formula);

@@ -80,6 +80,7 @@ const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
     provider_cfg: table.provider_cfg,
     ownership_formula: table.ownership_formula,
     rls_enabled: table.rls_enabled,
+    system_rows: table.system_rows,
     fields: fields.map((f) => strip_ids(f.toJson)),
     //triggers: triggers.map((tr) => tr.toJson),
     constraints: constraints.map((c) => c.toJson),
@@ -561,6 +562,7 @@ const filter_pack = (
     email_settings: boolean;
     ssl_settings: boolean;
     modules: boolean;
+    system_rows?: boolean;
   }
 ): void => {
   if (!options.configuration) pack.config = {};
@@ -593,6 +595,47 @@ const filter_pack = (
     }
   }
   if (!options.modules) pack.plugins = [];
+  if (!options.system_rows)
+    for (const tableSpec of pack.tables || []) delete tableSpec.rows;
+};
+
+/**
+ * Upsert the rows carried by system_rows tables in a snapshot.
+ * Rows are matched by primary key; existing rows not in the pack are kept.
+ * Triggers are not run.
+ * @param pack
+ * @param log
+ */
+const restore_system_rows = async (
+  pack: Pack,
+  log: (msg: string) => void
+): Promise<void> => {
+  for (const tableSpec of pack.tables || []) {
+    if (!tableSpec.rows?.length) continue;
+    const table = Table.findOne({ name: tableSpec.name });
+    if (!table || table.external || table.provider_name) continue;
+    log(`Restoring system rows for ${table.name}`);
+    const pk = table.pk_name;
+    for (const row of tableSpec.rows) {
+      const pkVal = row[pk];
+      try {
+        const existing =
+          pkVal !== null && pkVal !== undefined
+            ? await table.getRow({ [pk]: pkVal })
+            : null;
+        if (existing) {
+          const { [pk]: _pk, ...upd } = row;
+          const res = await table.updateRow(upd, pkVal, undefined, true);
+          if (typeof res === "string") throw new Error(res);
+        } else await table.insertRow(row, undefined, undefined, true);
+      } catch (e: any) {
+        throw new Error(
+          `Unable to restore row ${pk}=${pkVal} in table ${table.name}: ${e.message}`
+        );
+      }
+    }
+    await table.resetSequence();
+  }
 };
 
 /**
@@ -662,6 +705,7 @@ const install_pack = async (
       triggers,
       constraints,
       fields,
+      rows,
       ...updrow
     } = tableSpec;
 
@@ -754,6 +798,8 @@ const install_pack = async (
     }
   }
   await getState()!.refresh_tables(true);
+
+  await restore_system_rows(pack, log);
 
   if (pack.views?.length) log("Restoring views");
   for (const viewSpec of pack.views) {

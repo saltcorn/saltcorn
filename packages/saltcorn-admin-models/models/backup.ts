@@ -92,7 +92,12 @@ const create_pack_json = async (
   // tables
   const tables = await asyncMap(
     await Table.find({}, { orderBy: "id" }),
-    async (t: Table) => await table_pack(t) // find already done before
+    async (t: Table) => {
+      const tpack = await table_pack(t); // find already done before
+      if (forSnapshot && t.system_rows && !t.external && !t.provider_name)
+        tpack.rows = await t.getRows({}, { orderBy: t.pk_name });
+      return tpack;
+    }
   );
   // views
   const views = await asyncMap(
