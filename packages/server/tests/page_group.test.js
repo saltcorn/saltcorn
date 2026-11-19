@@ -229,6 +229,37 @@ describe("run page group", () => {
       .expect(notFound);
   });
 
+  it("an old unencoded Cookie still works", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    const raw = JSON.stringify({
+      width: 912,
+      height: 1360,
+      innerWidth: 912,
+      innerHeight: 1360,
+    });
+    await request(app)
+      .get(`/page/page_group`)
+      .set("Cookie", `${loginCookie}; _sc_screen_info_=${raw}`)
+      .set("accept-language", "en")
+      .expect(toInclude("Surface Pro 7"))
+      .expect(toNotInclude("iPhone XR"));
+  });
+
+  it("a broken Cookie falls back to the user agent", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    for (const broken of ["{broken", "null", "42"]) {
+      await request(app)
+        .get(`/page/page_group`)
+        .set("Cookie", `${loginCookie}; _sc_screen_info_=${broken}`)
+        .set("User-Agent", prepUserAgent())
+        .expect(200)
+        .expect(toInclude("Laptop"))
+        .expect(toNotInclude("Surface Pro 7"));
+    }
+  });
+
   it("width an height without Cookie", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
