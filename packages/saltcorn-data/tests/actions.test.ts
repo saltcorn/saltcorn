@@ -597,6 +597,26 @@ const waitForEventLogs = async (
   }
 };
 
+describe("send_email without a table (e.g. Often trigger)", () => {
+  it("is offered for triggers that do not require a row", async () => {
+    const opts = Trigger.action_options({
+      notRequireRow: true,
+      workflow: true,
+      allTriggers: true,
+    });
+    const names = opts.flatMap((o: any) => o.options || []);
+    expect(names).toContain("send_email");
+  });
+  it("has configurable fields without a table", async () => {
+    const fields = await (baseactions.send_email as any).configFields({
+      table: null,
+      mode: "trigger",
+    });
+    expect(fields.map((f: any) => f.name)).toContain("to_email");
+    expect(fields.map((f: any) => f.name)).toContain("subject");
+  });
+});
+
 describe("Events and eventlog", () => {
   it("should add custom event", async () => {
     await getState()!.setConfig("custom_events", [

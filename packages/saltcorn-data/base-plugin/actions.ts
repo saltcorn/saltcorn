@@ -866,7 +866,7 @@ export default {
      */
     description: "Send an email, based on a chosen view for this table",
     configFields: async ({ table, mode }: { table?: Table; mode?: string }) => {
-      if (mode === "workflow") {
+      if (mode === "workflow" || !table) {
         return [
           {
             name: "to_email",
@@ -927,7 +927,6 @@ export default {
           },
         ];
       }
-      if (!table) return [];
       const views = await View.find_table_views_where(
         table,
         ({ state_fields, viewtemplate, viewrow }): boolean =>
@@ -1079,6 +1078,7 @@ export default {
       ];
     },
     requireRow: true,
+    allowWithoutRow: true,
     /**
      * @param {object} opts
      * @param {object} opts.row
@@ -1136,7 +1136,7 @@ export default {
     }) => {
       const from = getState()!.getConfig("email_from");
 
-      if (mode === "workflow") {
+      if (mode === "workflow" || !table) {
         const email = {
           from,
           to: interpolate(to_email, row, user, "send_email to address"),
