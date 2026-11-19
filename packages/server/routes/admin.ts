@@ -78,6 +78,10 @@ import {
   script,
   text,
   domReady,
+  details,
+  summary,
+  thead,
+  small,
 } from "@saltcorn/markup/tags";
 import db from "@saltcorn/data/db";
 import {
@@ -88,11 +92,18 @@ import {
   get_process_init_time,
 } from "@saltcorn/data/db/state";
 import _am_backup from "@saltcorn/admin-models/models/backup";
-const { backup_to_stream, backup_file_name, restore, auto_backup_now } =
-  _am_backup;
+const {
+  backup_to_stream,
+  backup_file_name,
+  restore,
+  auto_backup_now,
+  create_pack_json,
+} = _am_backup;
 import _am_pack from "@saltcorn/admin-models/models/pack";
 const { install_pack, filter_pack } = _am_pack;
 import Snapshot from "@saltcorn/admin-models/models/snapshot";
+import { diff_packs } from "@saltcorn/admin-models/models/pack_diff";
+import type { PathChange } from "@saltcorn/admin-models/models/pack_diff";
 import { runConfigurationCheck } from "@saltcorn/admin-models/models/config-check";
 import fs from "fs";
 import {
@@ -734,6 +745,54 @@ router.get(
       }
     ))!;
     const locale = getState()!.getConfig("default_locale", "en");
+    const pickerOptions = (selected: string) => [
+      option(
+        { value: "current", selected: selected === "current" },
+        req.__("Current application")
+      ),
+      ...snaps.map((snap: any) =>
+        option(
+          { value: `${snap.id}`, selected: selected === `${snap.id}` },
+          text(snapshotLabel(snap, locale))
+        )
+      ),
+    ];
+    const picker =
+      snaps.length > 0
+        ? form(
+            {
+              method: "get",
+              action: "/admin/snapshot-compare",
+              class: "d-flex flex-wrap align-items-center gap-2 mb-3",
+            },
+            label({ for: "snapcmp-from", class: "mb-0" }, req.__("Compare")),
+            select(
+              {
+                name: "from",
+                id: "snapcmp-from",
+                class: "form-select form-select-sm w-auto",
+              },
+              pickerOptions(`${snaps[0].id}`)
+            ),
+            span("&rarr;"),
+            select(
+              {
+                name: "to",
+                "aria-label": req.__("Compare to"),
+                class: "form-select form-select-sm w-auto",
+              },
+              pickerOptions("current")
+            ),
+            button(
+              { type: "submit", class: "btn btn-primary btn-sm" },
+              req.__("Compare")
+            )
+          )
+        : "";
+    const snapsWithPrev = snaps.map((snap: any, ix: number) => ({
+      ...snap,
+      prev_id: snaps[ix + 1]?.id,
+    }));
     send_admin_page({
       res,
       req,
@@ -742,33 +801,292 @@ router.get(
         above: [
           {
             type: "card",
-            title: req.__("Download snapshots"),
+            title: req.__("Snapshots"),
             contents: div(
               snaps.length > 0
-                ? ul(
-                    snaps.map((snap: any) =>
-                      li(
-                        a(
-                          {
-                            href: `/admin/snapshot-download/${encodeURIComponent(
-                              snap.id
+                ? picker +
+                    mkTable(
+                      [
+                        {
+                          label: req.__("When"),
+                          key: (r: any) =>
+                            `${localeDateTime(r.created, {}, locale)} ${small(
+                              { class: "text-muted" },
+                              `(${moment(r.created).fromNow()})`
                             )}`,
-                            target: "_blank",
-                          },
-                          `${localeDateTime(
-                            snap.created,
-                            {},
-                            locale
-                          )} (${moment(snap.created).fromNow()})${
-                            snap.name ? ` [${snap.name}]` : ""
-                          }`
-                        )
-                      )
+                        },
+                        {
+                          label: req.__("Name"),
+                          key: (r: any) => text(r.name || ""),
+                        },
+                        {
+                          label: "",
+                          key: (r: any) =>
+                            [
+                              a(
+                                {
+                                  href: `/admin/snapshot-download/${encodeURIComponent(
+                                    r.id
+                                  )}`,
+                                  target: "_blank",
+                                },
+                                req.__("Download")
+                              ),
+                              r.prev_id
+                                ? a(
+                                    {
+                                      href: snapshotCompareUrl(r.prev_id, r.id),
+                                    },
+                                    req.__("Compare with previous")
+                                  )
+                                : null,
+                              a(
+                                { href: snapshotCompareUrl(r.id, "current") },
+                                req.__("Compare with current")
+                              ),
+                            ]
+                              .filter(Boolean)
+                              .join(" &middot; "),
+                        },
+                      ],
+                      snapsWithPrev
                     )
-                  )
                 : p(req.__("No files"))
             ),
           },
+        ],
+      },
+    });
+  })
+);
+
+const snapshotCompareUrl = (from: any, to: any): string =>
+  `/admin/snapshot-compare?from=${encodeURIComponent(
+    from
+  )}&to=${encodeURIComponent(to)}`;
+
+const snapshotLabel = (snap: any, locale: string): string =>
+  `${snap.name ? `${snap.name} · ` : ""}${localeDateTime(
+    snap.created,
+    {},
+    locale
+  )}`;
+
+const snapshotSectionLabels: Record<string, string> = {
+  tables: "Tables",
+  views: "Views",
+  pages: "Pages",
+  page_groups: "Page groups",
+  triggers: "Triggers",
+  code_pages: "Code pages",
+  roles: "Roles",
+  plugins: "Modules",
+  library: "Library",
+  tags: "Tags",
+  models: "Models",
+  config: "Configuration",
+};
+
+/**
+ * Load one side of a snapshot comparison: a snapshot id or "current"
+ * @returns null if the id is invalid or the snapshot does not exist
+ */
+const loadCompareSide = async (
+  v: any,
+  req: Req,
+  locale: string
+): Promise<{ label: string; pack: any } | null> => {
+  if (v === "current")
+    return {
+      label: req.__("Current application"),
+      pack: await create_pack_json(false, true),
+    };
+  if (typeof v !== "string" || !/^\d+$/.test(v)) return null;
+  const snap = await Snapshot.findOne({ id: parseInt(v) });
+  if (!snap) return null;
+  return { label: snapshotLabel(snap, locale), pack: snap.pack };
+};
+
+/**
+ * Compare two snapshots, or a snapshot and the current application
+ * @name get/snapshot-compare
+ * @function
+ * @memberof module:routes/admin~routes/adminRouter
+ */
+router.get(
+  "/snapshot-compare",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { from, to } = req.query;
+    const locale = getState()!.getConfig("default_locale", "en");
+    const fromSide = await loadCompareSide(from, req, locale);
+    const toSide = await loadCompareSide(to, req, locale);
+    if (!fromSide || !toSide) {
+      req.flash("error", req.__("Snapshot not found"));
+      res.redirect("/admin/snapshot-list");
+      return;
+    }
+    const diff = diff_packs(fromSide.pack, toSide.pack);
+
+    const showValue = (change: PathChange, which: "old" | "new") => {
+      if (!("old" in change) && !("new" in change))
+        return i({ class: "text-muted" }, req.__("(hidden)"));
+      const v = change[which];
+      if (v === undefined) return "";
+      const s = JSON.stringify(v);
+      return code(text(s.length > 300 ? `${s.slice(0, 300)}…` : s));
+    };
+    const countBadges = (n_add: number, n_rem: number, n_chg: number) =>
+      span({ class: "badge bg-success me-1" }, `+${n_add}`) +
+      span({ class: "badge bg-danger me-1" }, `&minus;${n_rem}`) +
+      span({ class: "badge bg-warning text-dark" }, `~${n_chg}`);
+    const summaryTile = (n: number, lbl: string, cls: string) =>
+      div(
+        { class: "col" },
+        div(
+          { class: "border rounded text-center py-2" },
+          h3({ class: `mb-0 ${cls}` }, `${n}`),
+          div(lbl)
+        )
+      );
+
+    const sectionCards = Object.entries(diff.sections).map(([s, sd]) => ({
+      type: "card",
+      title:
+        req.__(snapshotSectionLabels[s] || s) +
+        " " +
+        countBadges(sd.added.length, sd.removed.length, sd.changed.length),
+      contents: div(
+        sd.added.length
+          ? div(
+              { class: "mb-2" },
+              sd.added
+                .map((nm) =>
+                  span(
+                    {
+                      class:
+                        "badge bg-success-subtle text-success-emphasis me-1",
+                    },
+                    `+ ${text(nm)}`
+                  )
+                )
+                .join("")
+            )
+          : "",
+        sd.removed.length
+          ? div(
+              { class: "mb-2" },
+              sd.removed
+                .map((nm) =>
+                  span(
+                    {
+                      class: "badge bg-danger-subtle text-danger-emphasis me-1",
+                    },
+                    `&minus; ${text(nm)}`
+                  )
+                )
+                .join("")
+            )
+          : "",
+        sd.changed.map(({ name, changes }) =>
+          details(
+            { class: "mb-2" },
+            summary(
+              text(name),
+              " ",
+              small(
+                { class: "text-muted" },
+                changes.length === 1
+                  ? req.__("1 change")
+                  : req.__("%s changes", changes.length)
+              )
+            ),
+            table(
+              { class: "table table-sm mt-2 mb-0" },
+              thead(
+                tr(
+                  th(req.__("Path")),
+                  th(req.__("Before")),
+                  th(req.__("After"))
+                )
+              ),
+              tbody(
+                changes.map((c) =>
+                  tr(
+                    td(code(text(c.path || req.__("(value)")))),
+                    td(showValue(c, "old")),
+                    td(showValue(c, "new"))
+                  )
+                )
+              )
+            )
+          )
+        )
+      ),
+    }));
+
+    const nothing =
+      diff.summary.added + diff.summary.removed + diff.summary.changed === 0;
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Backup",
+      contents: {
+        above: [
+          {
+            type: "card",
+            title: req.__("Compare snapshots"),
+            contents: div(
+              div(
+                {
+                  class:
+                    "d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3",
+                },
+                div(
+                  span({ class: "fw-bold" }, text(fromSide.label)),
+                  " &rarr; ",
+                  span({ class: "fw-bold" }, text(toSide.label))
+                ),
+                div(
+                  a(
+                    {
+                      href: snapshotCompareUrl(to, from),
+                      class: "btn btn-outline-secondary btn-sm me-1",
+                    },
+                    req.__("Swap")
+                  ),
+                  a(
+                    {
+                      href: "/admin/snapshot-list",
+                      class: "btn btn-outline-secondary btn-sm",
+                    },
+                    req.__("All snapshots")
+                  )
+                )
+              ),
+              nothing
+                ? p({ class: "mb-0" }, req.__("No differences"))
+                : div(
+                    { class: "row g-2" },
+                    summaryTile(
+                      diff.summary.added,
+                      req.__("Added"),
+                      "text-success"
+                    ),
+                    summaryTile(
+                      diff.summary.removed,
+                      req.__("Removed"),
+                      "text-danger"
+                    ),
+                    summaryTile(
+                      diff.summary.changed,
+                      req.__("Changed"),
+                      "text-warning"
+                    )
+                  )
+            ),
+          },
+          ...sectionCards,
         ],
       },
     });
