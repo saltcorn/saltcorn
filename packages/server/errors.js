@@ -23,6 +23,11 @@ async function (err, req, res, next) {
   const role = (req.user || {}).role_id || 100;
   if (err.message && err.message.includes("invalid csrf token")) {
     state.log(2, err.message);
+    // the mobile app can't see a redirect, it refreshes the token and retries
+    if (req.smr) {
+      res.status(403).json({ error: "invalid csrf token" });
+      return;
+    }
 
     req.flash("error", req.__("Invalid form data, try again"));
     if (req.url && req.url.includes("/auth/login")) res.redirect("/auth/login");

@@ -178,7 +178,9 @@ export async function createSyncInfoTables(synchTbls) {
 }
 
 export async function tablesUptodate(createdAt, historyFile) {
-  const { updated_at } = await readFile(historyFile, Directory.Data);
+  const { updated_at } = JSON.parse(
+    await readFile(historyFile, Directory.Data)
+  );
   if (!updated_at) {
     console.log("No updated_at in history file");
     return false;
