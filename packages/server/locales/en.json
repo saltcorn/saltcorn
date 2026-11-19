@@ -2167,5 +2167,7 @@
 	"No differences": "No differences",
 	"Added": "Added",
 	"Removed": "Removed",
-	"Changed": "Changed"
+	"Changed": "Changed",
+	"(not set)": "(not set)",
+	"(removed)": "(removed)"
 }

@@ -92,6 +92,49 @@ describe("snapshot compare", () => {
       .expect(toInclude("<code>1</code>"));
   });
 
+  it("marks removed and added values explicitly", async () => {
+    const view = View.findOne({ name: "CompareNewView" });
+    await View.update(
+      { configuration: { columns: [], extra_setting: "x" } },
+      view.id
+    );
+    await Snapshot.take_if_changed("cmp_with_extra");
+    const withExtra = await Snapshot.findOne({ name: "cmp_with_extra" });
+    await View.update({ configuration: { columns: [] } }, view.id);
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(`/admin/snapshot-compare?from=${withExtra.id}&to=current`)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude("<code>configuration.extra_setting</code>"))
+      .expect(toInclude("(removed)"))
+      .expect(toInclude("var(--bs-danger)"));
+    await request(app)
+      .get(`/admin/snapshot-compare?from=current&to=${withExtra.id}`)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude("(not set)"))
+      .expect(toInclude("var(--bs-success)"));
+  });
+
+  it("renders snapshot dates as HTML, not escaped markup", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(`/admin/snapshot-compare?from=${snapId}&to=current`)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toInclude("<time datetime="))
+      .expect(toNotInclude("&lt;time"));
+    await request(app)
+      .get("/admin/snapshot-list")
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toNotInclude("&lt;time"))
+      .expect(toInclude("cmp_base · 20"));
+  });
+
   it("shows no differences for the same snapshot", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();

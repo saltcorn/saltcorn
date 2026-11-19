@@ -753,7 +753,7 @@ router.get(
       ...snaps.map((snap: any) =>
         option(
           { value: `${snap.id}`, selected: selected === `${snap.id}` },
-          text(snapshotLabel(snap, locale))
+          text(snapshotPlainLabel(snap))
         )
       ),
     ];
@@ -865,11 +865,18 @@ const snapshotCompareUrl = (from: any, to: any): string =>
     from
   )}&to=${encodeURIComponent(to)}`;
 
+/** HTML label: escaped name and a client-localized <time> element */
 const snapshotLabel = (snap: any, locale: string): string =>
-  `${snap.name ? `${snap.name} · ` : ""}${localeDateTime(
+  `${snap.name ? `${text(snap.name)} · ` : ""}${localeDateTime(
     snap.created,
     {},
     locale
+  )}`;
+
+/** Plain-text label, for places that cannot hold HTML such as <option> */
+const snapshotPlainLabel = (snap: any): string =>
+  `${snap.name ? `${snap.name} · ` : ""}${moment(snap.created).format(
+    "YYYY-MM-DD HH:mm"
   )}`;
 
 const snapshotSectionLabels: Record<string, string> = {
@@ -896,9 +903,10 @@ const loadCompareSide = async (
   req: Req,
   locale: string
 ): Promise<{ label: string; pack: any } | null> => {
+  // label is HTML
   if (v === "current")
     return {
-      label: req.__("Current application"),
+      label: text(req.__("Current application")),
       pack: await create_pack_json(false, true),
     };
   if (typeof v !== "string" || !/^\d+$/.test(v)) return null;
@@ -929,12 +937,22 @@ router.get(
     const diff = diff_packs(fromSide.pack, toSide.pack);
 
     const showValue = (change: PathChange, which: "old" | "new") => {
+      // the side that does not exist for an added/removed value
+      if (which === "old" && change.kind === "added")
+        return i({ class: "text-muted" }, req.__("(not set)"));
+      if (which === "new" && change.kind === "removed")
+        return i({ class: "text-muted" }, req.__("(removed)"));
       if (!("old" in change) && !("new" in change))
         return i({ class: "text-muted" }, req.__("(hidden)"));
       const v = change[which];
       if (v === undefined) return "";
       const s = JSON.stringify(v);
       return code(text(s.length > 300 ? `${s.slice(0, 300)}…` : s));
+    };
+    // colored left edge on the path cell marks added/removed values
+    const kindMarker: Record<string, string> = {
+      added: "box-shadow: inset 3px 0 0 var(--bs-success)",
+      removed: "box-shadow: inset 3px 0 0 var(--bs-danger)",
     };
     const countBadges = (n_add: number, n_rem: number, n_chg: number) =>
       span({ class: "badge bg-success me-1" }, `+${n_add}`) +
@@ -1013,7 +1031,10 @@ router.get(
               tbody(
                 changes.map((c) =>
                   tr(
-                    td(code(text(c.path || req.__("(value)")))),
+                    td(
+                      { style: kindMarker[c.kind] },
+                      code(text(c.path || req.__("(value)")))
+                    ),
                     td(showValue(c, "old")),
                     td(showValue(c, "new"))
                   )
@@ -1043,9 +1064,9 @@ router.get(
                     "d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3",
                 },
                 div(
-                  span({ class: "fw-bold" }, text(fromSide.label)),
+                  span({ class: "fw-bold" }, fromSide.label),
                   " &rarr; ",
-                  span({ class: "fw-bold" }, text(toSide.label))
+                  span({ class: "fw-bold" }, toSide.label)
                 ),
                 div(
                   a(
