@@ -780,14 +780,29 @@ class WorkflowStep {
       attributes: { options: WorkflowStep.waitableEventTypes() },
       showIf: { wf_action_name: "WaitForEvent" },
     });
+    const tableEventTypes = ["Insert", "Update", "Delete"];
+    const channelEventTypes = Object.entries(getState()!.eventTypes)
+      .filter(([k, v]: [string, any]) => v?.hasChannel)
+      .map(([k]) => k);
     actionConfigFields.push({
-      label: "Table / channel",
+      label: "Table",
       name: "event_channel",
-      sublabel:
-        "Table name for Insert, Update and Delete events, or the channel for other events. Blank matches any table or channel",
+      sublabel: "Blank matches a row change in any table",
       type: "String",
-      showIf: { wf_action_name: "WaitForEvent" },
+      attributes: { options: Table.allTableNames },
+      showIf: { wf_action_name: "WaitForEvent", event_type: tableEventTypes },
     });
+    if (channelEventTypes.length)
+      actionConfigFields.push({
+        label: "Channel",
+        name: "event_channel",
+        sublabel: "Blank matches any channel",
+        type: "String",
+        showIf: {
+          wf_action_name: "WaitForEvent",
+          event_type: channelEventTypes,
+        },
+      });
     actionConfigFields.push({
       label: "Match query",
       name: "event_query",
