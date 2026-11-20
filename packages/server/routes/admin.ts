@@ -810,7 +810,11 @@ router.get(
                         {
                           label: req.__("When"),
                           key: (r: any) =>
-                            `${localeDateTime(r.created, {}, locale)} ${small(
+                            `${localeDateTime(
+                              new Date(r.created),
+                              {},
+                              locale
+                            )} ${small(
                               { class: "text-muted" },
                               `(${moment(r.created).fromNow()})`
                             )}`,
@@ -866,9 +870,10 @@ const snapshotCompareUrl = (from: any, to: any): string =>
   )}&to=${encodeURIComponent(to)}`;
 
 /** HTML label: escaped name and a client-localized <time> element */
+// created is a Date on Postgres but a number on SQLite
 const snapshotLabel = (snap: any, locale: string): string =>
   `${snap.name ? `${text(snap.name)} · ` : ""}${localeDateTime(
-    snap.created,
+    new Date(snap.created),
     {},
     locale
   )}`;
