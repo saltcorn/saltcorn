@@ -227,7 +227,10 @@ class WorkflowRun {
 
     const waiting_runs = await WorkflowRun.find({ status: "Waiting" });
 
-    const until_runs = waiting_runs.filter((r) => !r.wait_info.form);
+    // event waits are resumed by resumeOnEvent, not by the scheduler
+    const until_runs = waiting_runs.filter(
+      (r) => !r.wait_info.form && !r.wait_info.event_type
+    );
 
     if (!until_runs.length) {
       state.waitingWorkflows = false;
@@ -246,6 +249,61 @@ class WorkflowRun {
       await db.withTransaction(async () => {
         await run.run({});
       });
+    }
+  }
+
+  /**
+   * Resume workflow runs paused in a WaitForEvent step whose event type,
+   * channel and match query fit this event. Called from Trigger.emitEvent
+   * and Trigger.runTableTriggers
+   * @param eventType event type, e.g. "Insert" or a custom event
+   * @param channel table name for table events, otherwise the event channel
+   * @param payload event payload, matched against the step's query
+   */
+  static async resumeOnEvent(
+    eventType: string,
+    channel: string | null | undefined,
+    payload: any
+  ) {
+    const waiting = await WorkflowRun.find({
+      status: "Waiting",
+      wait_info: { json: { event_type: eventType } },
+    });
+    const matching = waiting.filter(
+      (r) =>
+        !r.wait_info.event_received &&
+        (!r.wait_info.event_channel || r.wait_info.event_channel === channel) &&
+        utils.satisfies(r.wait_info.event_query || {})(payload || {})
+    );
+    for (const run of matching) {
+      try {
+        await db.withTransaction(async () => {
+          // another event may have resumed this run since it was selected
+          const fresh = await WorkflowRun.findOne({ id: run.id });
+          if (
+            !fresh ||
+            fresh.status !== "Waiting" ||
+            fresh.wait_info?.event_type !== eventType ||
+            fresh.wait_info?.event_received
+          )
+            return;
+          if (fresh.wait_info.payload_variable)
+            fresh.context[fresh.wait_info.payload_variable] = payload;
+          await fresh.update({
+            context: fresh.context,
+            wait_info: { ...fresh.wait_info, event_received: true },
+          });
+          const user = fresh.started_by
+            ? await User.findOne({ id: fresh.started_by })
+            : undefined;
+          await fresh.run({ user: user || ({} as AbstractUser) });
+        });
+      } catch (e: any) {
+        getState()!.log(
+          2,
+          `Error resuming workflow run ${run.id} on event ${eventType}: ${e?.message}`
+        );
+      }
     }
   }
 
@@ -492,6 +550,9 @@ class WorkflowRun {
             break;
           case "form":
             if (v) fulfilled = false;
+            break;
+          case "event_type":
+            if (!this.wait_info.event_received) fulfilled = false;
             break;
           case "workflow_run":
             const wait_for_run = await WorkflowRun.findOne({ id: v });
@@ -819,6 +880,33 @@ class WorkflowRun {
             }
             state.waitingWorkflows = true;
             if (trace) await this.createTrace(step.name, user);
+            do_break = true;
+            return;
+          }
+          if (
+            step?.action_name === "WaitForEvent" &&
+            !waiting_fulfilled &&
+            !skip_because_only_if
+          ) {
+            const event_query = step.configuration.event_query
+              ? eval_expression(
+                  step.configuration.event_query,
+                  this.context,
+                  user,
+                  `Match query in step ${step.name}`
+                )
+              : {};
+            await this.update({
+              status: "Waiting",
+              wait_info: {
+                event_type: step.configuration.event_type,
+                event_channel: step.configuration.event_channel || null,
+                event_query: event_query || {},
+                payload_variable: step.configuration.payload_variable || null,
+              },
+            });
+            if (trace) await this.createTrace(step.name, user);
+
             do_break = true;
             return;
           }

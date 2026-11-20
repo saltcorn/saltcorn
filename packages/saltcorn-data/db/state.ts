@@ -247,6 +247,7 @@ class State {
   queriesCache?: Record<string, any>;
   scVersion: string;
   waitingWorkflows?: boolean;
+  waitEventKeys: Set<string> = new Set();
   keyframes: Array<string>;
   copilot_skills: Array<CopilotSkill>;
   capacitorPlugins: Array<CapacitorPlugin>;
@@ -795,10 +796,40 @@ class State {
    */
   async refresh_triggers(noSignal?: boolean) {
     this.triggers = await Trigger.findDB();
+    await this.refresh_wait_event_keys();
     if (!noSignal) this.log(5, "Refresh triggers");
 
     if (!noSignal && db.is_node)
       this.processSend({ refresh: "triggers", tenant: db.getTenantSchema() });
+  }
+
+  async refresh_wait_event_keys() {
+    try {
+      const WorkflowStep = (await import("../models/workflow_step.js")).default;
+      const steps = await WorkflowStep.find({ action_name: "WaitForEvent" });
+      this.waitEventKeys = new Set(
+        steps
+          .filter((s) => s.configuration?.event_type)
+          .map(
+            (s) =>
+              `${s.configuration.event_type}:${s.configuration.event_channel || ""}`
+          )
+      );
+    } catch (e: any) {
+      this.log(2, `Error refreshing wait event keys: ${e?.message}`);
+    }
+  }
+
+  /**
+   * Could a workflow run be waiting for this event?
+   * @param eventType
+   * @param channel
+   */
+  hasEventWaiters(eventType: string, channel?: string | null): boolean {
+    return (
+      this.waitEventKeys.has(`${eventType}:`) ||
+      (!!channel && this.waitEventKeys.has(`${eventType}:${channel}`))
+    );
   }
 
   /**

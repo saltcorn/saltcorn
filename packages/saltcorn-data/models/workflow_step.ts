@@ -86,7 +86,10 @@ class WorkflowStep {
         }
       );
     }
-    return await db.insert("_sc_workflow_steps", step.toJson);
+    const id = await db.insert("_sc_workflow_steps", step.toJson);
+    if (step.action_name === "WaitForEvent")
+      await getState()?.refresh_triggers();
+    return id;
   }
 
   /**
@@ -206,6 +209,11 @@ class WorkflowStep {
       );
     }
     await db.update("_sc_workflow_steps", row, this.id);
+    if (
+      this.action_name === "WaitForEvent" ||
+      row.action_name === "WaitForEvent"
+    )
+      await getState()?.refresh_triggers();
   }
 
   async run(context: any, user: AbstractUser, req?: any, workflowRun?: any) {
@@ -514,6 +522,16 @@ class WorkflowStep {
         if (cfg.resume_at)
           lines.push(`${t("Resume at")}: ${shorten(cfg.resume_at)}`);
         break;
+      case "WaitForEvent":
+        if (cfg.event_type)
+          lines.push(
+            `${t("Event")}: ${cfg.event_type}${
+              cfg.event_channel ? ` ${cfg.event_channel}` : ""
+            }`
+          );
+        if (cfg.event_query)
+          lines.push(`${t("Match")}: ${shorten(cfg.event_query)}`);
+        break;
       case "WaitNextTick":
         lines.push(
           cfg.immediately_bg
@@ -578,6 +596,25 @@ class WorkflowStep {
     return normalized.length ? normalized : undefined;
   }
 
+  /**
+   * Event types a WaitForEvent step can wait for. Scheduled, API and
+   * validation events are excluded, as is PageLoad (too frequent)
+   */
+  static waitableEventTypes(): string[] {
+    const exclude = new Set([
+      "Never",
+      "Validate",
+      "Weekly",
+      "Daily",
+      "Hourly",
+      "Often",
+      "Cron",
+      "API call",
+      "PageLoad",
+    ]);
+    return Trigger.when_options.filter((o) => !exclude.has(o));
+  }
+
   static builtInActionExplainers(opts: any = {}) {
     const actionExplainers: any = {};
     actionExplainers.SetContext = "Set variables in the context";
@@ -590,6 +627,8 @@ class WorkflowStep {
     actionExplainers.OutputView =
       "Display the output of running a Saltcorn view. Pause workflow until the message is read.";
     actionExplainers.WaitUntil = "Pause until a time in the future";
+    actionExplainers.WaitForEvent =
+      "Pause until an event occurs whose payload matches a query";
     actionExplainers.WaitNextTick =
       "Decouple workflow from invocation. Pause until the next scheduler invocation (at most 5 minutes), or run in background immediately.";
     actionExplainers.UserForm =
@@ -732,6 +771,42 @@ class WorkflowStep {
         "JavaScript expression for the time to resume. <code>moment</code> is in scope.",
       type: "String",
       showIf: { wf_action_name: "WaitUntil" },
+    });
+    actionConfigFields.push({
+      label: "Event type",
+      name: "event_type",
+      type: "String",
+      required: true,
+      attributes: { options: WorkflowStep.waitableEventTypes() },
+      showIf: { wf_action_name: "WaitForEvent" },
+    });
+    actionConfigFields.push({
+      label: "Table / channel",
+      name: "event_channel",
+      sublabel:
+        "Table name for Insert, Update and Delete events, or the channel for other events. Blank matches any table or channel",
+      type: "String",
+      showIf: { wf_action_name: "WaitForEvent" },
+    });
+    actionConfigFields.push({
+      label: "Match query",
+      name: "event_query",
+      sublabel:
+        'JavaScript where object expression, evaluated in the context when the step is reached, that the event payload must match. Example <code>{id: order_id, status: "Paid"}</code>. Blank or <code>{}</code> matches any payload',
+      type: "String",
+      class: "validate-expression",
+      default: "{}",
+      showIf: { wf_action_name: "WaitForEvent" },
+    });
+    actionConfigFields.push({
+      label: "Payload variable",
+      name: "payload_variable",
+      sublabel:
+        "Optional. Context variable to store the matching event payload in",
+      class: "validate-identifier",
+      type: "String",
+      validator: jsIdentifierValidator,
+      showIf: { wf_action_name: "WaitForEvent" },
     });
     actionConfigFields.push({
       label: "Context values",
