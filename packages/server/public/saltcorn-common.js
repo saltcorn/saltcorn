@@ -1334,13 +1334,9 @@ function initialize_page() {
         contentType: "application/json",
         data: decodeURIComponent(fielddata),
       }).then((resp) => {
-        const opts = encodeURIComponent(
-          JSON.stringify({
-            resetHtml,
-          })
-        );
+        const opts = encode_inline_edit_opts({ resetHtml });
         $(this).replaceWith(
-          `<form method="post" action="/field/save-click-edit" onclick="event.stopPropagation()" onsubmit="inline_ajax_submit_with_fielddata(event, '${opts}')"        
+          `<form method="post" action="/field/save-click-edit" onclick="event.stopPropagation()" onsubmit="inline_ajax_submit_with_fielddata(event, '${opts}')">
       <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
       <input type="hidden" name="_fielddata" value="${fielddata}">
       <div class="input-group">
@@ -1372,20 +1368,18 @@ function initialize_page() {
       current = current === "true";
     }
     var is_key = type?.startsWith("Key:");
-    const opts = encodeURIComponent(
-      JSON.stringify({
-        url,
-        key,
-        ajax,
-        current,
-        current_label: $(this).attr("data-inline-edit-current-label"),
-        type,
-        is_key,
-        schema,
-        resetHtml,
-        ...(decimalPlaces ? { decimalPlaces } : {}),
-      })
-    );
+    const opts = encode_inline_edit_opts({
+      url,
+      key,
+      ajax,
+      current,
+      current_label: $(this).attr("data-inline-edit-current-label"),
+      type,
+      is_key,
+      schema,
+      resetHtml,
+      ...(decimalPlaces ? { decimalPlaces } : {}),
+    });
     const doAjaxOptionsFetch = (tblName, target) => {
       $.ajax(`/api/${tblName}`)
         .then((resp) => {
@@ -1455,7 +1449,7 @@ function initialize_page() {
             : ""
         } name="${key}" ${type === "Bool" ? (current ? "checked" : "") : ``}>
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
-      <button onclick="cancel_inline_edit(event, '${opts.replaceAll("'", "\\'")}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+      <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
       </form>`
       );
       if (type !== "Bool") {
@@ -2013,6 +2007,20 @@ function card_max_full_screen($card_outer) {
   window.addEventListener("resize", computeHeights, true);
 }
 
+function encode_inline_edit_opts(opts) {
+  return encodeURIComponent(JSON.stringify(opts)).replace(/'/g, "%27");
+}
+
+function inline_edit_outer_view(elem) {
+  return $(elem).parents("[data-sc-view-source]").last();
+}
+
+function reload_after_inline_edit($outerView) {
+  const viewname = $outerView.attr("data-sc-embed-viewname");
+  if (viewname) reload_embedded_view(viewname);
+  else if (getIsNode()) location.reload();
+}
+
 function cancel_inline_edit(e, opts1) {
   var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
   var form = $(e.target).closest("form");
@@ -2031,6 +2039,7 @@ function inline_submit_success(e, form, opts) {
         ? form.find("select").find("option:selected").text()
         : rawVal;
 
+    const $outerView = inline_edit_outer_view(e.target);
     $(e.target).replaceWith(`<div 
   data-inline-edit-field="${opts.key}" 
   ${opts.ajax ? `data-inline-edit-ajax="true"` : ""}
@@ -2054,6 +2063,7 @@ function inline_submit_success(e, form, opts) {
     <i class="editicon ${!isNode ? "visible" : ""} fas fa-edit ms-1"></i>
   </div>`);
     initialize_page();
+    reload_after_inline_edit($outerView);
   } else location.reload();
 }
 
@@ -2074,10 +2084,11 @@ function inline_ajax_submit_with_fielddata(e, opts1) {
     },
     data: form_data,
     success: function (res) {
-      var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
       var form = $(e.target).closest("form");
+      const $outerView = inline_edit_outer_view(form);
       form.replaceWith(res);
       initialize_page();
+      reload_after_inline_edit($outerView);
     },
     error: function (e) {
       if (!checkNetworkError(e))
