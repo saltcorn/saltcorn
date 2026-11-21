@@ -1036,6 +1036,51 @@ describe("Edit view components", () => {
       success: "ok",
     });
   });
+  it("runs multi-step action after failed server-side Save", async () => {
+    const col = {
+      type: "Action",
+      rndid: "c4058a",
+      minRole: 100,
+      action_name: "Multi-step action",
+      action_label: "",
+      step_action_names: ["form_action", "run_js_code"],
+      step_only_ifs: ["", ""],
+      configuration: {
+        steps: [
+          { form_action: "Save" },
+          {
+            code: `await Table.findOne({name: "publisher"}).getRows({});
+return {notify: "step 2 ran"}`,
+            run_where: "Server",
+          },
+        ],
+      },
+    };
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: { ...col, type: "action" },
+        columns: [col],
+      },
+    });
+
+    mockReqRes.reset();
+    const body = { rndid: "c4058a", author: "No pages" };
+    const user = { email: "admin@foo.com", id: 1, role_id: 1, language: "en" };
+    await db.runWithTenant(db.getTenantSchema(), async () => {
+      await view.runRoute(
+        "run_action",
+        body,
+        mockReqRes.res,
+        { req: { ...mockReqRes.req, body, user }, res: mockReqRes.res },
+        false
+      );
+    });
+    const json = mockReqRes.getStored().json;
+    expect(json.error).toBeUndefined();
+    expect(json.notify).toBe("step 2 ran");
+    const books = Table.findOne({ name: "books" })!;
+    expect(await books.getRow({ author: "No pages" })).toBeNull();
+  });
   it("view link independent same table", async () => {
     const view = await mkViewWithCfg({
       configuration: {

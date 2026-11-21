@@ -2451,20 +2451,21 @@ class Table implements AbstractTable {
       throw new Error("Read-only access");
 
     let use_user = (this.constructor as typeof Table).fixed_user || user;
-    try {
-      const maybe_err = await this.updateRow(v, id, use_user, {
-        noTrigger: false,
-        resultCollector,
-        extraArgs,
-      });
-      if (typeof maybe_err === "string") return { error: maybe_err };
-      else return { success: true };
-    } catch (e) {
-      return {
+    return await db.tryCatchInTransaction<ResultMessage>(
+      async () => {
+        const maybe_err = await this.updateRow(v, id, use_user, {
+          noTrigger: false,
+          resultCollector,
+          extraArgs,
+        });
+        if (typeof maybe_err === "string") return { error: maybe_err };
+        else return { success: true };
+      },
+      (e: Error) => ({
         error: this.normalise_error_message((e as ErrorObj).message),
-        errorObj: e as Error,
-      };
-    }
+        errorObj: e,
+      })
+    );
   }
 
   /**
@@ -3115,19 +3116,24 @@ class Table implements AbstractTable {
     if ((this.constructor as typeof Table).read_only)
       throw new Error("Read-only access");
 
-    try {
-      const id = await this.insertRow(v, use_user, resultCollector);
-      if (!id) return { error: "Not authorized" };
-      if (id?.includes?.("Not authorized")) return { error: id };
-      if (id?.error) return id;
-      return { success: id };
-    } catch (e) {
-      await nsState.getState()!.log(5, e);
-      return {
-        error: this.normalise_error_message((e as ErrorObj).message),
-        errorObj: e as Error,
-      };
-    }
+    return await db.tryCatchInTransaction<
+      { error: string; errorObj?: Error } | { success: PrimaryKeyValue }
+    >(
+      async () => {
+        const id = await this.insertRow(v, use_user, resultCollector);
+        if (!id) return { error: "Not authorized" };
+        if (id?.includes?.("Not authorized")) return { error: id };
+        if (id?.error) return id;
+        return { success: id };
+      },
+      async (e: Error) => {
+        await nsState.getState()!.log(5, e);
+        return {
+          error: this.normalise_error_message((e as ErrorObj).message),
+          errorObj: e,
+        };
+      }
+    );
   }
 
   /**
