@@ -1671,7 +1671,7 @@ const WorkflowEditor = ({ data }) => {
       // Valid connection landed; clear pending source so we don't treat it as a cancel
       connectSourceRef.current = null;
       setSelectedEdgeId(connection.id || null);
-      const loop = connection.sourceHandle === "loop";
+      const loop = connection.sourceHandle === "loop-out";
       const targetName = nameById[connection.target];
       if (connection.source === "start") {
         const targetId = connection.target;
