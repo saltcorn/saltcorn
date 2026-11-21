@@ -168,6 +168,23 @@ class WorkflowStep {
         }
       }
 
+      const timeoutSteps = allSteps.filter(
+        (s) =>
+          s.action_name === "WaitForEvent" &&
+          s.configuration?.timeout_step == this.name
+      );
+      for (const waitStep of timeoutSteps) {
+        await waitStep.update({
+          configuration: {
+            ...waitStep.configuration,
+            timeout_step:
+              this.next_step && allStepNames.has(this.next_step)
+                ? this.next_step
+                : "",
+          },
+        });
+      }
+
       if (this.next_step && allStepNames.has(this.next_step))
         await db.query(
           `update ${schema}_sc_workflow_steps SET next_step = $1 WHERE trigger_id = $2 and next_step = $3`,
@@ -531,6 +548,12 @@ class WorkflowStep {
           );
         if (cfg.event_query)
           lines.push(`${t("Match")}: ${shorten(cfg.event_query)}`);
+        if (cfg.timeout_at)
+          lines.push(
+            `${t("Timeout")}: ${shorten(cfg.timeout_at)}${
+              cfg.timeout_step ? ` -> ${cfg.timeout_step}` : ""
+            }`
+          );
         break;
       case "WaitNextTick":
         lines.push(
@@ -821,6 +844,24 @@ class WorkflowStep {
       class: "validate-identifier",
       type: "String",
       validator: jsIdentifierValidator,
+      showIf: { wf_action_name: "WaitForEvent" },
+    });
+    actionConfigFields.push({
+      label: "Timeout at",
+      name: "timeout_at",
+      sublabel:
+        "Optional. JavaScript expression for the time to stop waiting, evaluated in the context when the step is reached. Example <code>moment().add(7, 'days')</code>. Timeouts are checked on scheduler ticks (at most 5 minutes). Blank waits indefinitely",
+      type: "String",
+      class: "validate-expression",
+      showIf: { wf_action_name: "WaitForEvent" },
+    });
+    actionConfigFields.push({
+      label: "Timeout step",
+      name: "timeout_step",
+      sublabel:
+        "Optional. Step to continue from if the timeout is reached before a matching event. Blank continues to the next step. The context variable <code>timed_out</code> is set to true or false",
+      type: "String",
+      attributes: await stepOptions(),
       showIf: { wf_action_name: "WaitForEvent" },
     });
     actionConfigFields.push({

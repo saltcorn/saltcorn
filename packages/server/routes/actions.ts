@@ -147,6 +147,7 @@ const workflowStrings = (req: Req, trigger: Trigger) => ({
   nextStep: req.__("Next step"),
   onlyIf: req.__("Only if"),
   loopBody: req.__("Loop body"),
+  timeout: req.__("Timeout"),
   openRuns: req.__("Show runs &raquo;"),
   configure: req.__(`Configure trigger %s`, trigger.name),
   copyStep: req.__("Copy"),
@@ -808,7 +809,8 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { trigger_id } = req.params;
-    const { step_id, next_step, initial_step, loop_body_step } = req.body || {};
+    const { step_id, next_step, initial_step, loop_body_step, timeout_step } =
+      req.body || {};
     const stepId = step_id ? +step_id : null;
     const step = (await WorkflowStep.findOne({ id: stepId, trigger_id }))!;
     if (!step) return res.status(404).json({ error: "Step not found" });
@@ -836,6 +838,15 @@ router.post(
       updateRow.configuration = {
         ...step.configuration,
         loop_body_initial_step: loop_body_step || "",
+      };
+    }
+    if (
+      typeof timeout_step !== "undefined" &&
+      step.action_name === "WaitForEvent"
+    ) {
+      updateRow.configuration = {
+        ...(updateRow.configuration || step.configuration),
+        timeout_step: timeout_step || "",
       };
     }
     await step.update(updateRow);

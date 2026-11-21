@@ -1281,4 +1281,140 @@ describe("Workflow wait for event", () => {
     expect(after.status).toBe("Finished");
     expect(after.context.evt.author).toBe("Doomed Author");
   });
+
+  const mkTimeoutWorkflow = async (name: string, waitConfig: GenObj) => {
+    const trigger = await mkWaitWorkflow(name, {
+      event_type: "OrderPaid",
+      event_query: `{order_id: my_order}`,
+      ...waitConfig,
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "on_timeout",
+      action_name: "SetContext",
+      initial_step: false,
+      configuration: { ctx_values: `{cancelled: true}` },
+    });
+    return trigger;
+  };
+  const startRun = async (trigger: Trigger) => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const run = await WorkflowRun.create({
+      trigger_id: trigger.id!,
+      context: { my_order: 5 },
+      started_by: user.id,
+    });
+    await run.run({ user });
+    expect(run.status).toBe("Waiting");
+    return { run, user };
+  };
+
+  it("goes to the timeout step when the timeout passes", async () => {
+    const trigger = await mkTimeoutWorkflow("wfWaitTimeout", {
+      timeout_at: `moment().subtract(1, 'minute')`,
+      timeout_step: "on_timeout",
+    });
+    const { run } = await startRun(trigger);
+    expect(run.wait_info.timeout_at).toBeTruthy();
+
+    await WorkflowRun.runResumableWorkflows();
+    const after = await reload(run);
+    expect(after.status).toBe("Finished");
+    expect(after.context.timed_out).toBe(true);
+    expect(after.context.cancelled).toBe(true);
+    expect(after.context.done).toBeUndefined();
+    expect(after.context.evt).toBeUndefined();
+  });
+
+  it("takes the normal path when the event arrives before the timeout", async () => {
+    const trigger = await mkTimeoutWorkflow("wfWaitBeforeTimeout", {
+      timeout_at: `moment().add(1, 'day')`,
+      timeout_step: "on_timeout",
+    });
+    const { run, user } = await startRun(trigger);
+
+    // not timed out yet
+    await WorkflowRun.runResumableWorkflows();
+    expect((await reload(run)).status).toBe("Waiting");
+
+    Trigger.emitEvent("OrderPaid", null, user, { order_id: 5 });
+    await sleep(300);
+    const after = await reload(run);
+    expect(after.status).toBe("Finished");
+    expect(after.context.timed_out).toBe(false);
+    expect(after.context.done).toBe(true);
+    expect(after.context.cancelled).toBeUndefined();
+    expect(after.context.evt).toStrictEqual({ order_id: 5 });
+  });
+
+  it("ignores an event that arrives after the timeout", async () => {
+    const trigger = await mkTimeoutWorkflow("wfWaitLateEvent", {
+      timeout_at: `moment().subtract(1, 'minute')`,
+      timeout_step: "on_timeout",
+    });
+    const { run, user } = await startRun(trigger);
+
+    Trigger.emitEvent("OrderPaid", null, user, { order_id: 5 });
+    await sleep(300);
+    expect((await reload(run)).status).toBe("Waiting");
+
+    await WorkflowRun.runResumableWorkflows();
+    const after = await reload(run);
+    expect(after.status).toBe("Finished");
+    expect(after.context.timed_out).toBe(true);
+    expect(after.context.cancelled).toBe(true);
+    expect(after.context.evt).toBeUndefined();
+  });
+
+  it("continues to the next step on timeout without a timeout step", async () => {
+    const trigger = await mkTimeoutWorkflow("wfWaitTimeoutNext", {
+      timeout_at: `moment().subtract(1, 'minute')`,
+    });
+    const { run } = await startRun(trigger);
+
+    await WorkflowRun.runResumableWorkflows();
+    const after = await reload(run);
+    expect(after.status).toBe("Finished");
+    expect(after.context.timed_out).toBe(true);
+    expect(after.context.done).toBe(true);
+    expect(after.context.cancelled).toBeUndefined();
+  });
+
+  it("reconnects the timeout step when it is deleted", async () => {
+    const trigger = await mkTimeoutWorkflow("wfWaitDeleteTimeout", {
+      timeout_at: `moment().add(1, 'day')`,
+      timeout_step: "on_timeout",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "notify",
+      action_name: "SetContext",
+      initial_step: false,
+      configuration: { ctx_values: `{notified: true}` },
+    });
+    const onTimeout = await WorkflowStep.findOne({
+      trigger_id: trigger.id!,
+      name: "on_timeout",
+    });
+    await onTimeout.update({ next_step: "notify" });
+    onTimeout.next_step = "notify";
+    await onTimeout.delete(true);
+    const wait = await WorkflowStep.findOne({
+      trigger_id: trigger.id!,
+      name: "wait",
+    });
+    expect(wait.configuration.timeout_step).toBe("notify");
+
+    const notify = await WorkflowStep.findOne({
+      trigger_id: trigger.id!,
+      name: "notify",
+    });
+    await notify.delete(true);
+    const wait1 = await WorkflowStep.findOne({
+      trigger_id: trigger.id!,
+      name: "wait",
+    });
+    expect(wait1.configuration.timeout_step).toBe("");
+  });
 });
