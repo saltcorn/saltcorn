@@ -10,6 +10,7 @@
   --wf-edge: #6c757d;
   --wf-edge-adder: #0d6efd;
   --wf-edge-loop: #f59f00;
+  --wf-edge-timeout: #dc3545;
   --wf-edge-label: #495057;
   --wf-handle-border: #3f3f3f;
   --wf-handle-bg: #fff;
@@ -303,6 +304,11 @@
   border-color: var(--wf-edge-loop) !important;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
 }
+.wf-shell .react-flow__handle.wf-handle-source-timeout {
+  background: var(--wf-edge-timeout) !important;
+  border-color: var(--wf-edge-timeout) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
 .wf-shell .react-flow__handle.wf-handle-target-loop {
   border-color: var(--wf-edge-loop) !important;
 }
@@ -338,6 +344,7 @@
   --wf-edge: #aeb3bd;
   --wf-edge-adder: #6ea8fe;
   --wf-edge-loop: #f0ad4e;
+  --wf-edge-timeout: #ea868f;
   --wf-edge-label: #c0c4cf;
   --wf-handle-border: #c0c4cf;
   --wf-handle-bg: #2f3139;

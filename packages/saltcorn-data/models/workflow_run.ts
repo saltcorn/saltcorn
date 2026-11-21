@@ -227,15 +227,23 @@ class WorkflowRun {
 
     const waiting_runs = await WorkflowRun.find({ status: "Waiting" });
 
-    const until_runs = waiting_runs.filter((r) => !r.wait_info.form);
+    // event waits are resumed by resumeOnEvent, not by the scheduler,
+    // unless they have a timeout
+    const until_runs = waiting_runs.filter(
+      (r) =>
+        !r.wait_info.form &&
+        (!r.wait_info.event_type || r.wait_info.timeout_at)
+    );
 
     if (!until_runs.length) {
       state.waitingWorkflows = false;
       return [];
     }
     const now = new Date();
-    return until_runs.filter(
-      (r) => !r.wait_info.until_time || new Date(r.wait_info.until_time) < now
+    return until_runs.filter((r) =>
+      r.wait_info.event_type
+        ? !r.wait_info.event_received && WorkflowRun.eventWaitTimedOut(r, now)
+        : !r.wait_info.until_time || new Date(r.wait_info.until_time) < now
     );
   }
 
@@ -244,8 +252,92 @@ class WorkflowRun {
     const runs = await this.getResumableWorkflows();
     for (const run of runs) {
       await db.withTransaction(async () => {
-        await run.run({});
+        if (run.wait_info.event_type) {
+          // a matching event may have resumed this run since it was selected
+          const fresh = await WorkflowRun.findOne({ id: run.id });
+          if (
+            !fresh ||
+            fresh.status !== "Waiting" ||
+            fresh.wait_info?.event_received ||
+            !WorkflowRun.eventWaitTimedOut(fresh)
+          )
+            return;
+          const user = fresh.started_by
+            ? await User.findOne({ id: fresh.started_by })
+            : undefined;
+          await fresh.run({ user: user || ({} as AbstractUser) });
+        } else await run.run({});
       });
+    }
+  }
+
+  /**
+   * Has the timeout of a WaitForEvent step passed?
+   * @param run workflow run waiting for an event
+   * @param now current time
+   */
+  static eventWaitTimedOut(run: WorkflowRun, now: Date = new Date()) {
+    return (
+      !!run.wait_info?.timeout_at && new Date(run.wait_info.timeout_at) <= now
+    );
+  }
+
+  /**
+   * Resume workflow runs paused in a WaitForEvent step whose event type,
+   * channel and match query fit this event. Called from Trigger.emitEvent
+   * and Trigger.runTableTriggers
+   * @param eventType event type, e.g. "Insert" or a custom event
+   * @param channel table name for table events, otherwise the event channel
+   * @param payload event payload, matched against the step's query
+   */
+  static async resumeOnEvent(
+    eventType: string,
+    channel: string | null | undefined,
+    payload: any
+  ) {
+    const waiting = await WorkflowRun.find({
+      status: "Waiting",
+      wait_info: { json: { event_type: eventType } },
+    });
+    const matching = waiting.filter(
+      (r) =>
+        !r.wait_info.event_received &&
+        // after the timeout, the run times out at the next scheduler tick
+        !WorkflowRun.eventWaitTimedOut(r) &&
+        (!r.wait_info.event_channel || r.wait_info.event_channel === channel) &&
+        utils.satisfies(r.wait_info.event_query || {})(payload || {})
+    );
+    for (const run of matching) {
+      try {
+        await db.withTransaction(async () => {
+          // another event may have resumed this run since it was selected
+          const fresh = await WorkflowRun.findOne({ id: run.id });
+          if (
+            !fresh ||
+            fresh.status !== "Waiting" ||
+            fresh.wait_info?.event_type !== eventType ||
+            fresh.wait_info?.event_received ||
+            WorkflowRun.eventWaitTimedOut(fresh)
+          )
+            return;
+          if (fresh.wait_info.payload_variable)
+            fresh.context[fresh.wait_info.payload_variable] = payload;
+          if (fresh.wait_info.timeout_at) fresh.context.timed_out = false;
+          await fresh.update({
+            context: fresh.context,
+            wait_info: { ...fresh.wait_info, event_received: true },
+          });
+          const user = fresh.started_by
+            ? await User.findOne({ id: fresh.started_by })
+            : undefined;
+          await fresh.run({ user: user || ({} as AbstractUser) });
+        });
+      } catch (e: any) {
+        getState()!.log(
+          2,
+          `Error resuming workflow run ${run.id} on event ${eventType}: ${e?.message}`
+        );
+      }
     }
   }
 
@@ -492,6 +584,17 @@ class WorkflowRun {
             break;
           case "form":
             if (v) fulfilled = false;
+            break;
+          case "event_type":
+            if (this.wait_info.event_received) break;
+            if (WorkflowRun.eventWaitTimedOut(this)) {
+              this.wait_info.timed_out = true;
+              this.context.timed_out = true;
+              await this.update({
+                wait_info: this.wait_info,
+                context: this.context,
+              });
+            } else fulfilled = false;
             break;
           case "workflow_run":
             const wait_for_run = await WorkflowRun.findOne({ id: v });
@@ -823,6 +926,45 @@ class WorkflowRun {
             return;
           }
           if (
+            step?.action_name === "WaitForEvent" &&
+            !waiting_fulfilled &&
+            !skip_because_only_if
+          ) {
+            const event_query = step.configuration.event_query
+              ? eval_expression(
+                  step.configuration.event_query,
+                  this.context,
+                  user,
+                  `Match query in step ${step.name}`
+                )
+              : {};
+            const timeout_at = step.configuration.timeout_at
+              ? eval_expression(
+                  step.configuration.timeout_at,
+                  { moment, ...this.context },
+                  user,
+                  `Timeout at expression in step ${step.name}`
+                )
+              : null;
+            if (timeout_at) state.waitingWorkflows = true;
+            await this.update({
+              status: "Waiting",
+              wait_info: {
+                event_type: step.configuration.event_type,
+                event_channel: step.configuration.event_channel || null,
+                event_query: event_query || {},
+                payload_variable: step.configuration.payload_variable || null,
+                timeout_at: timeout_at
+                  ? new Date(timeout_at).toISOString()
+                  : null,
+              },
+            });
+            if (trace) await this.createTrace(step.name, user);
+
+            do_break = true;
+            return;
+          }
+          if (
             step?.action_name === "WaitUntil" &&
             !waiting_fulfilled &&
             !skip_because_only_if
@@ -845,6 +987,7 @@ class WorkflowRun {
             return;
           }
           let result: any;
+          let timeout_step: string | null = null;
           if (step?.action_name === "ForLoop" && !skip_because_only_if) {
             const array = eval_expression(
               step.configuration.array_expression,
@@ -874,6 +1017,12 @@ class WorkflowRun {
             }
           } else if (waiting_fulfilled) {
             waiting_fulfilled = false;
+            if (
+              step?.action_name === "WaitForEvent" &&
+              this.wait_info?.timed_out &&
+              step.configuration.timeout_step
+            )
+              timeout_step = step.configuration.timeout_step;
           } else if (step && user)
             result = await step.run(this.context, user, req, this);
 
@@ -886,7 +1035,14 @@ class WorkflowRun {
             await this.createTrace(step?.name as string, user);
 
           //find next step
-          const nextStep = step ? this.get_next_step(step, user) : null;
+          let nextStep = step ? this.get_next_step(step, user) : null;
+          if (timeout_step) {
+            nextStep = steps.find((s) => s.name === timeout_step) || null;
+            if (!nextStep)
+              throw new Error(
+                `Timeout step ${timeout_step} not found in step ${step?.name}`
+              );
+          }
 
           if (!nextStep) {
             if (this.current_step.length > 1) {

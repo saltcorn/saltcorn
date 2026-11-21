@@ -1340,6 +1340,9 @@ class Table implements AbstractTable {
 
       // get triggers on delete
       const triggers = await Trigger.getTableTriggers("Delete", this);
+      // workflows waiting for a Delete event on this table need the rows
+      const deleteWaiters =
+        !noTrigger && !!getState()?.hasEventWaiters("Delete", this.name);
       const fields = this.fields;
 
       const ownerFieldName: string | null = (() => {
@@ -1397,7 +1400,10 @@ class Table implements AbstractTable {
         (f) => f.type === "File" && f.attributes?.also_delete_file
       );
       const deleteFiles: Array<File> = [];
-      if ((triggers.length > 0 || deleteFileFields.length > 0) && !noTrigger) {
+      if (
+        (triggers.length > 0 || deleteFileFields.length > 0 || deleteWaiters) &&
+        !noTrigger
+      ) {
         if (!rows)
           rows = await this.getJoinedRows({
             where,
@@ -1490,6 +1496,14 @@ class Table implements AbstractTable {
           //if (fields.find((f) => f.primary_key)) await this.resetSequence();
           for (const file of deleteFiles) {
             await file.delete();
+          }
+          if (deleteWaiters && rows) {
+            const WorkflowRun = (await import("./workflow_run.js")).default;
+            const deletedRows = rows;
+            await db.afterCommit(async () => {
+              for (const row of deletedRows)
+                await WorkflowRun.resumeOnEvent("Delete", this.name, row);
+            });
           }
         },
         (e: any) => {
