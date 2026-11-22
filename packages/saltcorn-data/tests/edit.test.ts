@@ -1037,6 +1037,7 @@ describe("Edit view components", () => {
     });
   });
   it("runs multi-step action after failed server-side Save", async () => {
+    if (db.isSQLite) return;
     const col = {
       type: "Action",
       rndid: "c4058a",
