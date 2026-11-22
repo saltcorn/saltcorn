@@ -1047,7 +1047,6 @@ export const supports_array_param_in = true;
 
 const sessionTable = (): string =>
   `${quote(defaultSchema || "public")}._sc_session`;
-console.log({sessionTable: sessionTable(), defaultSchema: defaultSchema})
 export const deleteSessionsForUser = async (
   userId: string,
   tenant: string
@@ -1155,7 +1154,6 @@ export const init = (getConnectObjectPara: (connObj?: any) => any): void => {
     if (connectObj) {
       pool = new Pool(connectObj);
       defaultSchema = connectObj.default_schema;
-      console.log({defaultSchema})
       getTenantSchema = tenantsModule(connectObj).getTenantSchema;
       getRequestContext = tenantsModule(connectObj).getRequestContext;
     } else {
