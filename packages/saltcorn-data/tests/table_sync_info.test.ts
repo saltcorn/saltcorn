@@ -33,7 +33,9 @@ describe("Table sync info", () => {
     it("sets updated_field timestamp on row update", async () => {
       const table = Table.findOne({ name: "books" });
       await table?.updateRow({ author: "New Autor" }, 1);
-      let resu = await db.query("SELECT * FROM books_sync_info ");
+      let resu = await db.query(
+        `SELECT * FROM ${db.getTenantSchemaPrefix()}books_sync_info`
+      );
       expect(resu.rows.length).toBe(1);
       let updatedFields = resu.rows[0].updated_fields;
       expect(updatedFields).toBeDefined();
@@ -43,7 +45,9 @@ describe("Table sync info", () => {
       expect(authorTimestamp).toBeInstanceOf(Date);
 
       await table?.updateRow({ pages: "200" }, 1);
-      resu = await db.query("SELECT * FROM books_sync_info ");
+      resu = await db.query(
+        `SELECT * FROM ${db.getTenantSchemaPrefix()}books_sync_info`
+      );
       expect(resu.rows.length).toBe(1);
       updatedFields = resu.rows[0].updated_fields;
       expect(updatedFields).toBeDefined();

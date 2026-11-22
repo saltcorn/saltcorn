@@ -295,6 +295,8 @@ describe("Table get data", () => {
           table: "patients",
           field: "favbook",
           where: { author: "Leo Tolstoy" },
+          // as production callers do (plugin-helper)
+          tenant: db.supports_multiple_schemas ? db.getTenantSchema() : undefined,
         },
       },
     });
@@ -657,7 +659,12 @@ describe("Table get data", () => {
     assertIsSet(table);
     const fields = table.getFields();
     const rows = await db.select("patients", {
-      _fts: { fields, searchTerm: "Douglas" },
+      _fts: {
+        fields,
+        searchTerm: "Douglas",
+        // as production callers do (plugin-helper stateFieldsToWhere)
+        schema: db.supports_multiple_schemas ? db.getTenantSchema() : undefined,
+      },
     });
 
     expect(rows.length).toBe(2);
@@ -668,7 +675,11 @@ describe("Table get data", () => {
     const fields = table.getFields();
 
     const rows = await table.getRows({
-      _fts: { fields, searchTerm: "Herman" },
+      _fts: {
+        fields,
+        searchTerm: "Herman",
+        schema: db.supports_multiple_schemas ? db.getTenantSchema() : undefined,
+      },
     });
 
     expect(rows.length).toBe(1);

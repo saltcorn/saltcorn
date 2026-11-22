@@ -83,6 +83,22 @@ describe("Tenant", () => {
       });
     });
 
+    it("does not leak tenant search_path onto pooled connections", async () => {
+      const clients: any[] = [];
+      for (let i = 0; i < 10; i++) clients.push(await (db as any).getClient());
+      try {
+        for (const client of clients) {
+          const { rows } = await client.query("SHOW search_path");
+          expect(rows[0].search_path.startsWith("test10")).toBe(false);
+          await db.runWithTenant({ tenant: "test10", client } as any, () =>
+            db.deleteSessionsForUser("1", "test10")
+          );
+        }
+      } finally {
+        clients.forEach((c) => c.release());
+      }
+    });
+
     it("check tenant list", async () => {
       const tens = await getAllTenants();
       expect(tens).toContain("test10");
