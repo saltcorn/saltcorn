@@ -130,9 +130,6 @@ const migrate = async (schema0?: string, verbose?: boolean): Promise<void> => {
           const contents: MigrationContents = require(
             path.join(__dirname, "migrations", name)
           );
-          // Postgres: SET LOCAL ends with the transaction, so the search_path
-          // does not leak onto the pooled connection (#4481). Other backends
-          // keep the plain SET (mysql-backend maps it onto USE <db>).
           const setLocal = db.driverName === "postgres";
           const runMigration = () =>
             db.withTransaction(
