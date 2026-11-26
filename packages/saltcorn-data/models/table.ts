@@ -2947,6 +2947,14 @@ class Table implements AbstractTable {
     //track which rows in which tables are updated
     const updated: { [k: string]: Set<PrimaryKeyValue> } = {};
 
+    // Lock the parent rows before recalculating, so concurrent writes to the
+    // same parent take turns and each one sums committed rows. NO KEY UPDATE
+    // because the child's foreign key check already holds KEY SHARE on the
+    // parent, which FOR UPDATE would deadlock against.
+    const lockParents: SelectOptions = db.supports_for_update
+      ? { fornokeyupdate: true }
+      : {};
+
     for (const calc_field of calc_agg_fields) {
       const agg_field_name = calc_field.attributes.agg_field.split("@")[0];
       if (changedFields && !changedFields.has(agg_field_name) && !keyChanged)
@@ -2956,9 +2964,10 @@ class Table implements AbstractTable {
       if (!refTable || !v[calc_field.attributes.ref]) continue;
       const val0 = v[calc_field.attributes.ref];
       const val = typeof val0 === "object" ? val0[pk_name] : val0;
-      const rows = await refTable?.getRows({
-        [refTable.pk_name]: val,
-      });
+      const rows = await refTable?.getRows(
+        { [refTable.pk_name]: val },
+        lockParents
+      );
       if (!updated[refTable.name]) updated[refTable.name] = new Set();
 
       for (const row of rows) {
@@ -2991,9 +3000,11 @@ class Table implements AbstractTable {
       const val0 = v[calc_field.attributes.ref];
       const val = typeof val0 === "object" ? val0[pk_name] : val0;
 
-      const rows = await refTable?.getRows({
-        [joinField]: val,
-      });
+      // ordered, so transactions locking several rows lock them in turn
+      const rows = await refTable?.getRows(
+        { [joinField]: val },
+        { ...lockParents, orderBy: refTable.pk_name }
+      );
       if (!updated[refTable.name]) updated[refTable.name] = new Set();
 
       for (const row of rows || []) {
