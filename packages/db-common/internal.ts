@@ -823,7 +823,11 @@ export const mkSelectOptionsForDialect = (
               : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
-  const forupdate = selopts.forupdate ? "FOR UPDATE" : "";
+  const forupdate = selopts.forupdate
+    ? "FOR UPDATE"
+    : selopts.fornokeyupdate
+      ? "FOR NO KEY UPDATE"
+      : "";
   return [orderby, limit, offset, forupdate].filter((s) => s).join(" ");
 };
 

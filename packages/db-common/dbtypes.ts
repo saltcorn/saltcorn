@@ -59,6 +59,7 @@ export type SelectOptions = {
   limit?: string | number;
   offset?: string | number;
   forupdate?: boolean;
+  fornokeyupdate?: boolean;
   nocase?: boolean;
   orderDesc?: boolean;
   cached?: boolean;

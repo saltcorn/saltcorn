@@ -255,6 +255,9 @@ export type DbExportsType = {
   pools_connections: boolean;
   // supports SELECT ... FOR UPDATE row locking
   supports_for_update: boolean;
+  // supports SELECT ... FOR NO KEY UPDATE (postgres only; NOT mysql). Optional
+  // so a driver that doesn't set it gets no lock.
+  supports_for_no_key_update?: boolean;
   // supports postgres-style row-level security (postgres only; NOT mysql)
   supports_row_level_security: boolean;
   // supports advanced ALTER TABLE DDL: DROP COLUMN, RENAME TABLE, ALTER COLUMN
