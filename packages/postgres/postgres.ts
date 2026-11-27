@@ -32,6 +32,7 @@ types.setTypeParser(types.builtins.DATE, (d: string) =>
 let getTenantSchema: () => string;
 let getRequestContext: () => any;
 let getConnectObject: ((connObj?: any) => any) | null = null;
+let defaultSchema: string | undefined;
 export let pool: Pool | null = null;
 
 let log_sql_enabled = false;
@@ -1043,12 +1044,15 @@ export const isDuplicateForeignKeyError = (_e: any): boolean => false;
 export const jsonMergeExpr = (colExpr: string, param: string): string =>
   `coalesce(${colExpr}, '{}'::jsonb) || ${param}::jsonb`;
 export const supports_array_param_in = true;
+
+const sessionTable = (): string =>
+  `${quote(defaultSchema || "public")}._sc_session`;
 export const deleteSessionsForUser = async (
   userId: string,
   tenant: string
 ): Promise<void> => {
   await query(
-    `delete from _sc_session
+    `delete from ${sessionTable()}
         where sess->'passport'->'user'->>'id' = $1
         and sess->'passport'->'user'->>'tenant' = $2`,
     [userId, tenant]
@@ -1058,7 +1062,7 @@ export const deleteSessionsForTenant = async (
   tenant: string
 ): Promise<void> => {
   await query(
-    `delete from _sc_session
+    `delete from ${sessionTable()}
           where sess->'passport'->'user'->>'tenant' = $1`,
     [tenant]
   );
@@ -1149,6 +1153,7 @@ export const init = (getConnectObjectPara: (connObj?: any) => any): void => {
     const connectObj = getConnectObject();
     if (connectObj) {
       pool = new Pool(connectObj);
+      defaultSchema = connectObj.default_schema;
       getTenantSchema = tenantsModule(connectObj).getTenantSchema;
       getRequestContext = tenantsModule(connectObj).getRequestContext;
     } else {

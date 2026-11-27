@@ -43,7 +43,7 @@ beforeAll(async () => {
   await fixturesMod();
   if (!db.isSQLite) {
     await db.query(
-      `create table tstcomppk ( name text, age int, address text, primary key(name,age));`
+      `create table ${db.getTenantSchemaPrefix()}tstcomppk ( name text, age int, address text, primary key(name,age));`
     );
     const pack = await discover_tables(["tstcomppk"]);
     await implement_discovery(pack);

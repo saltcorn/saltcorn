@@ -38,31 +38,34 @@ jest.setTimeout(30000);
 describe("Table Discovery", () => {
   if (!db.isSQLite) {
     it("should create tables", async () => {
+      // qualify raw SQL with the tenant schema: the connection's search_path
+      // is not the test schema
+      const sp = db.getTenantSchemaPrefix();
       // this is simple ref table
       await db.query(
-        `create table "disc breed"(id serial primary key, name text, rating smallint, population bigint );`
+        `create table ${sp}"disc breed"(id serial primary key, name text, rating smallint, population bigint );`
       );
       // this table has FK to users! Table-level FOREIGN KEY: MySQL 8 ignores
       // inline column-level REFERENCES, so no constraint would be created.
       await db.query(
-        `create table discperson(
+        `create table ${sp}discperson(
 id serial primary key,
 name text,
 age integer not null,
 "user" int,
-foreign key ("user") references users(id)
+foreign key ("user") references ${sp}users(id)
 );`
       );
       // this table has 2 FK and column with space in name
       await db.query(
-        `create table discdog(
+        `create table ${sp}discdog(
 id serial primary key,
 name text,
 "birth date" date,
 owner int,
 breed int,
-foreign key (owner) references discperson(id),
-foreign key (breed) references "disc breed"(id));`
+foreign key (owner) references ${sp}discperson(id),
+foreign key (breed) references ${sp}"disc breed"(id));`
       );
       // this table added to check that *_history tables are not discovered
       const table = await Table.create("table_with_history");
@@ -229,7 +232,7 @@ describe("Repair primary key", () => {
   if (!db.isSQLite) {
     it("creates table", async () => {
       await db.query(
-        `create table twoprimkeys(
+        `create table ${db.getTenantSchemaPrefix()}twoprimkeys(
         the_x integer,
         the_y integer,
         primary key(the_x,the_y)
@@ -295,7 +298,7 @@ describe("reconcile_table", () => {
 
       // Drop the column directly from DB
       await db.query(
-        `ALTER TABLE "reconcile_test" DROP COLUMN "mycol"`
+        `ALTER TABLE ${db.getTenantSchemaPrefix()}"reconcile_test" DROP COLUMN "mycol"`
       );
 
       // Refresh table in-memory fields
@@ -317,7 +320,7 @@ describe("reconcile_table", () => {
     it("should detect orphan columns", async () => {
       // Add a column directly to DB
       await db.query(
-        `ALTER TABLE "reconcile_test" ADD COLUMN "orphan_col" text`
+        `ALTER TABLE ${db.getTenantSchemaPrefix()}"reconcile_test" ADD COLUMN "orphan_col" text`
       );
 
       const freshTable = Table.findOne("reconcile_test")!;

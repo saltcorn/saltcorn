@@ -118,7 +118,7 @@ const getSyncRows = async (syncInfo: any, table: any, syncUntil: any, user: any)
          COALESCE(info_tbl.deleted, false) "_sync_info_tbl_deleted_",
          data_tbl.*
        from ${schema}"${db.sqlsanitize(tblName)}_sync_info" "info_tbl"
-       right join "${db.sqlsanitize(tblName)}" "data_tbl"
+       right join ${schema}"${db.sqlsanitize(tblName)}" "data_tbl"
          on info_tbl.ref = ${pkText}
          and info_tbl.deleted = false
        where (

@@ -130,23 +130,32 @@ const migrate = async (schema0?: string, verbose?: boolean): Promise<void> => {
           const contents: MigrationContents = require(
             path.join(__dirname, "migrations", name)
           );
-          await db.withTransaction(
-            async () => {
-              // include public so shared extensions installed there (e.g.
-              // uuid-ossp, pg_trgm) remain resolvable from the tenant schema -
-              // this SET persists on the pooled connection after the migration
-              if (db.supports_search_path)
-                await db.query(`SET search_path TO "${schema}", public;`);
-              await doMigrationStep(name, contents, schema);
-              if (verbose) console.log(".");
-            },
-            async (e: Error) => {
-              console.error(
-                `Tenant ${schema0} migration ${name} error:`,
-                e.message
-              );
-            }
-          );
+          const setLocal = db.driverName === "postgres";
+          const runMigration = () =>
+            db.withTransaction(
+              async () => {
+                // include public so shared extensions installed there (e.g.
+                // uuid-ossp, pg_trgm) remain resolvable from the tenant schema
+                if (db.supports_search_path)
+                  await db.query(
+                    `SET ${setLocal ? "LOCAL " : ""}search_path TO "${schema}", public;`
+                  );
+                await doMigrationStep(name, contents, schema);
+                if (verbose) console.log(".");
+              },
+              async (e: Error) => {
+                console.error(
+                  `Tenant ${schema0} migration ${name} error:`,
+                  e.message
+                );
+              }
+            );
+          // withTransaction only routes queries through its own client when
+          // there is a request context; without one, SET LOCAL and the
+          // migration would run on arbitrary pool connections
+          if (setLocal && !db.getRequestContext())
+            await db.runWithTenant(schema, runMigration);
+          else await runMigration();
         }
       }
     }
