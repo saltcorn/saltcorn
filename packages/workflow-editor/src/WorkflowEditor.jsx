@@ -122,6 +122,7 @@ const StepNode = ({ data }) => {
   const targetPosition = Position.Top;
   const sourcePosition = Position.Bottom;
   const isLoop = data.action_name === "ForLoop";
+  const hasTimeout = hasTimeoutHandle(data);
   const { showBackIn, showBackOut, showLoopIn, showLoopOut, hideMainSource } =
     data || {};
 
@@ -205,6 +206,15 @@ const StepNode = ({ data }) => {
           position={Position.Left}
         />
       ) : null}
+      {hasTimeout ? (
+        <Handle
+          style={handleStyle}
+          id="timeout-out"
+          type="source"
+          className="wf-handle-source-timeout"
+          position={Position.Right}
+        />
+      ) : null}
       {isLoop ? (
         <>
           {showLoopIn ? (
@@ -230,6 +240,10 @@ const StepNode = ({ data }) => {
     </div>
   );
 };
+
+// WaitForEvent steps with a timeout get a handle linking to the timeout step
+const hasTimeoutHandle = (step) =>
+  step?.action_name === "WaitForEvent" && !!step?.configuration?.timeout_at;
 
 const nodeTypes = {
   start: StartNode,
@@ -604,6 +618,28 @@ const buildGraph = (
           label: strings.loopBody,
           markerEnd: makeMarker("var(--wf-edge-loop, #f59f00)"),
           data: { loop: true, missing: !loopId },
+        });
+      }
+    }
+
+    if (hasTimeoutHandle(step) && step.configuration?.timeout_step) {
+      const timeoutTarget = step.configuration.timeout_step;
+      const timeoutId = idByName[timeoutTarget];
+      if (timeoutId) {
+        markEdgeKind(String(step.id), { forward: true });
+        edges.push({
+          id: `timeout-${step.id}-${timeoutTarget}`,
+          source: String(step.id),
+          target: timeoutId,
+          type: "smoothstep",
+          sourceHandle: "timeout-out",
+          style: {
+            stroke: "var(--wf-edge-timeout, #dc3545)",
+            strokeDasharray: "6 4",
+          },
+          label: strings.timeout,
+          markerEnd: makeMarker("var(--wf-edge-timeout, #dc3545)"),
+          data: { timeout: true },
         });
       }
     }
@@ -1681,7 +1717,12 @@ const WorkflowEditor = ({ data }) => {
       }
       const stepName = nameById[connection.source];
       if (!stepName) return;
-      if (loop) {
+      if (connection.sourceHandle === "timeout-out") {
+        await updateConnection({
+          step_id: connection.source,
+          timeout_step: targetName || "",
+        });
+      } else if (loop) {
         await updateConnection({
           step_id: connection.source,
           loop_body_step: targetName || "",
@@ -1740,7 +1781,11 @@ const WorkflowEditor = ({ data }) => {
       const targetEl = event?.target;
       if (targetEl?.classList?.contains("react-flow__pane")) {
         // Dropped on empty space: clear next_step mark as final/unconnected
-        if (pending.nodeId && pending.handleId !== "loop-out") {
+        if (
+          pending.nodeId &&
+          pending.handleId !== "loop-out" &&
+          pending.handleId !== "timeout-out"
+        ) {
           if (pending.nodeId === "start") {
             const currentInitial = steps.find((s) => s.initial_step);
             if (currentInitial) {
@@ -1784,6 +1829,10 @@ const WorkflowEditor = ({ data }) => {
           if (edge.data?.loop) {
             updates.push(
               updateConnection({ step_id: edge.source, loop_body_step: "" })
+            );
+          } else if (edge.data?.timeout) {
+            updates.push(
+              updateConnection({ step_id: edge.source, timeout_step: "" })
             );
           } else {
             updates.push(

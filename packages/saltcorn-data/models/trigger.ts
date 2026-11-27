@@ -346,6 +346,10 @@ class Trigger implements AbstractTrigger {
         payload: payload,
         occur_at: new Date(),
       });
+      if (state.hasEventWaiters(eventType, channel))
+        await db.afterCommit(() =>
+          workflowRunMod.resumeOnEvent(eventType, channel, payload)
+        );
     }, 0);
   }
 
@@ -431,6 +435,14 @@ class Trigger implements AbstractTrigger {
       payload: row,
       occur_at: new Date(),
     });
+    // resume workflows waiting for this event, once the row change is committed
+    if (
+      when_trigger !== "Validate" &&
+      state.hasEventWaiters(when_trigger, table?.name)
+    )
+      await db.afterCommit(() =>
+        workflowRunMod.resumeOnEvent(when_trigger, table?.name, row)
+      );
   }
 
   /**
