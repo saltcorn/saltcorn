@@ -932,6 +932,7 @@ export const supports_search_path = true;
 export const supports_multiple_schemas = true;
 export const pools_connections = true;
 export const supports_for_update = true;
+export const supports_for_no_key_update = true;
 export const supports_row_level_security = true;
 export const supports_alter_table = true;
 export const supports_non_integer_pk = true;

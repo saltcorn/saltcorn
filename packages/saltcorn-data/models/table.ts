@@ -2950,8 +2950,9 @@ class Table implements AbstractTable {
     // Lock the parent rows before recalculating, so concurrent writes to the
     // same parent take turns and each one sums committed rows. NO KEY UPDATE
     // because the child's foreign key check already holds KEY SHARE on the
-    // parent, which FOR UPDATE would deadlock against.
-    const lockParents: SelectOptions = db.supports_for_update
+    // parent, which FOR UPDATE would deadlock against. Drivers without NO KEY
+    // UPDATE (mysql, sqlite) take no lock.
+    const lockParents: SelectOptions = db.supports_for_no_key_update
       ? { fornokeyupdate: true }
       : {};
 

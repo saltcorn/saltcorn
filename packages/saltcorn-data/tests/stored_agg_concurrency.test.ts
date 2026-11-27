@@ -26,7 +26,8 @@ jest.setTimeout(30000);
 // the parent, the second one computes the stored Sum before the first commits
 // and then overwrites the parent with that out-of-date total.
 describe("stored aggregations under concurrent writes", () => {
-  if (db.isSQLite) return; // single writer, no row locks
+  // needs postgres row locks (and pg_stat_activity below)
+  if (!db.supports_for_no_key_update) return;
 
   let accounts: Table;
   let ledger: Table;
