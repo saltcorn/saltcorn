@@ -76,6 +76,7 @@ import {
   JOB_ID_RE,
 } from "./restore_jobs.js";
 import { v4 as uuidv4 } from "uuid";
+import { randomInt } from "crypto";
 // @ts-ignore
 import base32 from "thirty-two";
 // @ts-ignore
@@ -2383,7 +2384,7 @@ router.get(
     let key;
     if (user._attributes.totp_key) key = user._attributes.totp_key;
     else {
-      key = randomKey(10);
+      key = randomKey(25);
       user._attributes.totp_key = key;
       await user.update({ _attributes: user._attributes });
     }
@@ -2571,20 +2572,17 @@ const totpForm = (req: Req, action?: string) =>
     ],
   });
 /**
- * Random key generation for totp (TWA)
+ * Random key generation for totp (TWA), from a cryptographically secure source
  * @param {*} len
  * @returns
  */
 const randomKey = function (len: number) {
-  function getRandomInt(min: number, max: number) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
   var buf = [],
     chars = "abcdefghijklmnopqrstuvwxyz0123456789",
     charlen = chars.length;
 
   for (let i = 0; i < len; ++i) {
-    buf.push(chars[getRandomInt(0, charlen - 1)]);
+    buf.push(chars[randomInt(charlen)]);
   }
 
   return buf.join("");
