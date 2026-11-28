@@ -304,16 +304,18 @@ function apply_showif() {
           )
           .join("");
         e.append($(`<optgroup label="${o.label}">` + opts + "</optgroup>"));
-      } else if (
-        !(o && typeof o.label !== "undefined" && typeof o.value !== "undefined")
-      ) {
+      } else if (!(
+        o &&
+        typeof o.label !== "undefined" &&
+        typeof o.value !== "undefined"
+      )) {
         if (`${current}` === `${o}`)
           e.append($("<option selected>" + o + "</option>"));
         else e.append($("<option>" + o + "</option>"));
       } else {
         e.append(
           $(
-            `<option ${o.disabled? "disabled ":""}${
+            `<option ${o.disabled ? "disabled " : ""}${
               `${current}` === `${o.value}` ? "selected" : ""
             } value="${o.value}">${o.label}</option>`
           )
@@ -1239,6 +1241,12 @@ function validate_object_expression_elem(targetOrVal, ref = null) {
 }
 
 function initialize_page() {
+  // embedded views with forms arrive wrapped in <template> inside edit forms
+  // (wrapNestedForms in viewable_fields.ts); jQuery re-parses outside the
+  // outer form, so the nested form survives and its scripts run
+  $("template[data-sc-nested-form]").each(function () {
+    $(this).replaceWith(this.innerHTML);
+  });
   if (window._sc_locale && window.dayjs) dayjs.locale(window._sc_locale);
   const isNode = getIsNode();
   //console.log("init page");

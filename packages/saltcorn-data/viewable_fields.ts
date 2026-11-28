@@ -1083,18 +1083,23 @@ const get_viewable_fields = (
                 label
               );
             else
-              return post_btn_noform(url as string, label as string, req.csrfToken(), {
-                small: true,
-                ajax: true,
-                icon,
-                reload_on_done: true,
-                confirm: column.confirm,
-                spinner: column.spinner,
-                btnClass: column.in_dropdown
-                  ? "dropdown-item"
-                  : column.action_style || "btn-primary",
-                req,
-              });
+              return post_btn_noform(
+                url as string,
+                label as string,
+                req.csrfToken(),
+                {
+                  small: true,
+                  ajax: true,
+                  icon,
+                  reload_on_done: true,
+                  confirm: column.confirm,
+                  spinner: column.spinner,
+                  btnClass: column.in_dropdown
+                    ? "dropdown-item"
+                    : column.action_style || "btn-primary",
+                  req,
+                }
+              );
           },
         };
         if (column.in_dropdown) {
@@ -2295,6 +2300,19 @@ const getForm = async (
   return form;
 };
 
+/**
+ * Embedded views are rendered inside the edit view's own <form>.
+ * The HTML parser drops a nested <form> tag and lets its </form> close the outer form,
+ * so carry the view inside a <template>, where the parser keeps nested forms.
+ * The inline script swaps it in during page parse, so the view's scripts run
+ * when they would have ; initialize_page() does it for HTML injected later.
+ */
+const wrapNestedForms = (html: any): any =>
+  typeof html === "string" && /<form[\s>]/i.test(html)
+    ? `<template data-sc-nested-form>${html}</template>` +
+      `<script>(function(s){var t=s&&s.previousElementSibling;if(t&&t.tagName==="TEMPLATE"&&t.hasAttribute("data-sc-nested-form"))t.replaceWith(document.importNode(t.content,true))})(document.currentScript)</script>`
+    : html;
+
 const transformForm = async ({
   form,
   table,
@@ -2814,16 +2832,20 @@ const transformForm = async ({
         inLazy
           ? ""
           : view.renderLocally()
-            ? await view.run(
-                { ...state, ...outerState, ...extra_state },
-                { req, res },
-                view.isRemoteTable()
+            ? wrapNestedForms(
+                await view.run(
+                  { ...state, ...outerState, ...extra_state },
+                  { req, res },
+                  view.isRemoteTable()
+                )
               )
-            : await renderServerSide(view.name, {
-                ...state,
-                ...outerState,
-                ...extra_state,
-              })
+            : wrapNestedForms(
+                await renderServerSide(view.name, {
+                  ...state,
+                  ...outerState,
+                  ...extra_state,
+                })
+              )
       );
     },
   });
