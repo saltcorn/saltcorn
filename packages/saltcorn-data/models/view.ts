@@ -55,8 +55,41 @@ import bcryptjs from "bcryptjs";
 const { hash } = bcryptjs;
 
 import { remove_from_menu } from "./config.js";
+import { AsyncLocalStorage } from "async_hooks";
 
 declare const saltcorn: any;
+
+/**
+ * Views rendering in the current call chain. A view that ends up embedding
+ * itself with the same state would otherwise recurse until the server runs
+ * out of memory. Keyed on state as well as name, so recursive
+ * trees (a view embedding itself for child rows) still render.
+ */
+const renderChain = new AsyncLocalStorage<{ name: string; key: string }[]>();
+
+const runGuarded = <T>(
+  name: string,
+  state: any,
+  f: () => Promise<T>
+): Promise<T> => {
+  const chain = renderChain.getStore() || [];
+  let key: string;
+  try {
+    key = `${name}\u0000${JSON.stringify(state)}`;
+  } catch {
+    return f(); // unserialisable state: don't guard rather than guess
+  }
+  const i = chain.findIndex((s) => s.key === key);
+  if (i >= 0)
+    throw new InvalidConfiguration(
+      `View ${name} is embedded in itself: ${[
+        ...chain.slice(i).map((s) => s.name),
+        name,
+      ].join(" → ")}`
+    );
+    console.log({chain, name, key})
+  return renderChain.run([...chain, { name, key }], f);
+};
 
 /**
  * View Class
@@ -575,13 +608,15 @@ class View implements AbstractView {
         5,
         `Running view ${this.name} with state ${JSON.stringify(viewState)}`
       );
-      return await this.viewtemplateObj!.run(
-        table_id,
-        this.name,
-        this.configuration,
-        viewState,
-        extraArgs,
-        this.queries(remote, extraArgs.req, extraArgs.res)
+      return await runGuarded(this.name, viewState, () =>
+        this.viewtemplateObj!.run(
+          table_id,
+          this.name,
+          this.configuration,
+          viewState,
+          extraArgs,
+          this.queries(remote, extraArgs.req, extraArgs.res)
+        )
       );
     } catch (error: any) {
       state.log(2, error.stack);

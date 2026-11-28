@@ -1289,4 +1289,50 @@ describe("Edit view components", () => {
     expect(vres0).not.toContain("data-view-source-current");
     expect(vres0).toContain("<form");
   });
+  it("embed list whose embedded create view is this view", async () => {
+    // edit -> list -> embedded create (same edit) -> list -> ... used to
+    // recurse until the server ran out of memory
+    const suffix = Math.round(Math.random() * 100000);
+    const editName = `loopEdit${suffix}`;
+    const list = await View.create({
+      viewtemplate: "List",
+      name: `loopList${suffix}`,
+      table_id: Table.findOne("books")?.id,
+      min_role: 1,
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "field",
+                fieldview: "as_text",
+                field_name: "author",
+                configuration: {},
+              },
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [],
+        view_to_create: editName,
+        create_view_display: "Embedded",
+      },
+    });
+    const edit = await mkViewWithCfg({
+      name: editName,
+      configuration: {
+        layout: {
+          name: "c1a0e2",
+          type: "view",
+          view: list.name,
+          state: "shared",
+          relation: ".",
+        },
+        columns: [],
+      },
+    });
+    await expect(edit.run({ id: 1 }, mockReqRes)).rejects.toThrow(
+      "is embedded in itself"
+    );
+  });
 });
